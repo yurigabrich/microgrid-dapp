@@ -1,0 +1,26 @@
+% Specification of nodes (position, etc.)
+\node (start) [activityStarts]              {Activity starts};
+\node (p1)    [startstop, below of=start]   {New \gls{gd} plant?};
+\node (p2)    [process, below of=p1] {Define the power capacity ($P_{n}$)};
+\node (p3)    [process, below of=p2] {Create the tokens ($T_{n}$)};
+\node (p4)    [startstop, below of=p3] {Fundraising process?};
+\node (p5)    [activityRuns, below of=p4] {Distribute the tokens (transaction from group to member)};
+\node (p6)    [activityRuns, below of=p5] {Calculate individual quota ($qm_{n}$)};
+\node (end)   [activityStarts, below of=p6] {End};
+
+\node (n1)    [activityRuns, right of=p1, xshift=4cm, yshift=1cm]  {raise Poll()};
+\node (n2)    [activityRuns, right of=p4, xshift=4cm, yshift=1cm] {raise Auction() with fixed price};
+
+% Specification of lines between nodes specified above
+% with aditional nodes for description 
+\draw[->]  (start) -- (p1);
+\draw[->]     (p1) -- node {Yes} (p2);
+\draw[->]     (p1) -- ++(-4cm,0) |- (end) node[pos=0.25] {No};
+\draw[->]     (p2) -- (p3);
+\draw[->]     (p3) -- (p4);
+\draw[->]     (p4) -- (p5);
+\draw[->]     (p5) -- (p6);
+\draw[->]     (p6) -- (end);
+
+\draw[-]     (p1) -- (n1);
+\draw[-]     (p4) -- (n2);
