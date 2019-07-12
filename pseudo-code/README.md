@@ -5,3 +5,7 @@
 # DApp fluxogram
 
 ![Dapp fluxogram](./flux_dapp.png)
+
+# DApp UML
+
+![Dapp UML](./uml.pdf)
