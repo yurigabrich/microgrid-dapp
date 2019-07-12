@@ -9,3 +9,8 @@ Generic flowcharts and pseudocodes of the proposed systems are avaliable within 
 
 A first draft of the DApps can be seen [here](neo-dapp/microgrid-dapp.cs), which is being designed for interacting with the [NEO Blockchain](https://github.com/neo-project/neo).
 
+## License and Contribution
+
+This project is shared under the MIT License attribution.
+You're welcome to contribute to the dApp development.
+
