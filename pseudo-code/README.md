@@ -8,4 +8,4 @@
 
 # DApp UML
 
-![Dapp UML](./uml.pdf)
+Detail UML can be downloaded [here](./uml.pdf).
