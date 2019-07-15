@@ -1,3 +1,22 @@
+//---------------------------------------------------------------------------------------------
+// EVENTS
+
+[DisplayName("transaction")]
+public static event Action<byte[], byte[], BigInteger> Transfer;
+[DisplayName("membership")]
+public static event Action<string, string> Membership;
+[DisplayName("process")]
+public static event Action<string, string> Process;
+[DisplayName("ballot")]
+public static event Action<string, string, bool> Ballot;
+[DisplayName("change")]
+public static event Action<string, string> Update;
+[DisplayName("refund")]
+public static event Action<string, BigInteger> Refund;
+
+
+//---------------------------------------------------------------------------------------------
+// GLOBAL VARIABLES
 
 // Power limits of the distributed generation category defined by Brazilian law (0MW até 5MW).
 public static int[] PowGenLimits() => new int[] {0, 5000000};
@@ -17,24 +36,62 @@ private static string[] register => new string[] {"Quota", "Tokens"};
 
 
 //---------------------------------------------------------------------------------------------
-// HANDY FUNCTIONS
+// THE MAIN INTERFACE
 
-// Function to create a custom ID of a process based on its particular specifications.
-private static string ID(string arg1, string arg2, string arg3, string arg4)
-{
-    string temp1 = String.Concat(arg1, arg2);
-    string temp2 = String.Concat(arg3, arg4);
-    return String.Concat(temp1, temp2);
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //---------------------------------------------------------------------------------------------
-// GENERAL METHODS
-// --> CREATE
+// PUBLIC FUNCTIONS
 
+// To request to join the group.
+public static void Admission( string address, string fullName, string utility )
+{
+    string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
+    
+    // Must lock the contract for a while!!! --PENDING--
+    
+    if ( GetRef(id, "Outcome") )
+    {
+        // Add a new member after approval from group members.
+        Member( address, fullName, utility, 0, 0 );
+        Membership( address, "Welcome on board!" );
+        return;
+    }
+    Membership( address, "Not approved yet." );
+}
 
+// To vote in a given ID process.
+public static void Vote( string id, string member, bool answer )
+{
+    // Increase the number of votes.
+    BigInteger temp = GetRef(id,"NumOfVotes").AsBigInteger();
+    UpRef(id, "NumOfVotes", temp++);
 
-// --> READ
+    if (answer)
+    {
+        // Increase the number of "trues".
+        BigInteger temp = GetRef(id,"CountTrue").AsBigInteger();
+        UpRef(id, "CountTrue", temp++);
+    }
+
+    // Publish the answer.
+    Ballot(id, member, answer);
+}
+
+// To get information about something. The restrictions are made on the 'Main'.
 public static object Summary(string key, string opt = "")
 {
     // If 'key' is an 'address' ==  member.
@@ -46,8 +103,8 @@ public static object Summary(string key, string opt = "")
 
             if (opt == "detailed")
             {
-                string[] PowerPlantsByMember = PPMem(key); // to be implemented {[PP, quota]} ? HOW?
-                return brief + PowerPlantsByMember; // wrong concatenation method
+                string[] PowerPlantsByMember = PPMem(key); // to be implemented {[PP, quota]} ? HOW? --PENDING--
+                return brief + PowerPlantsByMember; // wrong concatenation method --PENDING--
             }
             return brief;
         }        
@@ -63,8 +120,8 @@ public static object Summary(string key, string opt = "")
 
             if (opt == "detailed")
             {
-                string[] MembersByPowerPlant = MemPP(key); // to be implemented {[Member, quota]} ? HOW?
-                return brief + MembersByPowerPlant; // wrong concatenation method
+                string[] MembersByPowerPlant = MemPP(key); // to be implemented {[Member, quota]} ? HOW? --PENDING--
+                return brief + MembersByPowerPlant; // wrong concatenation method --PENDING--
             }
             return brief;
         }
@@ -87,6 +144,109 @@ public static object Summary(string key, string opt = "")
         return new string[] { PowGenLimits()[0], PowGenLimits()[1], NumOfPP(), NumOfMemb(), TotalSupply() };
     }
 }
+
+//To create a custom ID of a process based on its particular specifications.
+private static string ID(string arg1, string arg2, string arg3, string arg4)
+{
+    //must handle BigInteger as parameter!
+
+    string temp1 = String.Concat(arg1, arg2);
+    string temp2 = String.Concat(arg3, arg4);
+    return String.Concat(temp1, temp2);
+}
+
+
+//---------------------------------------------------------------------------------------------
+// RESTRICTED FUNCTIONS
+
+// To update something on the ledger.
+private void Change( string key, params object[] opts )
+{
+    // If 'key' is an 'address' ==  member.
+    if (key[0] == "A")
+    {
+        // Only the member can change its own personal data.
+        // To UPDATE, the params must be ['profile option', 'value'].
+        if ( (Runtime.CheckWitness(key)) & (opts[1] is string) )
+        {
+            UpMemb(key, opts[0], opts[1]);
+            Update("Profile data.", key);
+        }
+        
+        // Any member can request the change of registration data of other member
+        // To UPDATE, the params must be ['register option', 'value'].
+        if ( opts[1] is BigInteger )
+        {
+            string id = Ref( "Change register_", String.Concat( key, opts[0] ) );
+    
+            // Must lock the contract for a while!!! --PENDING--
+            
+            if ( GetRef(id, "Outcome") )
+            {
+                Process(id, "Approved.");
+                UpMemb(key, opts[0], opts[1]);
+                Update("Registration data.", key);
+            }
+        Process(id, "Denied.");
+        }
+        
+        // Any member can request to delete another member
+        if ( opts.Length == 0 )
+        {
+            string id = Ref( "Delete member_", "Distribute the shares and delete the tokens." );
+            
+            // Must lock the contract for a while!!! --PENDING--
+            
+            if ( GetRef(id, "Outcome") )
+            {
+                Process(id, "Approved.");
+                BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
+                BigInteger give_out = portion/(NumOfMemb() - 1);
+                
+                // implement the loop for distribution --PENDING--
+
+                DelMemb(key);
+                Membership(key, "Goodbye.");
+            }
+            Process(id, "Denied.");
+        }
+    }
+    
+    // If 'key' is an 'id' with prefix 'P' == power plant.
+    if (key[0] == "P")
+    {
+        // Any member can request the change of the 'utility' a PP belongs to.
+        if ( opts.Length != 0 )
+        {
+            string id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
+    
+            // Must lock the contract for a while!!! --PENDING--
+            
+            if ( GetRef(id, "Outcome") )
+            {
+                Process(id, "Approved.");
+                UpPP(key, opts[0]);
+                Update("Belonging of.", key);
+            }
+            Process(id, "Denied.");
+        }
+
+        // Any member can request to DELETE a PP.
+        string id = Ref( "Delete PP_", String.Concat( key, opts[0] ) );
+    
+        // Must lock the contract for a while!!! --PENDING--
+        
+        if ( GetRef(id, "Outcome") )
+        {
+            Process(id, "Approved.");
+            DelPP(key);
+            Update("Deletion of.", key);
+        }
+        Process(id, "Denied.");
+    }
+}
+
+
 
 
 
@@ -188,7 +348,7 @@ private static void DelMemb( string address, string opt = "" )
 // --> create
 private static void PP( string capacity, BigInteger cost, string utility, BigInteger numOfFundMemb )
 {
-    string id = ID("P", capacity, cost, utility); // BigInteger + string ?
+    string id = ID("P", capacity, cost, utility); // BigInteger + string ? --PENDING--
     if ( GetPP(id, "Capacity").Length != 0 )
     {
         Process(id, "This power plant already exists. Use the method UpPP to change its registering data.")
@@ -246,21 +406,25 @@ private static void DelPP( string id )
 //---------------------------------------------------------------------------------------------
 // METHODS FOR REFERENDUMS
 // --> create
-private static void Ref( string proposal, string notes, BigInteger cost = 0 )
+private static string Ref( string proposal, string notes, BigInteger cost = 0 )
 {
     string id = ID("R", proposal, notes, cost); // BigInteger + string ?
     if ( GetRef(id, "Proposal").Length != 0 )
     {
         Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.")
-        return;
+        return; // pode dar merda com a exigência de se retornar string... --PENDING--
     }
     
-    Storage.Put( String.Concat( id, "Proposal" ), capacity );
-    Storage.Put( String.Concat( id, "Notes" ), utility );
+    Storage.Put( String.Concat( id, "Proposal" ), proposal );
+    Storage.Put( String.Concat( id, "Notes" ), notes );
     Storage.Put( String.Concat( id, "Cost" ), cost );
     // Storage.Put( String.Concat( id, "MoneyRaised" ), 0 ); // Expensive to create with null value. Just state it out!
     // Storage.Put( String.Concat( id, "NumOfVotes"), 0 );   // Expensive to create with null value. Just state it out!
-    Storage.Put( String.Concat( id, "Outcome" ), false ); // 'bool' pode ser um GRANDE problema se o compilador não convertê-lo para BigInteger
+    // Storage.Put( String.Concat( id, "CountTrue"), 0 );    // Expensive to create with null value. Just state it out!
+    Storage.Put( String.Concat( id, "Outcome" ), false ); // 'bool' pode ser um GRANDE problema se o compilador não convertê-lo para BigInteger --PENDING--
+
+    Process(id, "The referendum process has started.");
+    return id;
 }
 
 // --> read
@@ -270,10 +434,10 @@ public static object GetRef( string id, string opt )
 }
 
 // --> update
-// It is only possible to change the 'MoneyRaised', the 'NumOfVotes', and the 'Outcome'.
+// It is only possible to change the 'MoneyRaised', the 'NumOfVotes', the 'CountTrue' and the 'Outcome'.
 private static void UpRef( string id, string opt, BigInteger val )
 {
-    if ((opt == "NumOfVotes") || (opt == "MoneyRaised"))
+    if ((opt == "NumOfVotes") || (opt == "MoneyRaised") || (opt == "CountTrue"))
     {
         // Don't invoke Put if value is unchanged. 
         BigInteger orig = GetRef(id, opt).AsBigInteger();
@@ -290,7 +454,7 @@ private static void UpRef( string id, string opt, BigInteger val )
 private static void UpRef( string id, bool val )
 {
     // Don't invoke Put if value is unchanged. 
-    bool orig = GetRef(id, "Outcome").AsBool(?); // COMO FAZER ISSO?
+    bool orig = GetRef(id, "Outcome").AsBool(?); // COMO FAZER ISSO? --PENDING--
     if (orig == val) return;
         
     // else
@@ -315,32 +479,7 @@ private static void UpRef( string id, bool val )
 
 
 //---------------------------------------------------------------------------------------------
-// METHODS FOR VOTES -- refazer! -- Vote é uma ação, que é diferente de Ballot, uma consulta aos resultados
-// --> create
-private static void Vote( string id, bool answer, string member )
-{
-    // sum 1 more vote if answer is true
-    if (answer)
-    {
-        BigInteger temp = GetRef(id,"Votes");
-        UpRef(id, "Votes", temp++);
-    }
 
-    // save the member answer for each referendum process
-    Storage.Put( Storage.Concat( "Vote", id, member ), answer );
-}
-
-// --> read
-public static bool GetVote( string id, string member )
-{
-    return Storage.Get( Storage.Concat( "Vote", id, member ) ).AsString(); // testar de novo por causa do string, bool e BigInteger!
-}
-
-// --> update
-// A vote can not be changed later on.
-
-// --> delete
-// A vote lasts for your glory (or your ruin).
 
 //---------------------------------------------------------------------------------------------
 // METHODS FOR BIDS -- refazer! -- pois isso é um processo do ICO, já tem pronto!
