@@ -1,0 +1,391 @@
+
+// Power limits of the distributed generation category defined by Brazilian law (0MW até 5MW).
+public static int[] PowGenLimits() => new int[] {0, 5000000};
+
+// The total number of power plant units.
+public static BigInteger NumOfPP() => Storage.Get("NumOfPP").AsBigInteger();
+
+// The total number of members.
+public static BigInteger NumOfMemb() => Storage.Get("NumOfMemb").AsBigInteger();
+
+// The amount of tokens already created.
+public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigInteger();
+
+// Member's dataset.
+private static string[] profile => new string[] {"FullName", "Utility"};
+private static string[] register => new string[] {"Quota", "Tokens"};
+
+
+//---------------------------------------------------------------------------------------------
+// HANDY FUNCTIONS
+
+// Function to create a custom ID of a process based on its particular specifications.
+private static string ID(string arg1, string arg2, string arg3, string arg4)
+{
+    string temp1 = String.Concat(arg1, arg2);
+    string temp2 = String.Concat(arg3, arg4);
+    return String.Concat(temp1, temp2);
+}
+
+
+//---------------------------------------------------------------------------------------------
+// GENERAL METHODS
+// --> CREATE
+
+
+
+// --> READ
+public static object Summary(string key, string opt = "")
+{
+    // If 'key' is an 'address' ==  member.
+    if (key[0] == "A")
+    {
+        if ((opt == "") || (opt == "detailed"))
+        {
+            string[] brief = new string[] { GetMemb(key,"FullName"), GetMemb(key,"Utility"), GetMemb(key,"Quota"), GetMemb(key,"Tokens") };
+
+            if (opt == "detailed")
+            {
+                string[] PowerPlantsByMember = PPMem(key); // to be implemented {[PP, quota]} ? HOW?
+                return brief + PowerPlantsByMember; // wrong concatenation method
+            }
+            return brief;
+        }        
+        return GetMemb(key,opt);
+    }
+
+    // If 'key' is an 'id' with prefix 'P' == power plant.
+    else if (key[0] == "P")
+    {
+        if ((opt == "") || (opt == "detailed"))
+        {
+            string[] brief = new string[] { GetPP(key,"Capacity"), GetPP(key,"Cost"), GetPP(key,"Utility"), GetPP(key,"TotMembers") };
+
+            if (opt == "detailed")
+            {
+                string[] MembersByPowerPlant = MemPP(key); // to be implemented {[Member, quota]} ? HOW?
+                return brief + MembersByPowerPlant; // wrong concatenation method
+            }
+            return brief;
+        }
+        return GetPP(key,opt);
+    }
+
+    // If 'key' is an 'id' with prefix 'R' == referendum process.
+    else if (key[0] == "R")
+    {
+        if (opt == "")
+        {
+            return new string[] { GetRef(key,"Proposal"), GetRef(key,"Notes"), GetRef(key,"Cost"), GetRef(key,"Outcome") };
+        }        
+        return GetRef(key,opt);
+    }
+
+    // Wrap-up the group information.
+    else
+    {
+        return new string[] { PowGenLimits()[0], PowGenLimits()[1], NumOfPP(), NumOfMemb(), TotalSupply() };
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//---------------------------------------------------------------------------------------------
+// METHODS FOR MEMBERS
+// --> create
+private static void Member( string address, string fullName, string utility, BigInteger quota, BigInteger tokens )
+{
+    Storage.Put( String.Concat( address, "FullName" ), fullName );
+    Storage.Put( String.Concat( address, "Utility" ), utility );
+    Storage.Put( String.Concat( address, "Quota" ), quota );
+    Storage.Put( String.Concat( address, "Tokens" ), tokens );
+
+    // Increase the total number of members.
+    BigInteger temp = NumOfMemb() + 1;
+    Storage.Put("NumOfMemb", temp);
+}
+
+// --> read
+public static byte[] GetMemb( string address, string opt )
+{
+    return Storage.Get( String.Concat( address, opt ) );
+}
+
+// --> update
+// Detailed restrictions to update 'profile' or 'register' data are set 
+// on the function 'Change'. Here this feature is handled by polymorphism.
+private static void UpMemb( string address, string opt, string val )
+{
+    // Don't invoke Put if value is unchanged.
+    string orig = GetMemb(address, opt).AsString();
+    if (orig == val) return;
+     
+    // Use Delete rather than Put if the new value is empty.
+    if (val.Length == 0)
+    {
+       DelMemb(address, opt);
+    }
+    else
+    {
+       Storage.Put( String.Concat( address, opt ), val );
+    }
+}
+
+private static void UpMemb( string address, string opt, BigInteger val )
+{
+    // Don't invoke Put if value is unchanged.
+    BigInteger orig = GetMemb(address, opt).AsBigInteger();
+    if (orig == val) return;
+     
+    // Use Delete rather than Put if the new value is zero.
+    if (val == 0)
+    {
+       DelMemb(address, opt);
+    }
+    else
+    {
+       Storage.Put( String.Concat( address, opt ), val );
+    }
+}
+
+// --> delete
+private static void DelMemb( string address, string opt = "" )
+{
+    // If a member exits the group.
+    if (opt == "")
+    {
+        Storage.Delete( String.Concat( address, "FullName" ) );
+        Storage.Delete( String.Concat( address, "Utility" ) );
+        Storage.Delete( String.Concat( address, "Quota" ) );
+        Storage.Delete( String.Concat( address, "Tokens" ) );
+        
+        // Decrease the total number of members.
+        BigInteger temp = NumOfMemb() - 1;
+        Storage.Put("NumOfMemb", temp);
+    }
+
+    // To support an economic action for the update method.
+    Storage.Delete( String.Concat( address, opt ) );
+}
+
+//---------------------------------------------------------------------------------------------
+// METHODS FOR POWER PLANTS
+// --> create
+private static void PP( string capacity, BigInteger cost, string utility, BigInteger numOfFundMemb )
+{
+    string id = ID("P", capacity, cost, utility); // BigInteger + string ?
+    if ( GetPP(id, "Capacity").Length != 0 )
+    {
+        Process(id, "This power plant already exists. Use the method UpPP to change its registering data.")
+        return;
+    }
+    
+    Storage.Put( String.Concat( id, "Capacity" ), capacity );
+    Storage.Put( String.Concat( id, "Cost" ), cost );
+    Storage.Put( String.Concat( id, "Utility" ), utility );
+    Storage.Put( String.Concat( id, "NumOfFundMemb" ), numOfFundMemb );
+
+    // Increase the total number of power plant units
+    BigInteger temp = NumOfPP() + 1;
+    Storage.Put("NumOfPP", temp);
+}
+
+// --> read
+public static object GetPP( string id, string opt )
+{
+    return Storage.Get( String.Concat( id, opt ) );
+}
+
+// --> update
+// The 'utility' is the only option that can be changed.
+// To update the other options, delete the current PP and create a new one.
+private static void UpPP( string id, string val )
+{
+    // Don't invoke Put if value is unchanged.
+    string orig = GetPP(id, "Utility").AsString();
+    if (orig == val) return;
+    
+    // Do nothing if the new value is empty.
+    if (val.Length == 0) return;
+    
+    // else
+    Storage.Put( String.Concat( id, "Utility" ), val );
+    // And must 'update' each member 'utility' field as well.
+    // 'Utility' should be a pointer and similar to 'Member' dataset.
+}
+
+// --> delete
+private static void DelPP( string id )
+{
+    Storage.Delete( String.Concat( id, "Capacity" ) );
+    Storage.Delete( String.Concat( id, "Cost" ) );
+    Storage.Delete( String.Concat( id, "Utility" ) );
+    Storage.Delete( String.Concat( id, "NumOfFundMemb" ) );
+
+    // Decrease the total number of power plant units
+    BigInteger temp = NumOfPP() - 1;
+    Storage.Put("NumOfPP", temp);
+
+}
+
+//---------------------------------------------------------------------------------------------
+// METHODS FOR REFERENDUMS
+// --> create
+private static void Ref( string proposal, string notes, BigInteger cost = 0 )
+{
+    string id = ID("R", proposal, notes, cost); // BigInteger + string ?
+    if ( GetRef(id, "Proposal").Length != 0 )
+    {
+        Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.")
+        return;
+    }
+    
+    Storage.Put( String.Concat( id, "Proposal" ), capacity );
+    Storage.Put( String.Concat( id, "Notes" ), utility );
+    Storage.Put( String.Concat( id, "Cost" ), cost );
+    // Storage.Put( String.Concat( id, "MoneyRaised" ), 0 ); // Expensive to create with null value. Just state it out!
+    // Storage.Put( String.Concat( id, "NumOfVotes"), 0 );   // Expensive to create with null value. Just state it out!
+    Storage.Put( String.Concat( id, "Outcome" ), false ); // 'bool' pode ser um GRANDE problema se o compilador não convertê-lo para BigInteger
+}
+
+// --> read
+public static object GetRef( string id, string opt )
+{
+    return Storage.Get( String.Concat( id, opt ) );
+}
+
+// --> update
+// It is only possible to change the 'MoneyRaised', the 'NumOfVotes', and the 'Outcome'.
+private static void UpRef( string id, string opt, BigInteger val )
+{
+    if ((opt == "NumOfVotes") || (opt == "MoneyRaised"))
+    {
+        // Don't invoke Put if value is unchanged. 
+        BigInteger orig = GetRef(id, opt).AsBigInteger();
+        if (orig == val) return;
+         
+        // Delete the storage if the new value is zero.
+        if (val == 0) return Storage.Delete( String.Concat(id, opt) );
+        
+        // else
+        Storage.Put( String.Concat( id, opt ), val );
+    }
+}
+
+private static void UpRef( string id, bool val )
+{
+    // Don't invoke Put if value is unchanged. 
+    bool orig = GetRef(id, "Outcome").AsBool(?); // COMO FAZER ISSO?
+    if (orig == val) return;
+        
+    // else
+    Storage.Put( String.Concat( id, "Outcome" ), val );
+}
+
+// --> delete
+// A referendum process remains forever... and ever.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//---------------------------------------------------------------------------------------------
+// METHODS FOR VOTES -- refazer! -- Vote é uma ação, que é diferente de Ballot, uma consulta aos resultados
+// --> create
+private static void Vote( string id, bool answer, string member )
+{
+    // sum 1 more vote if answer is true
+    if (answer)
+    {
+        BigInteger temp = GetRef(id,"Votes");
+        UpRef(id, "Votes", temp++);
+    }
+
+    // save the member answer for each referendum process
+    Storage.Put( Storage.Concat( "Vote", id, member ), answer );
+}
+
+// --> read
+public static bool GetVote( string id, string member )
+{
+    return Storage.Get( Storage.Concat( "Vote", id, member ) ).AsString(); // testar de novo por causa do string, bool e BigInteger!
+}
+
+// --> update
+// A vote can not be changed later on.
+
+// --> delete
+// A vote lasts for your glory (or your ruin).
+
+//---------------------------------------------------------------------------------------------
+// METHODS FOR BIDS -- refazer! -- pois isso é um processo do ICO, já tem pronto!
+// --> create
+private static void Bid( string id, BigInteger amount, string member )
+{
+    // check if it is still NEEDED!!!
+    // ...
+
+    // sum the amount to the money in raise
+    BigInteger temp = GetRef(id,"MoneyRaised");
+    UpRef(id, "MoneyRaised", temp+amount);
+
+    // save the member contribution for each fund process
+    Storage.Put( Storage.Concat( "Bid", id, member ), amount );
+}
+
+// --> read
+public static bool GetBid( string id, string member )
+{
+    return Storage.Get( Storage.Concat( "Bid", id, member ) ).AsString(); // testar de novo por causa do string, bool e BigInteger!
+}
+
+// --> update
+private static void UpBid( string id, string member, BigInteger val )
+{
+    // check if it is still POSSIBLE!!!
+    // ...
+
+    // Don't invoke Put if value is unchanged. 
+    BigInteger orig = GetBid(id, member);
+    if (orig == val) return;
+     
+    // If the new value is empty or zero.
+    if (val.Length == 0) || (val == 0)
+    {
+        DelBid(id, member);
+    }
+    
+    // else
+    Storage.Put( Storage.Concat( "Bid", id, member ), val );
+}
+
+// --> delete
+private static void DelBid( string id )
+{
+    Storage.Delete( Storage.Concat( "Bid", id, member ) );
+}
