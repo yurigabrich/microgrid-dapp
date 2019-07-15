@@ -54,9 +54,9 @@ private static string[] register => new string[] {"Quota", "Tokens"};
 
 
 //---------------------------------------------------------------------------------------------
-// PUBLIC FUNCTIONS
+// FUNCTIONS - The restrictions are made on the 'Main'.
 
-// To request to join the group.
+// To request to join the group.  (must avoid double requests!!!) <----------------
 public static void Admission( string address, string fullName, string utility )
 {
     string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
@@ -91,7 +91,7 @@ public static void Vote( string id, string member, bool answer )
     Ballot(id, member, answer);
 }
 
-// To get information about something. The restrictions are made on the 'Main'.
+// To get information about something.
 public static object Summary(string key, string opt = "")
 {
     // If 'key' is an 'address' ==  member.
@@ -145,19 +145,22 @@ public static object Summary(string key, string opt = "")
     }
 }
 
-//To create a custom ID of a process based on its particular specifications.
-private static string ID(string arg1, string arg2, string arg3, string arg4)
+// To create a custom ID of a process based on its particular specifications.
+private static string ID(object arg1, object arg2, object arg3, object arg4)
 {
-    //must handle BigInteger as parameter!
+    // 'object' solves the problem but miss the information.
 
     string temp1 = String.Concat(arg1, arg2);
     string temp2 = String.Concat(arg3, arg4);
     return String.Concat(temp1, temp2);
 }
 
-
-//---------------------------------------------------------------------------------------------
-// RESTRICTED FUNCTIONS
+// To properly storage a boolean variable.
+private static string ConvBool(bool val)
+{
+    if (val) return "1";
+    return "0";
+}
 
 // To update something on the ledger.
 private void Change( string key, params object[] opts )
@@ -281,7 +284,7 @@ private static void Member( string address, string fullName, string utility, Big
 }
 
 // --> read
-public static byte[] GetMemb( string address, string opt )
+private static byte[] GetMemb( string address, string opt )
 {
     return Storage.Get( String.Concat( address, opt ) );
 }
@@ -348,10 +351,10 @@ private static void DelMemb( string address, string opt = "" )
 // --> create
 private static void PP( string capacity, BigInteger cost, string utility, BigInteger numOfFundMemb )
 {
-    string id = ID("P", capacity, cost, utility); // BigInteger + string ? --PENDING--
+    string id = ID("P", capacity, cost, utility);
     if ( GetPP(id, "Capacity").Length != 0 )
     {
-        Process(id, "This power plant already exists. Use the method UpPP to change its registering data.")
+        Process(id, "This power plant already exists. Use the method UpPP to change its registering data.");
         return;
     }
     
@@ -366,7 +369,7 @@ private static void PP( string capacity, BigInteger cost, string utility, BigInt
 }
 
 // --> read
-public static object GetPP( string id, string opt )
+private static byte[] GetPP( string id, string opt )
 {
     return Storage.Get( String.Concat( id, opt ) );
 }
@@ -406,13 +409,13 @@ private static void DelPP( string id )
 //---------------------------------------------------------------------------------------------
 // METHODS FOR REFERENDUMS
 // --> create
-private static string Ref( string proposal, string notes, BigInteger cost = 0 )
+private static string Ref( string proposal, string notes, int cost = 0 )
 {
-    string id = ID("R", proposal, notes, cost); // BigInteger + string ?
+    string id = ID("R", proposal, notes, cost);
     if ( GetRef(id, "Proposal").Length != 0 )
     {
-        Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.")
-        return; // pode dar merda com a exigência de se retornar string... --PENDING--
+        Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.");
+        return "-";
     }
     
     Storage.Put( String.Concat( id, "Proposal" ), proposal );
@@ -421,14 +424,14 @@ private static string Ref( string proposal, string notes, BigInteger cost = 0 )
     // Storage.Put( String.Concat( id, "MoneyRaised" ), 0 ); // Expensive to create with null value. Just state it out!
     // Storage.Put( String.Concat( id, "NumOfVotes"), 0 );   // Expensive to create with null value. Just state it out!
     // Storage.Put( String.Concat( id, "CountTrue"), 0 );    // Expensive to create with null value. Just state it out!
-    Storage.Put( String.Concat( id, "Outcome" ), false ); // 'bool' pode ser um GRANDE problema se o compilador não convertê-lo para BigInteger --PENDING--
+    Storage.Put( String.Concat( id, "Outcome" ), ConvBool(false) );
 
     Process(id, "The referendum process has started.");
     return id;
 }
 
 // --> read
-public static object GetRef( string id, string opt )
+private static byte[] GetRef( string id, string opt )
 {
     return Storage.Get( String.Concat( id, opt ) );
 }
@@ -454,11 +457,11 @@ private static void UpRef( string id, string opt, BigInteger val )
 private static void UpRef( string id, bool val )
 {
     // Don't invoke Put if value is unchanged. 
-    bool orig = GetRef(id, "Outcome").AsBool(?); // COMO FAZER ISSO? --PENDING--
-    if (orig == val) return;
+    string orig = GetRef(id, "Outcome");
+    if ( orig == ConvBool(val) ) return;
         
     // else
-    Storage.Put( String.Concat( id, "Outcome" ), val );
+    Storage.Put( String.Concat( id, "Outcome" ), ConvBool(val) );
 }
 
 // --> delete
