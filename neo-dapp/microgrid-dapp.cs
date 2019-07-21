@@ -29,18 +29,18 @@ namespace Neo.SmartContract                                 // N1
          ****************/
         // Qual a diferença mesmo para o Runtime.Notify()? Aparentemente o custo e como a notificação aparece... Ainda não sei qual é melhor para se seguir em uma API.
         [DisplayName("transaction")]
-        public static event Action<byte[], byte[], BigInteger> Transfer;
+        public static event Action<byte[], byte[], BigInteger> Transfer; // --> OK!
         [DisplayName("membership")]
-        public static event Action<string, string> Membership;
+        public static event Action<string, string> Membership; // --> OK!
         [DisplayName("process")]
-        public static event Action<byte[], string> Process;
+        public static event Action<byte[], string> Process; // --> OK!
         [DisplayName("ballot")]
-        public static event Action<byte[], byte[], bool> Ballot;
+        public static event Action<byte[], byte[], bool> Ballot; // --> OK!
         [DisplayName("change")]
-        public static event Action<string, byte[]> Update;
+        public static event Action<string, byte[]> Update; // --> OK!
         
         /*******************************
-         * Global Variables Definition *
+         * Global Variables Definition * // --> OK!
          ******************************/
         // public byte[] caller = será passado como parâmetro! pubKey (or address?) of the user whose interacts with the smart contract.
         // fonte: https://docs.neo.org/en-us/sc/reference/api/System.html
@@ -108,7 +108,7 @@ namespace Neo.SmartContract                                 // N1
         /********************
         /* Public Functions *
         /*******************/
-        public void Summary()
+        public void Summary() // --> OK!
         {
             // PowGenLimits : [ Int, Int ] // limits of the group power generation
             // NumPP : Int // total number of power plant units
@@ -120,7 +120,7 @@ namespace Neo.SmartContract                                 // N1
             // https://docs.microsoft.com/pt-br/dotnet/csharp/programming-guide/inside-a-program/coding-conventions#linq-queries
         }
         
-        public void Admission( string address, string fullName, string utility )
+        public void Admission( string address, string fullName, string utility ) // --> OK!
         {
             if Referendum( fullName, address.ToBigInteger(), utility )
             {
@@ -134,7 +134,7 @@ namespace Neo.SmartContract                                 // N1
         /*********************
         /* Private Functions *
         /********************/
-        private void Change( string id, params object[] opts )
+        private void Change( string id, params object[] opts ) // --> OK!
         {
             // ALTERAR TUDO AQUI!
             if ( id.Length == 20 ) // check pubKey length
@@ -175,7 +175,7 @@ namespace Neo.SmartContract                                 // N1
             }
         }
         
-        private void Plant( string capacity, BigInteger cost, string description )
+        private void Plant( string capacity, BigInteger cost, string description ) // --> OK!
         {
             var answer = Referendum( capacity, cost, description );
             if answer:
@@ -200,7 +200,7 @@ namespace Neo.SmartContract                                 // N1
             return true;
         }
         
-        private bool Vote( byte[] id, bool answer )
+        private bool Vote( byte[] id, bool answer ) // --> OK!
         {
             Ballot( id, caller, answer ); // a ordem de publicação pode facilitar a busca na blockchain? Na blockchain ou no RPC?
             return true;
@@ -256,7 +256,7 @@ namespace Neo.SmartContract                                 // N1
     /*******************
      * Private Classes *                                    // N1.Cx
      ******************/
-    class Referendum
+    class Referendum // --> OK!
     {
         // Constructor
         public bool Referendum ( string proposal, BigInteger cost, string notes )
@@ -334,7 +334,7 @@ namespace Neo.SmartContract                                 // N1
         }
     }
     
-    private void Member( string address, string fullName, string utility, BigInteger quota, BigInteger tokens )
+    private void Member( string address, string fullName, string utility, BigInteger quota, BigInteger tokens ) // --> OK!
     {
         StorageMap member = Storage.CurrentContext.CreateMap( address );
         member.Put( "fullName", fullName );
@@ -343,7 +343,7 @@ namespace Neo.SmartContract                                 // N1
         member.Put( "tokens", tokens );
     }
     
-    class Member // Depends on 'Referendum' answer but not inherit its functions.
+    class Member // Depends on 'Referendum' answer but not inherit its functions. // --> OK!
     // com classe a nomenclatura fica confusa... Repensar esta funcionalidade!
     {
         
@@ -393,7 +393,7 @@ namespace Neo.SmartContract                                 // N1
         }
     }
     
-    class NPP // Depends on 'Referendum' answer but not inherit its functions.
+    class NPP // Depends on 'Referendum' answer but not inherit its functions. // --> OK!
     {
         // Constructor
         public NPP( byte[] id )
