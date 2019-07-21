@@ -108,32 +108,43 @@ public static void Vote( string id, string member, bool answer )
 // To make a bid in a new PP crowdfunding process.
 public static bool Bid( string PPid, string member, BigInteger bid )
 {
-    // Check parameters.
+    // Check parameters.    ------------------------------ The restrictions must be made on the 'Main'.
     if ( (PPid[0] != "P") || (PPid.Length == 0) )
         throw new InvalidOperationException( "Provide a valid PP address." );
     if ( (GetMemb(member, "FullName") == null) || (member.Length == 0) )
         throw new InvalidOperationException( "Only members can bid." );
     if ( bid <= 0 ) return false;
         throw new InvalidOperationException( "Stop being a jerk." );
-    if ( bid > target - totalAmount )
-        throw new InvalidOperationException( "You offered more than the amount requested ({0})".format( target - totalAmount ) );
+    
+    
+    BigInteger target = GetPP(PPid, "Cost").AsBigInteger();
+    BigInteger gathered = GetCrowd(PPid, "TotalAmount").AsBigInteger();
+    
+    if ( bid > target - gathered )
+        throw new InvalidOperationException( "You offered more than the amount requested ({0}). Bid again!".format( target - gathered ) );
 
     // WARNING!
-    // this is a Trade() to this smart contract account, but saving the value in a PPid!!
-    // the money bid must be converted to percentage, so it will be possible to define the quota and the SEB a member has to gain.
-
-    // Increase the totalAmount.
-    BigInteger temp = GetCrowd(PPid, "TotalAmount");
-    UpCrowd(PPid, "TotalAmount", temp + bid);
+    // All these steps are part of a crowdfunding process, not of a PP registration.
     
-    // Save this offer.
-    Storage.Put(String.Concat(PPid, member), bid);
-    Offer(PPid, member, bid);    
+    // Increases the value gathered so far.
+    UpCrowd(PPid, "TotalAmount", gathered + bid);
+    
+    // Increases the number of contributions.
+    BigInteger temp = GetCrowd(PPid, "Contributions").AsBigInteger();
+    UpCrowd(PPid, "Contributions", temp++);
+    
+    // Tracks bid by member for each PPid.
+    BigInteger previous = Storage.Get( String.Concat(PPid, member) ).AsBigInteger();
+    Storage.Put( String.Concat(PPid, member), previous + bid );
+    Offer(PPid, member, bid);
     return true;
+    
+    // If the hole fund process succeed, the money bid must be converted to percentage (bid/cost),
+    // so it will be possible to define the quota and the SEB a member has to gain.
 }
 
 // To get information about something.
-public static object Summary(string key, string opt = "")
+public static object Summary( string key, string opt = "" )
 {
     // If 'key' is an 'address' ==  member.
     if (key[0] == "A")
@@ -148,7 +159,7 @@ public static object Summary(string key, string opt = "")
                 return brief + PowerPlantsByMember; // wrong concatenation method --PENDING--
             }
             return brief;
-        }        
+        }
         return GetMemb(key,opt);
     }
 
@@ -175,7 +186,7 @@ public static object Summary(string key, string opt = "")
         if (opt == "")
         {
             return new string[] { GetRef(key,"Proposal"), GetRef(key,"Notes"), GetRef(key,"Cost"), GetRef(key,"Outcome") };
-        }        
+        }
         return GetRef(key,opt);
     }
 
@@ -187,7 +198,7 @@ public static object Summary(string key, string opt = "")
 }
 
 // To create a custom ID of a process based on its particular specifications.
-private static string ID(object arg1, object arg2, object arg3, object arg4)
+private static string ID( object arg1, object arg2, object arg3, object arg4 )
 {
     // 'object' solves the problem but miss the information.
 
@@ -197,14 +208,14 @@ private static string ID(object arg1, object arg2, object arg3, object arg4)
 }
 
 // To properly storage a boolean variable.
-private static string Bool2Str(bool val)
+private static string Bool2Str( bool val )
 {
     if (val) return "1";
     return "0";
 }
 
 // To properly read a boolean from storage.
-private static bool Str2Bool(byte[] val)
+private static bool Str2Bool( byte[] val )
 {
     if (val.AsString() == "1") return true;
     return false;
@@ -297,19 +308,25 @@ private void Change( string key, params object[] opts )
     }
 }
 
-// REVISAR!
 // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
 // The 'fromAddress' will exchange an amount of shares with 'toAddress' by a defined token price,
 // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
+// However, a new PP will just distribute tokens and shares after a crowdfunding process succeed.
 private bool Trade( string fromAddress, string toAddress, BigInteger exchange, BigInteger price )
 {
-    BigInteger[] fromWallet = new BigInteger[];
     BigInteger[] toWallet = new BigInteger[];
     
     // if fromAddress == member
-        if (!Runtime.CheckWitness(fromAddress)) return false; // does not work for contract address!
-        if (fromAddress and toAddress not a member) return false; // essas condições tem que estar no main!
-        if (different utilities) return false;
+    if (fromAddress[0] == "A")
+    {
+        if ( !Runtime.CheckWitness(fromAddress) ) // does not work for contract address! -- PENDING --
+            throw new InvalidOperationException( "Only the owner of an account can exchange her/his asset." );
+        if ( fromAddress and toAddress not a member ) // essas condições tem que estar no main! -- PENDING --
+            throw new InvalidOperationException( "Only members can trade. Join us!" ); // acho q isso já estará restrito em algum momento.
+        if ( GetMemb(fromAddress, "Utility") != GetMemb(toAddress, "Utility") )
+            throw new InvalidOperationException( "Both members must belong to the same utility cover area." );
+        
+        BigInteger[] fromWallet = new BigInteger[];
         
         // register = {"Quota", "Tokens"}
         foreach (string)data in register
@@ -325,15 +342,26 @@ private bool Trade( string fromAddress, string toAddress, BigInteger exchange, B
         
         UpMemb(toAddress, register[1], toWallet[1] - price);
         UpMemb(fromAddress, register[1], fromWallet[1] + price);
+    }
         
-        Transfer(fromAddress, toAddress, exchange, price);
-        return true;
+    // if fromAddress == new PP
+    if (fromAddress[0] == "P")
+    {
+        // All the exceptions were handle during the crowdfunding.
+        // It only needs to distribute the shares and the tokens.
         
-    // if fromAddress == PP
-        fromWallet[0] = GetPP(fromAddress, "Quota").AsBigInteger(); // 100
-        fromWallet[1] = GetPP(fromAddress, "Tokens").AsBigInteger(); // PPcapacity
+        // register = {"Quota", "Tokens"}
+        foreach (string)data in register
+        {
+            toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
+        }
         
-        if ?...
+        UpMemb(toAddress, register[0], toWallet[0] + exchange);
+        UpMemb(toAddress, register[1], toWallet[1] + price);
+    }
+    
+    Transfer(fromAddress, toAddress, exchange, price);
+    return true;
 }
 
 // REVISAR -- acho q não vai ser necessário. Talvez deva ser a operação no 'main'.
@@ -402,7 +430,7 @@ private static byte[] GetMemb( string address, string opt )
 }
 
 // --> update
-// Detailed restrictions to update 'profile' or 'register' data are set 
+// Detailed restrictions to update 'profile' or 'register' data are set
 // on the function 'Change'. Here this feature is handled by polymorphism.
 private static void UpMemb( string address, string opt, string val )
 {
@@ -562,7 +590,7 @@ private static void UpRef( string id, string opt, BigInteger val )
 {
     if ((opt == "NumOfVotes") || (opt == "MoneyRaised") || (opt == "CountTrue"))
     {
-        // Don't invoke Put if value is unchanged. 
+        // Don't invoke Put if value is unchanged.
         BigInteger orig = GetRef(id, opt).AsBigInteger();
         if (orig == val) return;
          
@@ -576,7 +604,7 @@ private static void UpRef( string id, string opt, BigInteger val )
 
 private static void UpRef( string id, bool val )
 {
-    // Don't invoke Put if value is unchanged. 
+    // Don't invoke Put if value is unchanged.
     string orig = Str2Bool( GetRef(id, "Outcome") );
     if ( orig == Bool2Str(val) ) return;
         
@@ -616,7 +644,7 @@ private static object GetCrowd( string PPid, string opt )
 // --> update
 private static bool UpBid( string PPid, string member, BigInteger bid )
 {
-    // Don't invoke Put if value is unchanged. 
+    // Don't invoke Put if value is unchanged.
     BigInteger orig = GetBid(PPid, member).AsBigInteger();
     if (orig == bid) return;
      
@@ -633,7 +661,7 @@ private static void UpCrowd( string PPid, string opt, BigInteger val )
 {
     if ( (opt == "TotalAmount") || (opt == "Contributions") )
     {
-        // Don't invoke Put if value is unchanged. 
+        // Don't invoke Put if value is unchanged.
         BigInteger orig = GetCrowd(PPid, opt).AsBigInteger();
         if (orig == val) return;
          
@@ -647,7 +675,7 @@ private static void UpCrowd( string PPid, string opt, BigInteger val )
 
 private static void UpCrowd( string PPid, bool val )
 {
-    // Don't invoke Put if value is unchanged. 
+    // Don't invoke Put if value is unchanged.
     string orig = Str2Bool( GetCrowd(PPid, "Success") );
     if ( orig == Bool2Str(val) ) return;
         
