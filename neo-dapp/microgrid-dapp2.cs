@@ -20,7 +20,7 @@ public static event Action<string, BigInteger> Refund;
 //---------------------------------------------------------------------------------------------
 // GLOBAL VARIABLES
 
-// Power limits of the distributed generation category defined by Brazilian law (0MW até 5MW).
+// Power limits of the distributed generation category defined by Brazilian law (from 0MW to 5MW).
 public static int[] PowGenLimits() => new int[] {0, 5000000};
 
 // The total number of power plant units.
@@ -118,16 +118,16 @@ public static bool Bid( string PPid, string member, BigInteger bid )
     
     
     BigInteger target = GetPP(PPid, "Cost").AsBigInteger();
-    BigInteger gathered = GetCrowd(PPid, "TotalAmount").AsBigInteger();
+    BigInteger funds = GetCrowd(PPid, "TotalAmount").AsBigInteger();
     
-    if ( bid > target - gathered )
-        throw new InvalidOperationException( "You offered more than the amount requested ({0}). Bid again!".format( target - gathered ) );
+    if ( bid > target - funds )
+        throw new InvalidOperationException( "You offered more than the amount requested ({0}). Bid again!".format( target - funds ) );
 
     // WARNING!
     // All these steps are part of a crowdfunding process, not of a PP registration.
     
     // Increases the value gathered so far.
-    UpCrowd(PPid, "TotalAmount", gathered + bid);
+    UpCrowd(PPid, "TotalAmount", funds + bid);
     
     // Increases the number of contributions.
     BigInteger temp = GetCrowd(PPid, "Contributions").AsBigInteger();
@@ -155,7 +155,7 @@ public static object Summary( string key, string opt = "" )
 
             if (opt == "detailed")
             {
-                string[] PowerPlantsByMember = PPMem(key); // to be implemented {[PP, quota]} ? HOW? --PENDING--
+                string[] PowerPlantsByMember = GetContributeValue( key, listOfPPs() );
                 return brief + PowerPlantsByMember; // wrong concatenation method --PENDING--
             }
             return brief;
@@ -166,18 +166,46 @@ public static object Summary( string key, string opt = "" )
     // If 'key' is an 'id' with prefix 'P' == power plant.
     else if (key[0] == "P")
     {
-        if ((opt == "") || (opt == "detailed"))
+        // The PP's crowdfunding had succeed and the PP is operating.
+        if ( GetPP(key,"TotMembers").Length != 0 )
         {
-            string[] brief = new string[] { GetPP(key,"Capacity"), GetPP(key,"Cost"), GetPP(key,"Utility"), GetPP(key,"TotMembers") };
-
-            if (opt == "detailed")
+            if ( (opt == "") || (opt == "detailed") )
             {
-                string[] MembersByPowerPlant = MemPP(key); // to be implemented {[Member, quota]} ? HOW? --PENDING--
-                return brief + MembersByPowerPlant; // wrong concatenation method --PENDING--
+                string[] brief = new string[] { GetPP(key,"Capacity"), GetPP(key,"Cost"), GetPP(key,"Utility"), GetPP(key,"TotMembers") };
+    
+                if (opt == "detailed")
+                {
+                    string[] MembersByPowerPlant = GetContributeValue( key, listOfMembers() );
+                    return brief + MembersByPowerPlant; // wrong concatenation method --PENDING--
+                }
+                return brief;
             }
-            return brief;
+            return GetPP(key,opt);
         }
-        return GetPP(key,opt);
+        
+        // The PP's crowdfunding may be succeed or not and the PP is definitely not operating.
+        else
+        {
+            if ( (opt == "") || (opt == "detailed") )
+            {
+                string[] brief = new string[] { GetCrowd(key,"StartTime"), GetCrowd(key,"EndTime"), GetCrowd(key,"TotalAmount"), GetCrowd(key,"Contributions"), GetCrowd(key,"Success") };
+    
+                if (opt == "detailed")
+                {
+                    string[][] PowerPlantBids = new string[][];
+                    
+                    for each member in Members() // to be implemented {[Member, quota]} ? HOW? --PENDING--
+                    {
+                        BigInteger bid = GetBid(key, member).AsBigInteger();
+                        if ( bid != 0 ) PowerPlantBids.append( [member, bid] );
+                    }
+                    
+                    return brief + PowerPlantBids; // wrong concatenation method --PENDING--
+                }
+                return brief;
+            }
+            return GetCrowd(key,opt); // sempre vai retornar byte[], a conversão final tem q ser feita de acordo com a opção escolhida para se ter o valor correto de número, texto ou boleano.
+        }
     }
 
     // If 'key' is an 'id' with prefix 'R' == referendum process.
@@ -193,32 +221,8 @@ public static object Summary( string key, string opt = "" )
     // Wrap-up the group information.
     else
     {
-        return new string[] { PowGenLimits()[0], PowGenLimits()[1], NumOfPP(), NumOfMemb(), Name, Symbol, TotalSupply() };
+        return new string[] { PowGenLimits()[0], PowGenLimits()[1], NumOfPP(), NumOfMemb(), Name(), Symbol(), TotalSupply() };
     }
-}
-
-// To create a custom ID of a process based on its particular specifications.
-private static string ID( object arg1, object arg2, object arg3, object arg4 )
-{
-    // 'object' solves the problem but miss the information.
-
-    string temp1 = String.Concat(arg1, arg2);
-    string temp2 = String.Concat(arg3, arg4);
-    return String.Concat(temp1, temp2);
-}
-
-// To properly storage a boolean variable.
-private static string Bool2Str( bool val )
-{
-    if (val) return "1";
-    return "0";
-}
-
-// To properly read a boolean from storage.
-private static bool Str2Bool( byte[] val )
-{
-    if (val.AsString() == "1") return true;
-    return false;
 }
 
 // To update something on the ledger.
@@ -316,7 +320,7 @@ private bool Trade( string fromAddress, string toAddress, BigInteger exchange, B
 {
     BigInteger[] toWallet = new BigInteger[];
     
-    // if fromAddress == member
+    // if 'fromAddress' is a member
     if (fromAddress[0] == "A")
     {
         if ( !Runtime.CheckWitness(fromAddress) ) // does not work for contract address! -- PENDING --
@@ -344,7 +348,7 @@ private bool Trade( string fromAddress, string toAddress, BigInteger exchange, B
         UpMemb(fromAddress, register[1], fromWallet[1] + price);
     }
         
-    // if fromAddress == new PP
+    // if 'fromAddress' is a new PP
     if (fromAddress[0] == "P")
     {
         // All the exceptions were handle during the crowdfunding.
@@ -364,49 +368,86 @@ private bool Trade( string fromAddress, string toAddress, BigInteger exchange, B
     return true;
 }
 
-// REVISAR -- acho q não vai ser necessário. Talvez deva ser a operação no 'main'.
-public static bool Funding(string fromAddress, string toPP, BigInteger reais) ???????????????
+// To create a custom ID of a process based on its particular specifications.
+private static string ID( object arg1, object arg2, object arg3, object arg4 )
 {
-    if (!Runtime.CheckWitness(from)) return false;
-    if (to.Length != 20) return false; // problema com privKey
+    // 'object' solves the problem but miss the information.
 
-    BigInteger from_value = Storage.Get(Storage.CurrentContext, from).AsBigInteger();
-    if (from_value < value) return false;
-    if (from == to) return true;
-    if (from_value == value)
-        Storage.Delete(Storage.CurrentContext, from);
-    else
-        Storage.Put(Storage.CurrentContext, from, from_value - value);
-    BigInteger to_value = Storage.Get(Storage.CurrentContext, to).AsBigInteger();
-    Storage.Put(Storage.CurrentContext, to, to_value + value);
-    Transferred(from, to, value);
-    return true;
+    string temp1 = String.Concat(arg1, arg2);
+    string temp2 = String.Concat(arg3, arg4);
+    return String.Concat(temp1, temp2);
 }
 
+// To properly storage a boolean variable.
+private static string Bool2Str( bool val )
+{
+    if (val) return "1";
+    return "0";
+}
 
+// To properly read a boolean from storage.
+private static bool Str2Bool( byte[] val )
+{
+    if (val.AsString() == "1") return true;
+    return false;
+}
 
+// To filter the relationship of members and PPs.
+private static string[] GetContributeValue(string lookForID, string[] listOfIDs)
+{
+    //
+    string[] equivList = new string[];
+    
+    // Gets values by each ID registered on the contract storage space.
+    if ( lookForID[0] == "P" )
+    {
+        // Gets PPs by a member.
+        foreach (string key in listOfIDs)
+        {
+            BigInteger GetBid(key, lookForID).AsBigInteger();
+            if ( temp != 0 ) equivList.append(temp);
+        }
+    }
+    else
+    {
+        // Gets members by a PP.
+        foreach (string key in listOfIDs)
+        {
+            BigInteger GetBid(lookForID, key).AsBigInteger();
+            if ( temp != 0 ) equivList.append(temp);
+        }
+    }
+    
+    return equivList;
+}
 
+// To get the IDs of each PP.
+private static string[] listOfPPs()
+{
+    string[] listPPs = new string[];
+    
+    foreach num in NumOfPP()
+    {
+        string PP = Storage.Get( String.Concat( "P", num.ToString() ) );
+        listMembers.append(PP);
+    }
+    
+    return listPPs;
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// To get the address of each member.
+private static string[] listOfMembers()
+{
+    string[] listMembers = new string[];
+    
+    foreach num in NumOfMemb()
+    {
+        string member = Storage.Get( String.Concat( "M", num.ToString() ) );
+        listMembers.append(member);
+    }
+    
+    return listMembers;
+}
 
 //---------------------------------------------------------------------------------------------
 // METHODS FOR MEMBERS
@@ -418,9 +459,12 @@ private static void Member( string address, string fullName, string utility, Big
     Storage.Put( String.Concat( address, "Quota" ), quota );
     Storage.Put( String.Concat( address, "Tokens" ), tokens );
 
-    // Increase the total number of members.
+    // Increases the total number of members.
     BigInteger temp = NumOfMemb() + 1;
     Storage.Put("NumOfMemb", temp);
+    
+    // Stores the address of each member.
+    Storage.Put( String.Concat( "M", temp.ToString() ), address );
 }
 
 // --> read
@@ -477,9 +521,12 @@ private static void DelMemb( string address, string opt = "" )
         Storage.Delete( String.Concat( address, "Quota" ) );
         Storage.Delete( String.Concat( address, "Tokens" ) );
         
-        // Decrease the total number of members.
+        // Decreases the total number of members.
         BigInteger temp = NumOfMemb() - 1;
         Storage.Put("NumOfMemb", temp);
+        
+        // Wipe off the address of the member.
+        Storage.Delete( String.Concat( "M", ? ), address ); // -- PENDING --
     }
 
     // To support an economic action for the update method.
@@ -489,7 +536,6 @@ private static void DelMemb( string address, string opt = "" )
 //---------------------------------------------------------------------------------------------
 // METHODS FOR POWER PLANTS
 // --> create
-// The 'Deploy()' at ICO template.
 private static void PP( string capacity, BigInteger cost, string utility )
 {
     string id = ID("P", capacity, cost, utility);
@@ -504,9 +550,12 @@ private static void PP( string capacity, BigInteger cost, string utility )
     Storage.Put( String.Concat( id, "Utility" ), utility );
     // Storage.Put( String.Concat( id, "NumOfFundMemb" ), 0 ); // Expensive to create with null value. Just state it out!
 
-    // Increase the total number of power plant units.
+    // Increases the total number of power plant units.
     BigInteger temp = NumOfPP() + 1;
     Storage.Put("NumOfPP", temp);
+    
+    // Stores the ID of each PP.
+    Storage.Put( String.Concat( "P", temp.ToString() ), id );
     
     Process(id, "New PP created.")
 }
@@ -543,13 +592,16 @@ private static void DelPP( string id )
     Storage.Delete( String.Concat( id, "Utility" ) );
     if ( GetPP(id, "NumOfFundMemb") != 0 ) Storage.Delete( String.Concat( id, "NumOfFundMemb" ) );
 
-    // Decrease the total number of power plant units.
+    // Decreases the total number of power plant units.
     BigInteger temp = NumOfPP() - 1;
     Storage.Put("NumOfPP", temp);
 
-    // Decrease the total power supply of power plants.
+    // Decreases the total power supply of power plants.
     BigInteger temp = TotalSupply() - GetPP(id, "Capacity").AsBigInteger();
     Storage.Put("TotalSupply", temp);
+    
+    // Wipe off the id of the PP.
+    Storage.Delete( String.Concat( "P", ? ), id ); // -- PENDING --
 }
 
 //---------------------------------------------------------------------------------------------
@@ -689,21 +741,22 @@ private static void Refund( string PPid, string member )
     // Deletes the member's offer.
     BigInteger grant = GetBid(PPid, member);
     Storage.Delete( String.Concat( PPid, member ) );
-
-    // Sends the money back to the member.
-    ...
     
-    // Decreases the total amount of power-------------------------------. PROBLEMA ENTRE MONEY AND POWER!!
-    BigInteger cash = GetCrowd(PPid, "TotalAmount");
-    UpCrowd(PPi, "TotalAmount", cash - grant);
+    // Decreases the total amount of funds
+    BigInteger funds = GetCrowd(PPid, "TotalAmount");
+    UpCrowd(PPi, "TotalAmount", funds - grant);
 
     // Decreases the total number of contributions.
-    BigInteger contributions = GetCrowd(PPid, "Contributions" );
+    BigInteger contributions = GetCrowd(PPid, "Contributions");
     UpCrowd(PPid, "Contributions", contributions--);
     
+    // Sends the money back to the member.
+    Trade(PPid, member, 0, grant);
+    Refund(member, grant);
 }
 
-// Only the 'Total Amount' and 'Contributions' can be "deleted".
+// Only the 'Total Amount' and 'Contributions' can be "deleted"
+// because the failure of a crowdfunding must be preserved.
 // Actually it is only used to "store" null values cheaply.
 private static void DelCrowd( string PPid, string opt )
 {
@@ -729,7 +782,7 @@ https://github.com/neo-project/examples/blob/master/csharp/NEP5/NEP5.cs
         ...
         // Must lock the contract for a while!!! --PENDING--
 
-        if fund ok:
+        if funding ok:
         {
             // Update the number of fund members database
             BigInteger numOfFundMemb = ...; // --PENDING--
@@ -776,45 +829,9 @@ https://github.com/neo-project/examples/blob/master/csharp/NEP5/NEP5.cs
 
 // Do I need this?
 
-// check whether asset is SEB and get sender script hash
-private static byte[] GetSender()
-{
-    Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
-    TransactionOutput[] reference = tx.GetReferences();
-
-    // you can choice refund or not refund ????????
-    foreach (TransactionOutput output in reference)
-    {
-        if (output.AssetId == SEB_asset_id) return output.ScriptHash;
-    }
-    return new byte[]{};
-}
-
-
-
-// get all you contribute neo amount
-private static ulong GetContributeValue()   // testar esta merdaaaaaaaaaa !!!!!!!!!!!!!
-{
-    // source.Get(member, bid);
-
-    Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
-    TransactionOutput[] outputs = tx.GetOutputs();
-    ulong value = 0;
-
-    // get the total amount of Neo
-    foreach (TransactionOutput output in outputs)
-    {
-        if (output.ScriptHash == GetReceiver() && output.AssetId == SEB_asset_id)
-        {
-            value += (ulong)output.Value;
-        }
-    }
-    return value;
-}
-
 
 // if ( (.TODAY() > start_time) && (.TODAY() < end_time) ) // Crowdfunding is still available
-public static bool CrowdFunding(string PPid)
+private static bool CrowdFunding(string PPid)
 {
     BigInteger offer = GetPP(PPid, "Capacity").AsBigInteger();
     BigInteger target = GetPP(PPid, "Cost").AsBigInteger();
