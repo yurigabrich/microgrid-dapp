@@ -43,34 +43,141 @@ public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", 
 private static string[] profile => new string[] {"FullName", "Utility"};
 private static string[] register => new string[] {"Quota", "Tokens"};
 
-// New Power Plant crowdfunding settings (ICO).
-private const ulong factor = 1000;              // decided by Decimals() --PENDING--
-private const ulong neo_decimals = 100000000;   // --PENDING--
+// New Power Plant crowdfunding settings (ICO of an NFT).
+private const ulong factor = 1000;              // decided by Decimals() --PENDING-- 1kW =?= 1SEB
 private const byte minOffer = 1;
 
+// The restrictive message to show up.
+private static ?string? Warning() => new InvalidOperationException("Only members can access this information. Join us!"); // --PENDING--
 
 //---------------------------------------------------------------------------------------------
 // THE MAIN INTERFACE
 
+public static Object Main ( string operation, params object[] args )
+{
+    if ( Runtime.Trigger == TriggerType.Verification )
+    {        
+        if ( Member.Get() == null ) // --PENDING--
+        {
+            if (args.Length != 2) return false; // --PENDING--
+            Member( caller, args[0], args[1], 100, 0 ); // --PENDING--
+            return "New GGM blockchain initiated."; // --PENDING--
+        }
+        return false;
+    }
+    else if ( Runtime.Trigger == TriggerType.Application )
+    {
+        // General operation.
+        if (operation == "admission")
+        {
+            if ( args.Length != 3 )
+                throw new InvalidOperationException("Please provide the 3 arguments: your account address, full name and power utility name.");
 
+            if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
+                throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
 
+            if ( GetMemb((string)args[0], "FullName").Length != 0 )
+                throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
+            
+            return Admission( (string)args[0],   // invoker/caller address
+                              (string)args[1],   // fullName
+                              (string)args[2] ); // utility
+        }
+        
+        // Restricted operations (for most of the options).
+        if (operation == "summary")
+        {
+            if ( args.Length != 1 )
+                throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
+            if ( (GetMemb(caller, "FullName").Length == null) | (args[0][0] == "A") ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+                throw Warning();
 
+            return Summary( (string)args[0],     // Address/ID
+                            (string)args[1] );   // option
+        }
 
+        if ( GetMemb(caller, "FullName").Length != null )
+        {
+            if (operation == "vote")
+            {
+                if ( args.Length != 3 )
+                    throw new InvalidOperationException("Please provide the 3 arguments: the referendum id, your account address, and your vote.");
 
+                if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
+                    throw new InvalidOperationException("The vote can not be done on someone else's behalf.");               
 
+                return Vote( (string)args[0],    // referendum id
+                             (string)args[1],    // member address
+                             (bool)args[2] );    // answer
+            }
 
+            if (operation == "bid")
+            {
+                if ( args.Length != 3 )
+                    throw new InvalidOperationException("Please provide the 3 arguments: the ICO id, your account address, and your bid.");
 
+                if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
+                    throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
 
+                if ( (args[0][0] != "P") || (args[0].Length == null) )
+                    throw new InvalidOperationException("Provide a valid ICO ID.");
 
+                if ( args[2] <= 0 ) return false;
+                    throw new InvalidOperationException("Stop being a jerk.");
 
+                return Bid( (string)args[0],     // ICO id
+                            (string)args[1],     // member address
+                            (bool)args[2] );     // bid value
+            }
 
+            if (operation == "trade")
+            {
+                if ( args.Length != 4 )
+                    throw new InvalidOperationException("Please provide the 4 arguments: your account address, the address of who you are transaction to, the quota value, and the amount of tokens.");
+
+                if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
+                    throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
+
+                if ( GetMemb(args[1], "FullName").Length != null )
+                    throw new InvalidOperationException("The address you are transaction to must be a member too.");
+
+                if ( (args[1][0] != "A") || (args[1].Length == null) )
+                    throw new InvalidOperationException("Provide a valid destiny address.");
+
+                if ( (GetMemb(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
+                    throw new InvalidOperationException( "Both members must belong to the same power utility cover area." );
+
+                if ( (args[2] <= 0) & (args[3] <= 0) )
+                    throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 4th argument empty. Otherwise, to donate tokens let ONLY the 3rd argument empty.");
+                
+                return Trade( (string)args[0],       // fromAddress
+                              (string)args[1],       // toAddress
+                              (BigInteger)args[2],   // quota exchange
+                              (BigInteger)args[3] ); // token price
+            }
+
+            if (operation == "power") // to request a new power plant --> starts a Ref, later on a ICO, and then the token distribution...
+            {
+                if (args.Length != 3) return false;
+                return Plant( (string)args[0],       // capacity
+                              (BigInteger)args[1],   // cost
+                              (string)args[2]);      // description
+            } // --PENDING--
+
+            if (operation == "change") return Change( (string)args[0], (params object[])args? ); // --PENDING--
+        }
+        throw Warning();
+        // return false;
+    }
+    return false;
+}
 
 
 //---------------------------------------------------------------------------------------------
 // FUNCTIONS - The restrictions are made on the 'Main'.
 
-// To request to join the group.  (must avoid double requests!!!) <---------------- --PENDING--
+// To request to join the group.
 public static void Admission( string address, string fullName, string utility )
 {
     string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
@@ -85,62 +192,6 @@ public static void Admission( string address, string fullName, string utility )
         return;
     }
     Membership( address, "Not approved yet." );
-}
-
-// To vote in a given ID process.
-public static void Vote( string id, string member, bool answer )
-{
-    // Increase the number of votes.
-    BigInteger temp = GetRef(id,"NumOfVotes").AsBigInteger();
-    UpRef(id, "NumOfVotes", temp++);
-
-    if (answer)
-    {
-        // Increase the number of "trues".
-        BigInteger temp = GetRef(id,"CountTrue").AsBigInteger();
-        UpRef(id, "CountTrue", temp++);
-    }
-
-    // Publish the answer.
-    Ballot(id, member, answer);
-}
-
-// To make a bid in a new PP crowdfunding process.
-public static bool Bid( string PPid, string member, BigInteger bid )
-{
-    // Check parameters.    ------------------------------ The restrictions must be made on the 'Main'.
-    if ( (PPid[0] != "P") || (PPid.Length == 0) )
-        throw new InvalidOperationException( "Provide a valid PP address." );
-    if ( (GetMemb(member, "FullName") == null) || (member.Length == 0) )
-        throw new InvalidOperationException( "Only members can bid." );
-    if ( bid <= 0 ) return false;
-        throw new InvalidOperationException( "Stop being a jerk." );
-    
-    
-    BigInteger target = GetPP(PPid, "Cost").AsBigInteger();
-    BigInteger funds = GetCrowd(PPid, "TotalAmount").AsBigInteger();
-    
-    if ( bid > target - funds )
-        throw new InvalidOperationException( "You offered more than the amount requested ({0}). Bid again!".format( target - funds ) );
-
-    // WARNING!
-    // All these steps are part of a crowdfunding process, not of a PP registration.
-    
-    // Increases the value gathered so far.
-    UpCrowd(PPid, "TotalAmount", funds + bid);
-    
-    // Increases the number of contributions.
-    BigInteger temp = GetCrowd(PPid, "Contributions").AsBigInteger();
-    UpCrowd(PPid, "Contributions", temp++);
-    
-    // Tracks bid by member for each PPid.
-    BigInteger previous = Storage.Get( String.Concat(PPid, member) ).AsBigInteger();
-    Storage.Put( String.Concat(PPid, member), previous + bid );
-    Offer(PPid, member, bid);
-    return true;
-    
-    // If the hole fund process succeed, the money bid must be converted to percentage (bid/cost),
-    // so it will be possible to define the quota and the SEB a member has to gain.
 }
 
 // To get information about something.
@@ -223,6 +274,53 @@ public static object Summary( string key, string opt = "" )
     {
         return new string[] { PowGenLimits()[0], PowGenLimits()[1], NumOfPP(), NumOfMemb(), Name(), Symbol(), TotalSupply() };
     }
+}
+
+// To vote in a given ID process.
+public static void Vote( string id, string member, bool answer )
+{
+    // Increase the number of votes.
+    BigInteger temp = GetRef(id,"NumOfVotes").AsBigInteger();
+    UpRef(id, "NumOfVotes", temp++);
+
+    if (answer)
+    {
+        // Increase the number of "trues".
+        BigInteger temp = GetRef(id,"CountTrue").AsBigInteger();
+        UpRef(id, "CountTrue", temp++);
+    }
+
+    // Publish the answer.
+    Ballot(id, member, answer);
+}
+
+// To make a bid in a new PP crowdfunding process (ICO of a NFT).
+public static bool Bid( string ICOid, string member, BigInteger bid )
+{
+    BigInteger target = GetPP(ICOid, "Cost").AsBigInteger();
+    BigInteger funds = GetCrowd(ICOid, "TotalAmount").AsBigInteger();
+    
+    if ( bid > target - funds )
+        throw new InvalidOperationException( "You offered more than the amount requested ({0}). Bid again!".format( target - funds ) );
+
+    // WARNING!
+    // All these steps are part of a crowdfunding process, not of a PP registration.
+    
+    // Increases the value gathered so far.
+    UpCrowd(ICOid, "TotalAmount", funds + bid);
+    
+    // Increases the number of contributions.
+    BigInteger temp = GetCrowd(ICOid, "Contributions").AsBigInteger();
+    UpCrowd(ICOid, "Contributions", temp++);
+    
+    // Tracks bid by member for each ICOid.
+    BigInteger previous = Storage.Get( String.Concat(ICOid, member) ).AsBigInteger();
+    Storage.Put( String.Concat(ICOid, member), previous + bid );
+    Offer(ICOid, member, bid);
+    return true;
+    
+    // If the hole fund process succeed, the money bid must be converted to percentage (bid/cost),
+    // so it will be possible to define the quota and the SEB a member has to gain.
 }
 
 // To update something on the ledger.
@@ -317,15 +415,7 @@ private void Change( string key, params object[] opts )
 // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
 private bool Trade( string fromAddress, string toAddress, BigInteger exchange, BigInteger price )
 {
-    BigInteger[] toWallet = new BigInteger[];
-    
-    if ( !Runtime.CheckWitness(fromAddress) ) // essas condições tem que estar no main! -- PENDING --
-        throw new InvalidOperationException( "Only the owner of an account can exchange her/his asset." );
-    if ( fromAddress and toAddress not a member ) // essas condições tem que estar no main! -- PENDING --
-        throw new InvalidOperationException( "Only members can trade. Join us!" ); // acho q isso já estará restrito em algum momento.
-    if ( GetMemb(fromAddress, "Utility") != GetMemb(toAddress, "Utility") ) // essas condições tem que estar no main! -- PENDING --
-        throw new InvalidOperationException( "Both members must belong to the same utility cover area." );
-    
+    BigInteger[] toWallet = new BigInteger[];    
     BigInteger[] fromWallet = new BigInteger[];
     
     // register = {"Quota", "Tokens"}
@@ -667,98 +757,98 @@ private static void UpRef( string id, bool val )
 //---------------------------------------------------------------------------------------------
 // METHODS TO EVALUATE A NEW POWER PLANT (aka an ICO of a NFT)
 // --> create
-private static void CrowdFunding( string PPid, int startTime, int endTime)
+private static void CrowdFunding( string ICOid, int startTime, int endTime)
 {
-    Storage.Put( String.Concat( PPid, "StartTime" ), startTime ); // --PENDING--
-    Storage.Put( String.Concat( PPid, "EndTime" ), endTime ); // --PENDING--
-    // Storage.Put( String.Concat( PPid, "TotalAmount" ), 0 );   // Expensive to create with null value. Just state it out!
-    // Storage.Put( String.Concat( PPid, "Contributions" ), 0 ); // Expensive to create with null value. Just state it out!
-    Storage.Put( String.Concat( PPid, "Success" ), Bool2Str(false) );
+    Storage.Put( String.Concat( ICOid, "StartTime" ), startTime ); // --PENDING--
+    Storage.Put( String.Concat( ICOid, "EndTime" ), endTime ); // --PENDING--
+    // Storage.Put( String.Concat( ICOid, "TotalAmount" ), 0 );   // Expensive to create with null value. Just state it out!
+    // Storage.Put( String.Concat( ICOid, "Contributions" ), 0 ); // Expensive to create with null value. Just state it out!
+    Storage.Put( String.Concat( ICOid, "Success" ), Bool2Str(false) );
 }
 
 // The function to bid on a crowdfunding is declared above, because it is public.
 
 // --> read
-private static BigInteger GetBid( string PPid, string member )
+private static BigInteger GetBid( string ICOid, string member )
 {
-    return Storage.Get( String.Concat( PPid, member ) );
+    return Storage.Get( String.Concat( ICOid, member ) );
 }
 
-private static object GetCrowd( string PPid, string opt )
+private static object GetCrowd( string ICOid, string opt )
 {
-    return Storage.Get( String.Concat( PPid, opt ) );
+    return Storage.Get( String.Concat( ICOid, opt ) );
 }
 
 // --> update
-private static bool UpBid( string PPid, string member, BigInteger bid )
+private static bool UpBid( string ICOid, string member, BigInteger bid )
 {
     // Don't invoke Put if value is unchanged.
-    BigInteger orig = GetBid(PPid, member).AsBigInteger();
+    BigInteger orig = GetBid(ICOid, member).AsBigInteger();
     if (orig == bid) return;
      
     // Delete the storage if the new value is zero.
-    if (bid == 0) return Refund(PPid, member);                               Storage.Delete( String.Concat(id, opt) );
+    if (bid == 0) return Refund(ICOid, member);                               Storage.Delete( String.Concat(id, opt) );
     
     // else
-    Storage.Put( String.Concat( PPid, member ), bid );
+    Storage.Put( String.Concat( ICOid, member ), bid );
     return true;
 }
 
 // Only the 'Total Amount', 'Contributions' and 'Success' can be updated.
-private static void UpCrowd( string PPid, string opt, BigInteger val )
+private static void UpCrowd( string ICOid, string opt, BigInteger val )
 {
     if ( (opt == "TotalAmount") || (opt == "Contributions") )
     {
         // Don't invoke Put if value is unchanged.
-        BigInteger orig = GetCrowd(PPid, opt).AsBigInteger();
+        BigInteger orig = GetCrowd(ICOid, opt).AsBigInteger();
         if (orig == val) return;
          
         // Delete the storage if the new value is zero.
-        if (val == 0) return DelCrowd(PPid, opt);
+        if (val == 0) return DelCrowd(ICOid, opt);
         
         // else
-        Storage.Put( String.Concat( PPid, opt ), val );
+        Storage.Put( String.Concat( ICOid, opt ), val );
     }
 }
 
-private static void UpCrowd( string PPid, bool val )
+private static void UpCrowd( string ICOid, bool val )
 {
     // Don't invoke Put if value is unchanged.
-    string orig = Str2Bool( GetCrowd(PPid, "Success") );
+    string orig = Str2Bool( GetCrowd(ICOid, "Success") );
     if ( orig == Bool2Str(val) ) return;
         
     // else
-    Storage.Put( String.Concat( PPid, "Success" ), Bool2Str(val) );
+    Storage.Put( String.Concat( ICOid, "Success" ), Bool2Str(val) );
 }
 
 // --> delete
-private static void Refund( string PPid, string member )
+private static void Refund( string ICOid, string member )
 {
     // Deletes the member's offer.
-    BigInteger grant = GetBid(PPid, member);
-    Storage.Delete( String.Concat( PPid, member ) );
+    BigInteger grant = GetBid(ICOid, member);
+    Storage.Delete( String.Concat( ICOid, member ) );
     
     // Decreases the total amount of funds
-    BigInteger funds = GetCrowd(PPid, "TotalAmount");
+    BigInteger funds = GetCrowd(ICOid, "TotalAmount");
     UpCrowd(PPi, "TotalAmount", funds - grant);
 
     // Decreases the total number of contributions.
-    BigInteger contributions = GetCrowd(PPid, "Contributions");
-    UpCrowd(PPid, "Contributions", contributions--);
+    BigInteger contributions = GetCrowd(ICOid, "Contributions");
+    UpCrowd(ICOid, "Contributions", contributions--);
     
     // Sends the money back to the member.
-    Trade(PPid, member, 0, grant);
+    Trade(ICOid, member, 0, grant);
     Refund(member, grant);
 }
 
 // Only the 'Total Amount' and 'Contributions' can be "deleted"
 // because the failure of a crowdfunding must be preserved.
 // Actually it is only used to "store" null values cheaply.
-private static void DelCrowd( string PPid, string opt )
+private static void DelCrowd( string ICOid, string opt )
 {
     if ( (opt == "TotalAmount") || (opt == "Contributions") )
     {
-        Storage.Delete( String.Concat( PPid, opt ) );
+        Storage.Delete( String.Concat( ICOid, opt ) );
     }
 }
 
@@ -795,7 +885,7 @@ private void WhereItWillBePlaced(?)
             // When the PP starts to operate, it's time to distribute tokens and shares.
             
             // Increases the total power supply of the group.
-            BigInteger capOfPP = GetPP(PPid, "Capacity").AsBigInteger();
+            BigInteger capOfPP = GetPP(ICOid, "Capacity").AsBigInteger();
             BigInteger capOfGroup = TotalSupply() + capOfPP;
             Storage.Put("TotalSupply", capOfGroup);
 
@@ -803,11 +893,11 @@ private void WhereItWillBePlaced(?)
             BigInteger sharesOfPP = capOfPP/capOfGroup;
 
             // Gets a list of funders of the respective PP.
-            string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
+            string[] litsOfFunders = GetContributeValue( ICOid, listOfMembers() );
             
             foreach funder in litsOfFunders
             {
-                BigInteger grant = GetBid(PPid, funder).AsBigInteger();
+                BigInteger grant = GetBid(ICOid, funder).AsBigInteger();
                 BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos
                 BigInteger quota = tokens * sharesOfPP; // --PENDING-- rever unidades e cálculos
 
