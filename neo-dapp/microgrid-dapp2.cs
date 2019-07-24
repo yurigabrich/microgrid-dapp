@@ -315,57 +315,53 @@ private void Change( string key, params object[] opts )
 // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
 // The 'fromAddress' will exchange an amount of shares with 'toAddress' by a defined token price,
 // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
-// However, a new PP will just distribute tokens and shares after a crowdfunding process succeed.
 private bool Trade( string fromAddress, string toAddress, BigInteger exchange, BigInteger price )
 {
     BigInteger[] toWallet = new BigInteger[];
     
-    // if 'fromAddress' is a member
-    if (fromAddress[0] == "A")
+    if ( !Runtime.CheckWitness(fromAddress) ) // essas condições tem que estar no main! -- PENDING --
+        throw new InvalidOperationException( "Only the owner of an account can exchange her/his asset." );
+    if ( fromAddress and toAddress not a member ) // essas condições tem que estar no main! -- PENDING --
+        throw new InvalidOperationException( "Only members can trade. Join us!" ); // acho q isso já estará restrito em algum momento.
+    if ( GetMemb(fromAddress, "Utility") != GetMemb(toAddress, "Utility") ) // essas condições tem que estar no main! -- PENDING --
+        throw new InvalidOperationException( "Both members must belong to the same utility cover area." );
+    
+    BigInteger[] fromWallet = new BigInteger[];
+    
+    // register = {"Quota", "Tokens"}
+    foreach (string)data in register
     {
-        if ( !Runtime.CheckWitness(fromAddress) ) // does not work for contract address! -- PENDING --
-            throw new InvalidOperationException( "Only the owner of an account can exchange her/his asset." );
-        if ( fromAddress and toAddress not a member ) // essas condições tem que estar no main! -- PENDING --
-            throw new InvalidOperationException( "Only members can trade. Join us!" ); // acho q isso já estará restrito em algum momento.
-        if ( GetMemb(fromAddress, "Utility") != GetMemb(toAddress, "Utility") )
-            throw new InvalidOperationException( "Both members must belong to the same utility cover area." );
-        
-        BigInteger[] fromWallet = new BigInteger[];
-        
-        // register = {"Quota", "Tokens"}
-        foreach (string)data in register
-        {
-            fromWallet.append( GetMemb(fromAddress, data).AsBigInteger() );
-            toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
-        }
-        
-        if ( ( fromWallet[0] < exchange ) || ( toWallet[1] < price ) ) return false;
-        
-        UpMemb(fromAddress, register[0], fromWallet[0] - exchange);
-        UpMemb(toAddress, register[0], toWallet[0] + exchange);
-        
-        UpMemb(toAddress, register[1], toWallet[1] - price);
-        UpMemb(fromAddress, register[1], fromWallet[1] + price);
+        fromWallet.append( GetMemb(fromAddress, data).AsBigInteger() );
+        toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
     }
-        
-    // if 'fromAddress' is a new PP
-    if (fromAddress[0] == "P")
-    {
-        // All the exceptions were handle during the crowdfunding.
-        // It only needs to distribute the shares and the tokens.
-        
-        // register = {"Quota", "Tokens"}
-        foreach (string)data in register
-        {
-            toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
-        }
-        
-        UpMemb(toAddress, register[0], toWallet[0] + exchange);
-        UpMemb(toAddress, register[1], toWallet[1] + price);
-    }
+    
+    if ( ( fromWallet[0] < exchange ) || ( toWallet[1] < price ) ) return false;
+    
+    UpMemb(fromAddress, register[0], fromWallet[0] - exchange);
+    UpMemb(toAddress, register[0], toWallet[0] + exchange);
+    
+    UpMemb(toAddress, register[1], toWallet[1] - price);
+    UpMemb(fromAddress, register[1], fromWallet[1] + price);
     
     Transfer(fromAddress, toAddress, exchange, price);
     return true;
+}
+
+// A new PP will just distribute tokens and shares after a crowdfunding process succeed.
+// All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
+private static void Distribute( string toAddress, BigInteger quota, BigInteger tokens )
+{
+    BigInteger[] toWallet = new BigInteger[];
+
+    // register = {"Quota", "Tokens"}
+    foreach (string)data in register
+    {
+        toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
+    }
+    
+    UpMemb(toAddress, register[0], toWallet[0] + quota);
+    UpMemb(toAddress, register[1], toWallet[1] + tokens);
+    Transfer(null, toAddress, quota, tokens);
 }
 
 // To create a custom ID of a process based on its particular specifications.
@@ -378,7 +374,7 @@ private static string ID( object arg1, object arg2, object arg3, object arg4 )
     return String.Concat(temp1, temp2);
 }
 
-// To properly storage a boolean variable.
+// To properly store a boolean variable.
 private static string Bool2Str( bool val )
 {
     if (val) return "1";
@@ -401,19 +397,19 @@ private static string[] GetContributeValue(string lookForID, string[] listOfIDs)
     // Gets values by each ID registered on the contract storage space.
     if ( lookForID[0] == "P" )
     {
-        // Gets PPs by a member.
+        // Gets members by a PP.
         foreach (string key in listOfIDs)
         {
-            BigInteger GetBid(key, lookForID).AsBigInteger();
+            BigInteger GetBid(lookForID, key).AsBigInteger();
             if ( temp != 0 ) equivList.append(temp);
         }
     }
     else
     {
-        // Gets members by a PP.
+        // Gets PPs by a member.
         foreach (string key in listOfIDs)
         {
-            BigInteger GetBid(lookForID, key).AsBigInteger();
+            BigInteger GetBid(key, lookForID).AsBigInteger();
             if ( temp != 0 ) equivList.append(temp);
         }
     }
@@ -428,7 +424,7 @@ private static string[] listOfPPs()
     
     foreach num in NumOfPP()
     {
-        string PP = Storage.Get( String.Concat( "P", num.ToString() ) );
+        string PP = Storage.Get( String.Concat( "P", num.ToString() ) ); // --PENDING--
         listMembers.append(PP);
     }
     
@@ -442,7 +438,7 @@ private static string[] listOfMembers()
     
     foreach num in NumOfMemb()
     {
-        string member = Storage.Get( String.Concat( "M", num.ToString() ) );
+        string member = Storage.Get( String.Concat( "M", num.ToString() ) ); // --PENDING--
         listMembers.append(member);
     }
     
@@ -773,15 +769,19 @@ private static void DelCrowd( string PPid, string opt )
 https://github.com/neo-project/examples/blob/master/csharp/NEP5/NEP5.cs
 
 
-   
+private void WhereItWillBePlaced(?)
+{
     // Must lock the contract for a while!!! --PENDING--
 
     if ( Str2Bool( GetRef(id, "Outcome") ) )
     {
+        // Starts the crowdfunding...
         // Starts to raise money after approval from group members for a new PP. --PENDING-- ICO!
+        // if ( (.TODAY() > start_time) && (.TODAY() < end_time) ) // Crowdfunding is still available
         ...
         // Must lock the contract for a while!!! --PENDING--
 
+        // If crowdfunding succeeds.
         if funding ok:
         {
             // Update the number of fund members database
@@ -791,94 +791,42 @@ https://github.com/neo-project/examples/blob/master/csharp/NEP5/NEP5.cs
 
             // Must lock the contract for a while!!! --PENDING--
             ...
+            
             // When the PP starts to operate, it's time to distribute tokens and shares.
-            foreach funder, quota in litsOfFunders
+            
+            // Increases the total power supply of the group.
+            BigInteger capOfPP = GetPP(PPid, "Capacity").AsBigInteger();
+            BigInteger capOfGroup = TotalSupply() + capOfPP;
+            Storage.Put("TotalSupply", capOfGroup);
+
+            // What the presence of the PP account for on the group.
+            BigInteger sharesOfPP = capOfPP/capOfGroup;
+
+            // Gets a list of funders of the respective PP.
+            string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
+            
+            foreach funder in litsOfFunders
             {
-                Distribute(PPquota, funder, quota);
-                Distribute(PPtokens, funder, tokens);
+                BigInteger grant = GetBid(PPid, funder).AsBigInteger();
+                BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos
+                BigInteger quota = tokens * sharesOfPP; // --PENDING-- rever unidades e cálculos
+
+                Distribute(funder, quota, tokens);
+                Transfer(null, funder, quota, tokens);
             }
+
+            Process(id, "A new power plant is now operating.")
         }
-        Process(id, "Fundraising has failed.");
+
+        // If crowdfunding fails.
+        if (contributions < target)
+        {
+            Refund(sender, contribute_value);
+            Process(id, "Fundraising has failed.");
+        }
+        
     }
-    Process(id, "Let's wait a bit more.");
-
-
-
-
-
-    // Increase the total power supply of power plants
-    BigInteger temp = TotalSupply() + GetPP(id, "Capacity").AsBigInteger();
-    Storage.Put("TotalSupply", temp);
-
-
-
-
-    // Distribute the rewards after the ICO success.
-    public static void Distribute(BigInteger PPvalue, string funder, string asset)
-    {
-        BigInteger temp = getMemb(funder, "?").AsBigInteger();
-        BigInteger saved = getPP(id, "?").AsBigInteger();
-
-        upMemb(funder, "?", temp+saved);
-        upPP(id, "?", saved-saved);
-    }
-
-
-
-
-
-// Do I need this?
-
-
-// if ( (.TODAY() > start_time) && (.TODAY() < end_time) ) // Crowdfunding is still available
-private static bool CrowdFunding(string PPid)
-{
-    BigInteger offer = GetPP(PPid, "Capacity").AsBigInteger();
-    BigInteger target = GetPP(PPid, "Cost").AsBigInteger();
-    string limit = GetPP(PPid, "Utility").AsString();
-
-    BigInteger totalAmount = 0; // up to cost
-
-    ulong contributions = GetContributeValue();
-
-
-
-
-
-
-    byte[] sender = GetSender();
-
-    // contribute asset is not neo
-    if (sender.Length == 0) return false;
-
     
-
-    // if crowdfunding failure
-    if (contributions < target)
-    {
-        Refund(sender, contribute_value);
-        return false;
-    }
-    // you can get current swap token amount
-    ulong token = CurrentSwapToken(sender, contribute_value, swap_rate);
-    if (token == 0)
-    {
-        return false;
-    }
-    // crowdfunding success
-    // 众筹成功
-    BigInteger balance = Storage.Get(Storage.CurrentContext, sender).AsBigInteger();
-    Storage.Put(Storage.CurrentContext, sender, token + balance);
-    BigInteger totalSupply = Storage.Get(Storage.CurrentContext, "totalSupply").AsBigInteger();
-    Storage.Put(Storage.CurrentContext, "totalSupply", token + totalSupply);
-    Transferred(null, sender, token);
-    return true;
+    // If referendum for a new PP fails.
+    Process(id, "Let's wait a bit more.");
 }
-
-
-
-
-
-
-
-
