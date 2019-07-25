@@ -56,7 +56,7 @@ private static ?string? Warning() => new InvalidOperationException("Only members
 public static Object Main ( string operation, params object[] args )
 {
     if ( Runtime.Trigger == TriggerType.Verification )
-    {        
+    {
         if ( Member.Get() == null ) // --PENDING--
         {
             if (args.Length != 2) return false; // --PENDING--
@@ -106,7 +106,7 @@ public static Object Main ( string operation, params object[] args )
                     throw new InvalidOperationException("Please provide the 3 arguments: the referendum id, your account address, and your vote.");
 
                 if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
-                    throw new InvalidOperationException("The vote can not be done on someone else's behalf.");               
+                    throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
 
                 return Vote( (string)args[0],    // referendum id
                              (string)args[1],    // member address
@@ -180,7 +180,23 @@ public static Object Main ( string operation, params object[] args )
                                 (int)args[5] );        // timeframe to wait the new PP gets ready to operate -- PENDING--
             }
 
-            if (operation == "change") return Change( (string)args[0], (params object[])args? ); // --PENDING--
+            if (operation == "change")
+            {
+                if (args.Length != 2)
+                    throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
+                
+                if ( (args[1][0] in profile) & !(Runtime.CheckWitness(args[0])) )
+                    throw new InvalidOperationException("Only the member can change its own personal data.");
+                
+                if ( (args[0][0] != "A") | args[0][0] != "P"  )
+                    throw new InvalidOperationException("Provide a valid member address or PP ID.");
+                
+                
+                // Can a change a bid? Because args[0][0] == "P"                --PENDING--
+                
+                return Change( (string)args[0],     // member address or PP id
+                               (object[])args[1] ); // array with desired values --PENDING-- test length
+            }
         }
         throw Warning();
         // return false;
@@ -347,19 +363,20 @@ private void Change( string key, params object[] opts )
     {
         // Only the member can change its own personal data.
         // To UPDATE, the params must be ['profile option', 'value'].
-        if ( (Runtime.CheckWitness(key)) & (opts[1] is string) )
+        if ( opts[1] is string )
         {
             UpMemb(key, opts[0], opts[1]);
             Update("Profile data.", key);
         }
         
-        // Any member can request the change of registration data of other member
+        // Any member can request the change of registration data of other member.
         // To UPDATE, the params must be ['register option', 'value'].
         if ( opts[1] is BigInteger )
         {
             string id = Ref( "Change register_", String.Concat( key, opts[0] ) );
     
             // Must lock the contract for a while!!! --PENDING--
+            ...
             
             if ( Str2Bool( GetRef(id, "Outcome") ) )
             {
@@ -370,12 +387,13 @@ private void Change( string key, params object[] opts )
         Process(id, "Denied.");
         }
         
-        // Any member can request to delete another member
+        // Any member can request to delete another member.
         if ( opts.Length == 0 )
         {
             string id = Ref( "Delete member_", "Distribute the shares and delete the tokens." );
             
             // Must lock the contract for a while!!! --PENDING--
+            ...
             
             if ( Str2Bool( GetRef(id, "Outcome") ) )
             {
@@ -383,7 +401,14 @@ private void Change( string key, params object[] opts )
                 BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
                 BigInteger give_out = portion/(NumOfMemb() - 1);
                 
-                // implement the loop for distribution --PENDING--
+                foreach (string)member in listOfMembers()
+                {
+                    // In an infinitesimal time frame the group will be disbalance
+                    // until the related member be completely deleted.
+                    // There is no side effect and it is better than iterate through each member.
+                    
+                    Distribute(member, give_out, 0);
+                }
 
                 DelMemb(key);
                 Membership(key, "Goodbye.");
@@ -395,12 +420,16 @@ private void Change( string key, params object[] opts )
     // If 'key' is an 'id' with prefix 'P' == power plant.
     if (key[0] == "P")
     {
+        if ( (opts.Length != 1) & !(opts[0] is string) )
+            throw new InvalidOperationException("Provide a valid power utility name to be replaced by.");
+        
         // Any member can request the change of the 'utility' a PP belongs to.
         if ( opts.Length != 0 )
         {
             string id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
     
             // Must lock the contract for a while!!! --PENDING--
+            ...
             
             if ( Str2Bool( GetRef(id, "Outcome") ) )
             {
@@ -415,6 +444,7 @@ private void Change( string key, params object[] opts )
         string id = Ref( "Delete PP_", String.Concat( key, opts[0] ) );
     
         // Must lock the contract for a while!!! --PENDING--
+        ...
         
         if ( Str2Bool( GetRef(id, "Outcome") ) )
         {
@@ -506,7 +536,7 @@ private void PowerUp(BigInteger capacity, BigInteger cost, string utility, int s
 // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
 private bool Trade( string fromAddress, string toAddress, BigInteger exchange, BigInteger price )
 {
-    BigInteger[] toWallet = new BigInteger[];    
+    BigInteger[] toWallet = new BigInteger[];
     BigInteger[] fromWallet = new BigInteger[];
     
     // register = {"Quota", "Tokens"}
@@ -528,7 +558,7 @@ private bool Trade( string fromAddress, string toAddress, BigInteger exchange, B
     return true;
 }
 
-// A new PP will just distribute tokens and shares after a crowdfunding process succeed.
+// A new PP will just distribute tokens and shares after a crowdfunding process succeed.    // --PENDING-- verificar com o caso de deletar membro!
 // All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
 private static void Distribute( string toAddress, BigInteger quota, BigInteger tokens )
 {
@@ -815,7 +845,7 @@ private static byte[] GetRef( string id, string opt )
 }
 
 // --> update
-// It is only possible to change the 'MoneyRaised', the 'NumOfVotes', the 'CountTrue' and the 'Outcome'.
+// It is only possible to internally change the 'MoneyRaised', the 'NumOfVotes', the 'CountTrue' and the 'Outcome'.
 private static void UpRef( string id, string opt, BigInteger val )
 {
     if ((opt == "NumOfVotes") || (opt == "MoneyRaised") || (opt == "CountTrue"))
