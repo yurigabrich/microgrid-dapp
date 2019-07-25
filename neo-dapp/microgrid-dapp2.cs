@@ -84,7 +84,7 @@ public static Object Main ( string operation, params object[] args )
                               (string)args[2] ); // utility
         }
         
-        // Restricted operations (for most of the options).
+        // Partially restricted operation.
         if (operation == "summary")
         {
             if ( args.Length != 1 )
@@ -97,6 +97,7 @@ public static Object Main ( string operation, params object[] args )
                             (string)args[1] );   // option
         }
 
+        // Restricted operations.
         if ( GetMemb(caller, "FullName").Length != null )
         {
             if (operation == "vote")
@@ -123,10 +124,13 @@ public static Object Main ( string operation, params object[] args )
                 if ( (args[0][0] != "P") || (args[0].Length == null) )
                     throw new InvalidOperationException("Provide a valid ICO ID.");
 
+                if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
+                    throw new InvalidOperationException( "This member cannot profit from this power utility." );
+
                 if ( args[2] <= 0 ) return false;
                     throw new InvalidOperationException("Stop being a jerk.");
 
-                return Bid( (string)args[0],     // ICO id
+                return Bid( (string)args[0],     // ICO id == PP id
                             (string)args[1],     // member address
                             (bool)args[2] );     // bid value
             }
@@ -157,13 +161,24 @@ public static Object Main ( string operation, params object[] args )
                               (BigInteger)args[3] ); // token price
             }
 
-            if (operation == "power") // to request a new power plant --> starts a Ref, later on a ICO, and then the token distribution...
+            if (operation == "power up")
             {
-                if (args.Length != 3) return false;
-                return Plant( (string)args[0],       // capacity
-                              (BigInteger)args[1],   // cost
-                              (string)args[2]);      // description
-            } // --PENDING--
+                if (args.Length != 6)
+                    throw new InvalidOperationException("Please provide the 6 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, the start and end time of the crowdfunding process, and the timeframe planned to set the PP up.");
+
+                if ( (args[4] <= args[3]) || (args[3] == 0) || (args[4] == 0) )
+                    throw new InvalidOperationException("Please provide valid dates.");
+
+                if ( (args[5] == 0) || (args[5] < 30) )
+                    throw new InvalidOperationException("Timeframe must be a factual period.");
+
+                return PowerUp( (BigInteger)args[0],   // capacity [MW]
+                                (BigInteger)args[1],   // cost [R$]
+                                (string)args[2],       // power utility
+                                (int)args[3],          // start time -- PENDING--
+                                (int)args[4],          // end time -- PENDING--
+                                (int)args[5] );        // timeframe to wait the new PP gets ready to operate -- PENDING--
+            }
 
             if (operation == "change") return Change( (string)args[0], (params object[])args? ); // --PENDING--
         }
@@ -183,6 +198,7 @@ public static void Admission( string address, string fullName, string utility )
     string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
     
     // Must lock the contract for a while!!! --PENDING--
+    ...
     
     if ( Str2Bool( GetRef(id, "Outcome") ) )
     {
@@ -410,6 +426,81 @@ private void Change( string key, params object[] opts )
     }
 }
 
+// The whole process to integrate a new PP on the group power generation.
+private void PowerUp(BigInteger capacity, BigInteger cost, string utility, int startTime, int endTime, int timeframe)
+{
+    string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility ), cost ); // --PENDING-- vai dar merda na conversão!
+    
+    // Must lock the contract for a while!!! --PENDING--
+    ...
+    
+    // Adds or not a new PP after votes from group members.
+    if ( Str2Bool( GetRef(id, "Outcome") ) )
+    {
+        string PPid = PP(capacity, cost, utility);
+    }
+    else
+    {
+        Process(id, "This PP was not approved yet. Let's wait a bit more.");
+        return;
+    }
+
+    // If approved, starts to raise money.
+    CrowdFunding( PPid, startTime, endTime);
+    Process(PPid, "Shut up and give me money!");
+    
+    // if ( (.TODAY() > start_time) && (.TODAY() < end_time) ) // Crowdfunding is still available
+    ...
+    // Must lock the contract for a while!!! --PENDING--
+    ... if (contributions >= target) UpCrowd( PPid, true );
+    
+    // Gets a list of funders of the respective PP.
+    string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
+
+    // If crowdfunding succeeds.
+    if ( Str2Bool( GetCrowd( PPid, "Success") ) )
+    {
+        // Update the number of fund members database
+        BigInteger numOfFundMemb = ...; // --PENDING--
+        UpPP(id, "numOfFundMemb", numOfFundMemb);
+        Process(id, "New power plant on the way.");
+    }
+    else
+    {
+        foreach funder in litsOfFunders
+        {
+            Refund(PPid, funder);
+        }
+        Process(id, "Fundraising has failed.");
+        return;
+    }
+
+    // Must lock the contract for a while!!! --PENDING--
+    ... timeframe
+    
+    // When the PP starts to operate, it's time to distribute tokens and shares.
+        
+    // Increases the total power supply of the group.
+    BigInteger capOfPP = GetPP(ICOid, "Capacity").AsBigInteger();
+    BigInteger capOfGroup = TotalSupply() + capOfPP;
+    Storage.Put("TotalSupply", capOfGroup);
+
+    // The presence of the PP which accounts for on the group.
+    BigInteger sharesOfPP = capOfPP/capOfGroup;
+    
+    foreach funder in litsOfFunders
+    {
+        BigInteger grant = GetBid(ICOid, funder).AsBigInteger();
+        BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos
+        BigInteger quota = tokens * sharesOfPP; // --PENDING-- rever unidades e cálculos
+
+        Distribute(funder, quota, tokens);
+        Transfer(null, funder, quota, tokens);
+    }
+
+    Process(id, "A new power plant is now operating.")
+}
+
 // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
 // The 'fromAddress' will exchange an amount of shares with 'toAddress' by a defined token price,
 // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
@@ -622,7 +713,7 @@ private static void DelMemb( string address, string opt = "" )
 //---------------------------------------------------------------------------------------------
 // METHODS FOR POWER PLANTS
 // --> create
-private static void PP( string capacity, BigInteger cost, string utility )
+private static string PP( string capacity, BigInteger cost, string utility )
 {
     string id = ID("P", capacity, cost, utility);
     if ( GetPP(id, "Capacity").Length != 0 )
@@ -642,8 +733,9 @@ private static void PP( string capacity, BigInteger cost, string utility )
     
     // Stores the ID of each PP.
     Storage.Put( String.Concat( "P", temp.ToString() ), id );
-    
+
     Process(id, "New PP created.")
+    return id;
 }
 
 // --> read
@@ -837,7 +929,7 @@ private static void Refund( string ICOid, string member )
     UpCrowd(ICOid, "Contributions", contributions--);
     
     // Sends the money back to the member.
-    Trade(ICOid, member, 0, grant);
+    Trade(ICOid, member, 0, grant); // --PENDING-- aqui é SEB ou REAIS?
     Refund(member, grant);
 }
 
@@ -854,69 +946,4 @@ private static void DelCrowd( string ICOid, string opt )
 
 
 //---------------------------------------------------------------------------------------------
-
-
 https://github.com/neo-project/examples/blob/master/csharp/NEP5/NEP5.cs
-
-
-private void WhereItWillBePlaced(?)
-{
-    // Must lock the contract for a while!!! --PENDING--
-
-    if ( Str2Bool( GetRef(id, "Outcome") ) )
-    {
-        // Starts the crowdfunding...
-        // Starts to raise money after approval from group members for a new PP. --PENDING-- ICO!
-        // if ( (.TODAY() > start_time) && (.TODAY() < end_time) ) // Crowdfunding is still available
-        ...
-        // Must lock the contract for a while!!! --PENDING--
-
-        // If crowdfunding succeeds.
-        if funding ok:
-        {
-            // Update the number of fund members database
-            BigInteger numOfFundMemb = ...; // --PENDING--
-            UpPP(id, "numOfFundMemb", numOfFundMemb);
-            Process(id, "New power plant on the way.");
-
-            // Must lock the contract for a while!!! --PENDING--
-            ...
-            
-            // When the PP starts to operate, it's time to distribute tokens and shares.
-            
-            // Increases the total power supply of the group.
-            BigInteger capOfPP = GetPP(ICOid, "Capacity").AsBigInteger();
-            BigInteger capOfGroup = TotalSupply() + capOfPP;
-            Storage.Put("TotalSupply", capOfGroup);
-
-            // What the presence of the PP account for on the group.
-            BigInteger sharesOfPP = capOfPP/capOfGroup;
-
-            // Gets a list of funders of the respective PP.
-            string[] litsOfFunders = GetContributeValue( ICOid, listOfMembers() );
-            
-            foreach funder in litsOfFunders
-            {
-                BigInteger grant = GetBid(ICOid, funder).AsBigInteger();
-                BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos
-                BigInteger quota = tokens * sharesOfPP; // --PENDING-- rever unidades e cálculos
-
-                Distribute(funder, quota, tokens);
-                Transfer(null, funder, quota, tokens);
-            }
-
-            Process(id, "A new power plant is now operating.")
-        }
-
-        // If crowdfunding fails.
-        if (contributions < target)
-        {
-            Refund(sender, contribute_value);
-            Process(id, "Fundraising has failed.");
-        }
-        
-    }
-    
-    // If referendum for a new PP fails.
-    Process(id, "Let's wait a bit more.");
-}
