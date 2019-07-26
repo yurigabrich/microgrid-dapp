@@ -53,7 +53,7 @@ private static ?string? Warning() => new InvalidOperationException("Only members
 //---------------------------------------------------------------------------------------------
 // THE MAIN INTERFACE
 
-public static Object Main ( string operation, params object[] args )
+public static object Main ( string operation, params object[] args )
 {
     if ( Runtime.Trigger == TriggerType.Verification )
     {
@@ -63,6 +63,7 @@ public static Object Main ( string operation, params object[] args )
             Member( caller, args[0], args[1], 100, 0 ); // --PENDING--
             return "New GGM blockchain initiated."; // --PENDING--
         }
+
         return false;
     }
     else if ( Runtime.Trigger == TriggerType.Application )
@@ -192,15 +193,17 @@ public static Object Main ( string operation, params object[] args )
                     throw new InvalidOperationException("Provide a valid member address or PP ID.");
                 
                 
-                // Can a change a bid? Because args[0][0] == "P"                --PENDING--
+                // Can change a bid? Because args[0][0] == "P"                --PENDING--
                 
                 return Change( (string)args[0],     // member address or PP id
                                (object[])args[1] ); // array with desired values --PENDING-- test length
             }
         }
+
         throw Warning();
         // return false;
     }
+
     return false;
 }
 
@@ -209,7 +212,7 @@ public static Object Main ( string operation, params object[] args )
 // FUNCTIONS - The restrictions are made on the 'Main'.
 
 // To request to join the group.
-public static void Admission( string address, string fullName, string utility )
+public static bool Admission( string address, string fullName, string utility )
 {
     string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
     
@@ -221,9 +224,11 @@ public static void Admission( string address, string fullName, string utility )
         // Add a new member after approval from group members.
         Member( address, fullName, utility, 0, 0 );
         Membership( address, "Welcome on board!" );
-        return;
+        return true;
     }
+
     Membership( address, "Not approved yet." );
+    return false;
 }
 
 // To get information about something.
@@ -309,7 +314,7 @@ public static object Summary( string key, string opt = "" )
 }
 
 // To vote in a given ID process.
-public static void Vote( string id, string member, bool answer )
+public static bool Vote( string id, string member, bool answer )
 {
     // Increase the number of votes.
     BigInteger temp = GetRef(id,"NumOfVotes").AsBigInteger();
@@ -322,8 +327,10 @@ public static void Vote( string id, string member, bool answer )
         UpRef(id, "CountTrue", temp++);
     }
 
-    // Publish the answer.
+    // Publish the vote.
     Ballot(id, member, answer);
+
+    return answer;
 }
 
 // To make a bid in a new PP crowdfunding process (ICO of a NFT).
@@ -349,14 +356,16 @@ public static bool Bid( string ICOid, string member, BigInteger bid )
     BigInteger previous = Storage.Get( String.Concat(ICOid, member) ).AsBigInteger();
     Storage.Put( String.Concat(ICOid, member), previous + bid );
     Offer(ICOid, member, bid);
+    
     return true;
     
     // If the hole fund process succeed, the money bid must be converted to percentage (bid/cost),
     // so it will be possible to define the quota and the SEB a member has to gain.
+    // It is made on PowerUp().
 }
 
 // To update something on the ledger.
-private void Change( string key, params object[] opts )
+private bool Change( string key, params object[] opts )
 {
     // If 'key' is an 'address' ==  member.
     if (key[0] == "A")
@@ -367,6 +376,7 @@ private void Change( string key, params object[] opts )
         {
             UpMemb(key, opts[0], opts[1]);
             Update("Profile data.", key);
+            return true;
         }
         
         // Any member can request the change of registration data of other member.
@@ -383,8 +393,11 @@ private void Change( string key, params object[] opts )
                 Process(id, "Approved.");
                 UpMemb(key, opts[0], opts[1]);
                 Update("Registration data.", key);
+                return true;
             }
-        Process(id, "Denied.");
+        
+            Process(id, "Denied.");
+            return false;
         }
         
         // Any member can request to delete another member.
@@ -412,8 +425,11 @@ private void Change( string key, params object[] opts )
 
                 DelMemb(key);
                 Membership(key, "Goodbye.");
+                return true;
             }
+
             Process(id, "Denied.");
+            return false;
         }
     }
     
@@ -436,8 +452,11 @@ private void Change( string key, params object[] opts )
                 Process(id, "Approved.");
                 UpPP(key, opts[0]);
                 Update("Belonging of.", key);
+                return true;
             }
+
             Process(id, "Denied.");
+            return false;
         }
 
         // Any member can request to DELETE a PP.
@@ -451,13 +470,16 @@ private void Change( string key, params object[] opts )
             Process(id, "Approved.");
             DelPP(key);
             Update("Deletion of.", key);
+            return true;
         }
+
         Process(id, "Denied.");
+        return false;
     }
 }
 
 // The whole process to integrate a new PP on the group power generation.
-private void PowerUp(BigInteger capacity, BigInteger cost, string utility, int startTime, int endTime, int timeframe)
+private bool PowerUp(BigInteger capacity, BigInteger cost, string utility, int startTime, int endTime, int timeframe)
 {
     string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility ), cost ); // --PENDING-- vai dar merda na conversão!
     
@@ -472,7 +494,7 @@ private void PowerUp(BigInteger capacity, BigInteger cost, string utility, int s
     else
     {
         Process(id, "This PP was not approved yet. Let's wait a bit more.");
-        return;
+        return false;
     }
 
     // If approved, starts to raise money.
@@ -502,7 +524,7 @@ private void PowerUp(BigInteger capacity, BigInteger cost, string utility, int s
             Refund(PPid, funder);
         }
         Process(id, "Fundraising has failed.");
-        return;
+        return false;
     }
 
     // Must lock the contract for a while!!! --PENDING--
@@ -528,7 +550,8 @@ private void PowerUp(BigInteger capacity, BigInteger cost, string utility, int s
         Transfer(null, funder, quota, tokens);
     }
 
-    Process(id, "A new power plant is now operating.")
+    Process(id, "A new power plant is now operating.");
+    return true;
 }
 
 // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
