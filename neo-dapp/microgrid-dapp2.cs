@@ -44,11 +44,14 @@ private static string[] profile => new string[] {"FullName", "Utility"};
 private static string[] register => new string[] {"Quota", "Tokens"};
 
 // New Power Plant crowdfunding settings (ICO of an NFT).
-private const ulong factor = 1000;              // decided by Decimals() --PENDING-- 1kW =?= 1SEB
-private const byte minOffer = 1;
+private const ulong factor = 1000;              // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
+private const byte minOffer = 1;                // Review restriction because it was not used so far. --PENDING--
 
 // The restrictive message to show up.
-private static ?string? Warning() => new InvalidOperationException("Only members can access this information. Join us!"); // --PENDING--
+private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
+
+// Caller authenticity...
+public static byte[] Caller() => ...;                                                       // --PENDING--
 
 //---------------------------------------------------------------------------------------------
 // THE MAIN INTERFACE
@@ -156,8 +159,8 @@ public static object Main ( string operation, params object[] args )
                 if ( (args[2] <= 0) & (args[3] <= 0) )
                     throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 4th argument empty. Otherwise, to donate tokens let ONLY the 3rd argument empty.");
                 
-                return Trade( (string)args[0],       // fromAddress
-                              (string)args[1],       // toAddress
+                return Trade( (string)args[0],       // from address
+                              (string)args[1],       // to address
                               (BigInteger)args[2],   // quota exchange
                               (BigInteger)args[3] ); // token price
             }
@@ -176,9 +179,9 @@ public static object Main ( string operation, params object[] args )
                 return PowerUp( (BigInteger)args[0],   // capacity [MW]
                                 (BigInteger)args[1],   // cost [R$]
                                 (string)args[2],       // power utility
-                                (int)args[3],          // start time -- PENDING--
-                                (int)args[4],          // end time -- PENDING--
-                                (int)args[5] );        // timeframe to wait the new PP gets ready to operate -- PENDING--
+                                (uint)args[3],         // start time -- PENDING--
+                                (uint)args[4],         // end time -- PENDING--
+                                (uint)args[5] );       // timeframe to wait the new PP gets ready to operate -- PENDING--
             }
 
             if (operation == "change")
@@ -414,7 +417,7 @@ private bool Change( string key, params object[] opts )
                 BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
                 BigInteger give_out = portion/(NumOfMemb() - 1);
                 
-                foreach (string)member in listOfMembers()
+                foreach (string member in listOfMembers())
                 {
                     // In an infinitesimal time frame the group will be disbalance
                     // until the related member be completely deleted.
@@ -481,7 +484,7 @@ private bool Change( string key, params object[] opts )
 // The whole process to integrate a new PP on the group power generation.
 private bool PowerUp(BigInteger capacity, BigInteger cost, string utility, int startTime, int endTime, int timeframe)
 {
-    string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility ), cost ); // --PENDING-- vai dar merda na conversão!
+    string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility ), cost );
     
     // Must lock the contract for a while!!! --PENDING--
     ...
@@ -519,7 +522,7 @@ private bool PowerUp(BigInteger capacity, BigInteger cost, string utility, int s
     }
     else
     {
-        foreach funder in litsOfFunders
+        foreach (string funder in litsOfFunders)
         {
             Refund(PPid, funder);
         }
@@ -540,7 +543,7 @@ private bool PowerUp(BigInteger capacity, BigInteger cost, string utility, int s
     // The presence of the PP which accounts for on the group.
     BigInteger sharesOfPP = capOfPP/capOfGroup;
     
-    foreach funder in litsOfFunders
+    foreach (string funder in litsOfFunders)
     {
         BigInteger grant = GetBid(ICOid, funder).AsBigInteger();
         BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos
@@ -563,7 +566,7 @@ private bool Trade( string fromAddress, string toAddress, BigInteger exchange, B
     BigInteger[] fromWallet = new BigInteger[];
     
     // register = {"Quota", "Tokens"}
-    foreach (string)data in register
+    foreach (string data in register)
     {
         fromWallet.append( GetMemb(fromAddress, data).AsBigInteger() );
         toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
@@ -588,7 +591,7 @@ private static void Distribute( string toAddress, BigInteger quota, BigInteger t
     BigInteger[] toWallet = new BigInteger[];
 
     // register = {"Quota", "Tokens"}
-    foreach (string)data in register
+    foreach (string data in register)
     {
         toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
     }
@@ -601,11 +604,21 @@ private static void Distribute( string toAddress, BigInteger quota, BigInteger t
 // To create a custom ID of a process based on its particular specifications.
 private static string ID( object arg1, object arg2, object arg3, object arg4 )
 {
-    // 'object' solves the problem but miss the information.
+    object[] listOfArgs = new object[4] {arg1, arg2, arg3, arg4};
+    
+    for (int n = 0; n < 5; n++)
+    {
+        if (!(listOfArgs[n] is string))
+        {
+            listOfArgs[n] = (char)listOfArgs[n];
+        }
+    }
 
     string temp1 = String.Concat(arg1, arg2);
     string temp2 = String.Concat(arg3, arg4);
     return String.Concat(temp1, temp2);
+    // string to byte[]
+    // str.AsByteArray();
 }
 
 // To properly store a boolean variable.
@@ -656,7 +669,7 @@ private static string[] listOfPPs()
 {
     string[] listPPs = new string[];
     
-    foreach num in NumOfPP()
+    foreach (int num in NumOfPP())
     {
         string PP = Storage.Get( String.Concat( "P", num.ToString() ) ); // --PENDING--
         listMembers.append(PP);
@@ -670,13 +683,33 @@ private static string[] listOfMembers()
 {
     string[] listMembers = new string[];
     
-    foreach num in NumOfMemb()
+    foreach (int num in NumOfMemb())
     {
         string member = Storage.Get( String.Concat( "M", num.ToString() ) ); // --PENDING--
         listMembers.append(member);
     }
     
     return listMembers;
+}
+
+// To lock some operations on the contract for a while.
+private static bool Lock(uint startTime, uint endTime, uint timestamp)
+{
+    /**
+    * The contract implements a function that specifies a certain timestamp.
+    * Before the specified time stated, no one is allowed to withdraw any assets from the contract.
+    * Once the time stated is reached, the contract owners can then withdraw the assets.
+    * 
+    * INPUTS
+    *   timestamp = the lock time in the sample code, which is a Unix timestamp.
+    *               You can calculate it yourself or use it: https://unixtime.51240.com/
+    *   pubkey = insert the previous copy of the public key byte array
+    *   signature = the private key?
+    **/
+
+    Header header = Blockchain.GetHeader(Blockchain.GetHeight());
+    if (header.Timestamp < timestamp) return false;
+    return true;
 }
 
 //---------------------------------------------------------------------------------------------
@@ -1000,3 +1033,21 @@ private static void DelCrowd( string ICOid, string opt )
 
 //---------------------------------------------------------------------------------------------
 https://github.com/neo-project/examples/blob/master/csharp/NEP5/NEP5.cs
+
+
+Neo.Header.GetTimestamp         // Get the timestamp of the block
+Neo.Storage.GetContext          // [New] Get the current store context
+Neo.Contract.GetStorageContext  // [New] Get the storage context of the contract
+
+// get sender script hash
+Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
+TransactionOutput[] reference = tx.GetReferences();
+reference[0].ScriptHash;
+
+// to update ID and comparation of IDs operations
+    string temp1 = String.Concat( "Hello world", "outra coisa" );
+    string temp2 = String.Concat( "P", temp1);
+
+    byte[] result2 = temp2.AsByteArray();
+
+    Runtime.Notify( result2.AsString()[0] == 'P' ); // comparação entre string's, mas "P" não funciona...
