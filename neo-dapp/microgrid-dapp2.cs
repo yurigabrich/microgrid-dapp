@@ -32,6 +32,12 @@ public static BigInteger NumOfMemb() => Storage.Get("NumOfMemb").AsBigInteger();
 // The total power supply at the group, i.e., sum of PP's capacity.
 public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigInteger();
 
+// The number of days to answer a referendum process.
+private const byte timeframeRef = 30;         // Review the sum with uint (is the endtime right?) --PENDING--
+
+// The time a given function is invoked.
+private static uint StartTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp; // --PENDING--
+
 // Token settings.
 public static string Name() => "Sharing Electricity in Brazil";
 public static string Symbol() => "SEB";
@@ -46,6 +52,7 @@ private static string[] register => new string[] {"Quota", "Tokens"};
 // New Power Plant crowdfunding settings (ICO of an NFT).
 private const ulong factor = 1000;              // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
 private const byte minOffer = 1;                // Review restriction because it was not used so far. --PENDING--
+private const byte timeframeCrowd = 60;         // Review the sum with uint (is the endtime right?) --PENDING--
 
 // The restrictive message to show up.
 private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
@@ -112,6 +119,9 @@ public static object Main ( string operation, params object[] args )
                 if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
                     throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
 
+                if ( isLock((string)args[0]) )
+                    throw new InvalidOperationException("The ballot has ended.");
+                
                 return Vote( (string)args[0],    // referendum id
                              (string)args[1],    // member address
                              (bool)args[2] );    // answer
@@ -133,6 +143,9 @@ public static object Main ( string operation, params object[] args )
 
                 if ( args[2] <= 0 ) return false;
                     throw new InvalidOperationException("Stop being a jerk.");
+                
+                if ( isLock((string)args[0]) )
+                    throw new InvalidOperationException("The campaign has ended.");
 
                 return Bid( (string)args[0],     // ICO id == PP id
                             (string)args[1],     // member address
@@ -167,21 +180,16 @@ public static object Main ( string operation, params object[] args )
 
             if (operation == "power up")
             {
-                if (args.Length != 6)
-                    throw new InvalidOperationException("Please provide the 6 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, the start and end time of the crowdfunding process, and the timeframe planned to set the PP up.");
+                if (args.Length != 4)
+                    throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
 
-                if ( (args[4] <= args[3]) || (args[3] == 0) || (args[4] == 0) )
-                    throw new InvalidOperationException("Please provide valid dates.");
-
-                if ( (args[5] == 0) || (args[5] < 30) )
-                    throw new InvalidOperationException("Timeframe must be a factual period.");
+                if ( (args[3] == 0) || (args[3] < 30) )
+                    throw new InvalidOperationException("The time to market must be a factual period.");
 
                 return PowerUp( (BigInteger)args[0],   // capacity [MW]
                                 (BigInteger)args[1],   // cost [R$]
-                                (string)args[2],       // power utility
-                                (uint)args[3],         // start time -- PENDING--
-                                (uint)args[4],         // end time -- PENDING--
-                                (uint)args[5] );       // timeframe to wait the new PP gets ready to operate -- PENDING--
+                                (string)args[2],       // power utility name
+                                (ushort)args[3] );     // time to market
             }
 
             if (operation == "change")
@@ -482,7 +490,7 @@ private bool Change( string key, params object[] opts )
 }
 
 // The whole process to integrate a new PP on the group power generation.
-private bool PowerUp(BigInteger capacity, BigInteger cost, string utility, int startTime, int endTime, int timeframe)
+private bool PowerUp( BigInteger capacity, BigInteger cost, string utility, ushort timeToMarket )
 {
     string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility ), cost );
     
@@ -501,13 +509,13 @@ private bool PowerUp(BigInteger capacity, BigInteger cost, string utility, int s
     }
 
     // If approved, starts to raise money.
-    CrowdFunding( PPid, startTime, endTime);
+    CrowdFunding(PPid);
     Process(PPid, "Shut up and give me money!");
     
     // if ( (.TODAY() > start_time) && (.TODAY() < end_time) ) // Crowdfunding is still available
     ...
     // Must lock the contract for a while!!! --PENDING--
-    ... if (contributions >= target) UpCrowd( PPid, true );
+    ... if (contributions = target) UpCrowd( PPid, true ); // nunca vai ser maior pq existe uma restrição para isso não acontecer!
     
     // Gets a list of funders of the respective PP.
     string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
@@ -531,7 +539,7 @@ private bool PowerUp(BigInteger capacity, BigInteger cost, string utility, int s
     }
 
     // Must lock the contract for a while!!! --PENDING--
-    ... timeframe
+    ... timeToMarket
     
     // When the PP starts to operate, it's time to distribute tokens and shares.
         
@@ -692,25 +700,34 @@ private static string[] listOfMembers()
     return listMembers;
 }
 
-// To lock some operations on the contract for a while.
-private static bool Lock(uint startTime, uint endTime, uint timestamp)
-{
-    /**
+// Actualy, it restricts a given operation to happen based on a timeframe.
+// It must happen during any Referendum (new member, new PP), when a CrowdFunding is raised or when an Update of some information is requested (kind of referendum?).
+
+// All this steps must be provided on the first invoke of the function. So the contract call set the trigger to run in the future. -- WHOLE SHEET!
+
+// Check if some operation on the contract is locked for a while.
+/**
     * The contract implements a function that specifies a certain timestamp.
     * Before the specified time stated, no one is allowed to withdraw any assets from the contract.
     * Once the time stated is reached, the contract owners can then withdraw the assets.
-    * 
+    *
     * INPUTS
     *   timestamp = the lock time in the sample code, which is a Unix timestamp.
     *               You can calculate it yourself or use it: https://unixtime.51240.com/
     *   pubkey = insert the previous copy of the public key byte array
     *   signature = the private key?
     **/
-
+private static bool isLock( string id )
+{
     Header header = Blockchain.GetHeader(Blockchain.GetHeight());
-    if (header.Timestamp < timestamp) return false;
+    
+    
+    uint endTime = GetRef(id, "endTime");                      // provavelmente vai dar erro de conversão!
+    
+    if (header.Timestamp < endTime) return false;
     return true;
 }
+
 
 //---------------------------------------------------------------------------------------------
 // METHODS FOR MEMBERS
@@ -887,15 +904,17 @@ private static string Ref( string proposal, string notes, int cost = 0 )
     // Storage.Put( String.Concat( id, "NumOfVotes"), 0 );   // Expensive to create with null value. Just state it out!
     // Storage.Put( String.Concat( id, "CountTrue"), 0 );    // Expensive to create with null value. Just state it out!
     Storage.Put( String.Concat( id, "Outcome" ), Bool2Str(false) );
+    Storage.Put( String.Concat( id, "startTime" ), StartTime() );
+    Storage.Put( String.Concat( id, "endTime" ), StartTime() + timeframeRef );
 
     Process(id, "The referendum process has started.");
     return id;
 }
 
-// The function to vote on a referendum is declared above, because it is public.
+// The function to vote on a referendum is declared above because it is public.
 
 // --> read
-private static byte[] GetRef( string id, string opt )
+private static byte[] GetRef( string id, string opt )       // retorna byte[] OU object? --PENDING--
 {
     return Storage.Get( String.Concat( id, opt ) );
 }
@@ -935,16 +954,16 @@ private static void UpRef( string id, bool val )
 //---------------------------------------------------------------------------------------------
 // METHODS TO EVALUATE A NEW POWER PLANT (aka an ICO of a NFT)
 // --> create
-private static void CrowdFunding( string ICOid, int startTime, int endTime)
+private static void CrowdFunding( string ICOid )
 {
-    Storage.Put( String.Concat( ICOid, "StartTime" ), startTime ); // --PENDING--
-    Storage.Put( String.Concat( ICOid, "EndTime" ), endTime ); // --PENDING--
+    Storage.Put( String.Concat( ICOid, "startTime" ), StartTime() );
+    Storage.Put( String.Concat( ICOid, "endTime" ), StartTime() + timeframeCrowd );
     // Storage.Put( String.Concat( ICOid, "TotalAmount" ), 0 );   // Expensive to create with null value. Just state it out!
     // Storage.Put( String.Concat( ICOid, "Contributions" ), 0 ); // Expensive to create with null value. Just state it out!
     Storage.Put( String.Concat( ICOid, "Success" ), Bool2Str(false) );
 }
 
-// The function to bid on a crowdfunding is declared above, because it is public.
+// The function to bid on a crowdfunding is declared above because it is public.
 
 // --> read
 private static BigInteger GetBid( string ICOid, string member )
@@ -952,7 +971,7 @@ private static BigInteger GetBid( string ICOid, string member )
     return Storage.Get( String.Concat( ICOid, member ) );
 }
 
-private static object GetCrowd( string ICOid, string opt )
+private static object GetCrowd( string ICOid, string opt )             // retorna byte[] OU object? --PENDING--
 {
     return Storage.Get( String.Concat( ICOid, opt ) );
 }
@@ -1035,6 +1054,11 @@ private static void DelCrowd( string ICOid, string opt )
 https://github.com/neo-project/examples/blob/master/csharp/NEP5/NEP5.cs
 
 
+
+
+// TO TEST
+//---------------------------------------------------------------------------------------------
+
 Neo.Header.GetTimestamp         // Get the timestamp of the block
 Neo.Storage.GetContext          // [New] Get the current store context
 Neo.Contract.GetStorageContext  // [New] Get the storage context of the contract
@@ -1051,3 +1075,33 @@ reference[0].ScriptHash;
     byte[] result2 = temp2.AsByteArray();
 
     Runtime.Notify( result2.AsString()[0] == 'P' ); // comparação entre string's, mas "P" não funciona...
+    
+    
+    
+    
+    
+    
+    
+    
+    
+// TO DO
+//---------------------------------------------------------------------------------------------
+// It must be an offline operation! From an offline monitoring, any Neo user could continue the process invoking the function again. However, it will only work if the user has a membership ID.
+
+// CRIAR UMA OPERAÇÃO DA WALLET QUE POSSA FAZER ISSO! Exemplos de wallet?
+
+// ---------------
+
+// To unlock some operations to keep going.
+// It automatically invokes this smart contract to continue a function from where it has been locked.
+private static void Unlock(func equivalencia?) // como passar o comando para uma função específica?
+{
+    // Blockchain... Execute ( Owner(), function );
+    Blockchain.GetAccount( Owner() ); // Get an account based on the scripthash of the contract
+    Blockchain.GetAccount( Owner() ); // Get contract content based on contract hash
+    Transaction.GetHash; //	Get Hash for the current transaction
+    Transaction.GetAttributes; //	Query all properties of the current transaction
+    Account.GetScriptHash; //	Get the script hash of the contract account
+    Contract.GetScript; //	Get the scripthash of the contract
+    
+}
