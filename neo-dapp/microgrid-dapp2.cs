@@ -321,7 +321,7 @@ public static object Summary( string key, string opt = "" )
             return GetPP(key,opt);
         }
         
-        // The PP's crowdfunding may be succeed or not and the PP is definitely not operating.
+        // The PP's crowdfunding may be succeed or not, and the PP is definitely not operating.
         else
         {
             if ( (opt == "") || (opt == "detailed") )
@@ -729,7 +729,7 @@ private static void ChangeResult( string id )
     }
 }
 
-private static object PowerUpResult( string id, string PPid = null )
+private static object PowerUpResult( string id, string PPid = null ) // --PENDING-- how to garantee that each 'if' will only happen once?
 {
     string notes = GetRef(id, "Notes"); // --PENDING--
             
@@ -764,24 +764,27 @@ private static object PowerUpResult( string id, string PPid = null )
     }
     
     // STEP 3 - After a 'timeframeCrowd' waiting period.
+    
+    // Calculates the date the new PP is planned to start to operate, that can be updated until the deadline.
     uint operationDate = GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market"); // ICO_endTime + PP_timeToMarket
     
-    if ( (StartTime() > endTime) & (StartTime() < operationDate) )
-    {
-        if (?contributions = ?target)   // --PENDING--
-        {
-            UpCrowd( PPid, true ); // Aqui é o único lugar em que isso está acontecendo? É aqui que isso deve ser definido?
-        }
-        
-        // Gets a list of funders of the respective PP.
-        string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
+    // Gets a list of funders of the respective PP.
+    string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
     
-        // If crowdfunding succeeds.
-        if ( Str2Bool( GetCrowd( PPid, "Success") ) )
+    if ( (GetPP(PPid,"numOfFundMemb").Length == 0) & (StartTime() > endTime) & (StartTime() < operationDate) )
+    {
+        // Gets the result of the ICO process to comparison.
+        BigInteger target = GetPP(PPid, "Cost").AsBigInteger();
+        BigInteger funding = GetCrowd(PPid, "TotalAmount").AsBigInteger();
+        
+        if (funding == target)
         {
-            // Update the number of fund members database
-            BigInteger numOfFundMemb = ...; // --PENDING--
-            UpPP(id, "numOfFundMemb", numOfFundMemb);
+            // Crowdfunding has succeeded.
+            UpCrowd( PPid, true );
+            
+            // Updates the number of investors on the database.
+            UpPP(PPid, "numOfFundMemb", listOfFunders.Length);
+            
             Process(id, "New power plant on the way.");
             return true;
         }
@@ -791,13 +794,14 @@ private static object PowerUpResult( string id, string PPid = null )
             {
                 Refund(PPid, funder);
             }
+            
             Process(id, "Fundraising has failed.");
             return false;
         }
     }
     
     // STEP 4 - After waiting for the time to market.
-    if ( StartTime() > operationDate )
+    if ( (StartTime() > operationDate) & ("What is unique inside this 'if'?") )
     {
         // When the PP starts to operate, it's time to distribute tokens and shares.
             
@@ -806,14 +810,19 @@ private static object PowerUpResult( string id, string PPid = null )
         BigInteger capOfGroup = TotalSupply() + capOfPP;
         Storage.Put("TotalSupply", capOfGroup);
     
-        // The presence of the PP which accounts for on the group.
+        // How much the new Power Plant takes part on the group total power supply.
         BigInteger sharesOfPP = capOfPP/capOfGroup;
         
         foreach (string funder in litsOfFunders)
         {
+            // Gets the member contribution.
             BigInteger grant = GetBid(ICOid, funder).AsBigInteger();
-            BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos
-            BigInteger quota = tokens * sharesOfPP; // --PENDING-- rever unidades e cálculos
+            
+            // How much a member has from the new PP's capacity.
+            BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos (R$/MW ou kW/MW ?)
+            
+            // How much a member has from the updated total power supply.
+            BigInteger quota = tokens * sharesOfPP; // --PENDING-- rever unidades e cálculos (R$/MW ou kW/MW ?)
     
             Distribute(funder, quota, tokens);
             Transfer(null, funder, quota, tokens);
@@ -822,6 +831,8 @@ private static object PowerUpResult( string id, string PPid = null )
         Process(id, "A new power plant is now operating.");
         return true;
     }
+    
+    return "There is nothing more to be done.";
 }
 
 
