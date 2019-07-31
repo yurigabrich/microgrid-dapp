@@ -111,6 +111,7 @@ public static object Main ( string operation, params object[] args )
         // Restricted operations.
         if ( GetMemb(caller, "FullName").Length != null )
         {
+            // Group operations.
             if (operation == "vote")
             {
                 if ( args.Length != 3 )
@@ -209,6 +210,29 @@ public static object Main ( string operation, params object[] args )
                 return Change( (string)args[0],     // member address or PP id
                                (object[])args[1] ); // array with desired values --PENDING-- test length
             }
+            
+            // Administrative operations.
+            if (operation == "admission result")
+            {
+                if ( args.Length != 1 )
+                    throw new InvalidOperationException("Please provide the admission process ID.");
+                
+                if ( StartTime() <= GetRef( (string)args[0], "endTime" ) )
+                    throw new InvalidOperationException("There is no result yet.");
+                
+                return AdmissionResult( (string)args[0] ); // Referendum ID
+            }
+            
+            if (operation == "change result")
+            {
+                if ( args.Length != 1 )
+                    throw new InvalidOperationException("Please provide the change process ID.");
+                
+                if ( StartTime() <= GetRef( (string)args[0], "endTime" ) )
+                    throw new InvalidOperationException("There is no result yet.");
+                
+                ChangeResult( (string)args[0] ); // Referendum ID
+            }
         }
 
         throw Warning();
@@ -220,26 +244,15 @@ public static object Main ( string operation, params object[] args )
 
 
 //---------------------------------------------------------------------------------------------
-// FUNCTIONS - The restrictions are made on the 'Main'.
+// GROUP FUNCTIONS - The restrictions are made on the 'Main'.
 
 // To request to join the group.
-public static bool Admission( string address, string fullName, string utility )
+public static string Admission( string address, string fullName, string utility )
 {
     string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
+    Membership( address, "Request for admission." );
     
-    // Must lock the contract for a while!!! --PENDING--
-    ...
-    
-    if ( Str2Bool( GetRef(id, "Outcome") ) )
-    {
-        // Add a new member after approval from group members.
-        Member( address, fullName, utility, 0, 0 );
-        Membership( address, "Welcome on board!" );
-        return true;
-    }
-
-    Membership( address, "Not approved yet." );
-    return false;
+    return id;
 }
 
 // To get information about something.
@@ -376,7 +389,7 @@ public static bool Bid( string ICOid, string member, BigInteger bid )
 }
 
 // To update something on the ledger.
-private bool Change( string key, params object[] opts )
+private object Change( string key, params object[] opts )
 {
     // If 'key' is an 'address' ==  member.
     if (key[0] == "A")
@@ -395,52 +408,16 @@ private bool Change( string key, params object[] opts )
         if ( opts[1] is BigInteger )
         {
             string id = Ref( "Change register_", String.Concat( key, opts[0] ) );
-    
-            // Must lock the contract for a while!!! --PENDING--
-            ...
-            
-            if ( Str2Bool( GetRef(id, "Outcome") ) )
-            {
-                Process(id, "Approved.");
-                UpMemb(key, opts[0], opts[1]);
-                Update("Registration data.", key);
-                return true;
-            }
-        
-            Process(id, "Denied.");
-            return false;
+            Process( id, "Request the change of registration data of a member." );
+            return id;
         }
         
         // Any member can request to delete another member.
         if ( opts.Length == 0 )
         {
             string id = Ref( "Delete member_", "Distribute the shares and delete the tokens." );
-            
-            // Must lock the contract for a while!!! --PENDING--
-            ...
-            
-            if ( Str2Bool( GetRef(id, "Outcome") ) )
-            {
-                Process(id, "Approved.");
-                BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
-                BigInteger give_out = portion/(NumOfMemb() - 1);
-                
-                foreach (string member in listOfMembers())
-                {
-                    // In an infinitesimal time frame the group will be disbalance
-                    // until the related member be completely deleted.
-                    // There is no side effect and it is better than iterate through each member.
-                    
-                    Distribute(member, give_out, 0);
-                }
-
-                DelMemb(key);
-                Membership(key, "Goodbye.");
-                return true;
-            }
-
-            Process(id, "Denied.");
-            return false;
+            Process( id, "Request to dismiss a member." );
+            return id;
         }
     }
     
@@ -454,115 +431,25 @@ private bool Change( string key, params object[] opts )
         if ( opts.Length != 0 )
         {
             string id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
-    
-            // Must lock the contract for a while!!! --PENDING--
-            ...
-            
-            if ( Str2Bool( GetRef(id, "Outcome") ) )
-            {
-                Process(id, "Approved.");
-                UpPP(key, opts[0]);
-                Update("Belonging of.", key);
-                return true;
-            }
-
-            Process(id, "Denied.");
-            return false;
+            Process( id, "Request the change of utility name of a PP." );
+            return id;
         }
 
         // Any member can request to DELETE a PP.
         string id = Ref( "Delete PP_", String.Concat( key, opts[0] ) );
-    
-        // Must lock the contract for a while!!! --PENDING--
-        ...
+        Process( id, "Request to delete a PP." );
+        return id;
         
-        if ( Str2Bool( GetRef(id, "Outcome") ) )
-        {
-            Process(id, "Approved.");
-            DelPP(key);
-            Update("Deletion of.", key);
-            return true;
-        }
-
-        Process(id, "Denied.");
-        return false;
+        
     }
 }
 
 // The whole process to integrate a new PP on the group power generation.
-private bool PowerUp( BigInteger capacity, BigInteger cost, string utility, ushort timeToMarket )
+private string PowerUp( BigInteger capacity, BigInteger cost, string utility, ushort timeToMarket )
 {
-    string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility ), cost );
-    
-    // Must lock the contract for a while!!! --PENDING--
-    ...
-    
-    // Adds or not a new PP after votes from group members.
-    if ( Str2Bool( GetRef(id, "Outcome") ) )
-    {
-        string PPid = PP(capacity, cost, utility);
-    }
-    else
-    {
-        Process(id, "This PP was not approved yet. Let's wait a bit more.");
-        return false;
-    }
-
-    // If approved, starts to raise money.
-    CrowdFunding(PPid);
-    Process(PPid, "Shut up and give me money!");
-    
-    // if ( (.TODAY() > start_time) && (.TODAY() < end_time) ) // Crowdfunding is still available
-    ...
-    // Must lock the contract for a while!!! --PENDING--
-    ... if (contributions = target) UpCrowd( PPid, true ); // nunca vai ser maior pq existe uma restrição para isso não acontecer!
-    
-    // Gets a list of funders of the respective PP.
-    string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
-
-    // If crowdfunding succeeds.
-    if ( Str2Bool( GetCrowd( PPid, "Success") ) )
-    {
-        // Update the number of fund members database
-        BigInteger numOfFundMemb = ...; // --PENDING--
-        UpPP(id, "numOfFundMemb", numOfFundMemb);
-        Process(id, "New power plant on the way.");
-    }
-    else
-    {
-        foreach (string funder in litsOfFunders)
-        {
-            Refund(PPid, funder);
-        }
-        Process(id, "Fundraising has failed.");
-        return false;
-    }
-
-    // Must lock the contract for a while!!! --PENDING--
-    ... timeToMarket
-    
-    // When the PP starts to operate, it's time to distribute tokens and shares.
-        
-    // Increases the total power supply of the group.
-    BigInteger capOfPP = GetPP(ICOid, "Capacity").AsBigInteger();
-    BigInteger capOfGroup = TotalSupply() + capOfPP;
-    Storage.Put("TotalSupply", capOfGroup);
-
-    // The presence of the PP which accounts for on the group.
-    BigInteger sharesOfPP = capOfPP/capOfGroup;
-    
-    foreach (string funder in litsOfFunders)
-    {
-        BigInteger grant = GetBid(ICOid, funder).AsBigInteger();
-        BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos
-        BigInteger quota = tokens * sharesOfPP; // --PENDING-- rever unidades e cálculos
-
-        Distribute(funder, quota, tokens);
-        Transfer(null, funder, quota, tokens);
-    }
-
-    Process(id, "A new power plant is now operating.");
-    return true;
+    string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility, timeToMarket.ToString() ), cost );
+    Process( id, "Request to add a new PP." );
+    return id;
 }
 
 // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
@@ -592,6 +479,10 @@ private bool Trade( string fromAddress, string toAddress, BigInteger exchange, B
     return true;
 }
 
+
+//---------------------------------------------------------------------------------------------
+// SYSTEM FUNCTIONS
+
 // A new PP will just distribute tokens and shares after a crowdfunding process succeed.    // --PENDING-- verificar com o caso de deletar membro!
 // All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
 private static void Distribute( string toAddress, BigInteger quota, BigInteger tokens )
@@ -610,7 +501,7 @@ private static void Distribute( string toAddress, BigInteger quota, BigInteger t
 }
 
 // To create a custom ID of a process based on its particular specifications.
-private static string ID( object arg1, object arg2, object arg3, object arg4 )
+private static string ID( object arg1, object arg2, object arg3, object arg4 )  // --PENDING--
 {
     object[] listOfArgs = new object[4] {arg1, arg2, arg3, arg4};
     
@@ -726,6 +617,189 @@ private static bool isLock( string id )
     
     if (header.Timestamp < endTime) return false;
     return true;
+}
+
+
+//---------------------------------------------------------------------------------------------
+// ADMINISTRATIVE FUNCTIONS
+
+// After a period of 'timeframeRef' days a member should invoke this function to state the referendum process.
+// An offchain operation should handle this.
+
+private static void AdmissionResult( string id )
+{
+    if ( Str2Bool( GetRef(id, "Outcome") ) )
+    {
+        // Add a new member after approval from group members.
+        Member( address, fullName, utility, 0, 0 );
+        Membership( address, "Welcome on board!" );
+    }
+
+    Membership( address, "Not approved yet." );
+}
+
+private static void ChangeResult( string id )
+{
+    string proposal = GetRef(id, "Proposal").AsString();
+    
+    if (proposal == "Change register_")
+    {
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        {
+            Process(id, "Approved.");
+            UpMemb(key, opts[0], opts[1]);
+            Update("Registration data.", key);
+        }
+        
+        Process(id, "Denied.");
+    }
+                
+    if (proposal == "Delete member_")
+    {
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        {
+            Process(id, "Approved.");
+            BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
+            BigInteger give_out = portion/(NumOfMemb() - 1);
+            
+            foreach (string member in listOfMembers())
+            {
+                // In an infinitesimal period of time the group will be disbalanced
+                // until the related member be completely deleted.
+                // There is no side effect and it is better than iterate through each member.
+                
+                Distribute(member, give_out, 0);
+            }
+    
+            DelMemb(key);
+            Membership(key, "Goodbye.");
+        }
+    
+        Process(id, "Denied.");
+    }
+    
+    if (proposal == "Change utility_")
+    {
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        {
+            Process(id, "Approved.");
+            UpPP(key, opts[0]);
+            Update("Belonging of.", key);
+        }
+
+        Process(id, "Denied.");
+    }
+        
+    if (proposal == "Delete PP_")
+    {
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        {
+            Process(id, "Approved.");
+            DelPP(key);
+            Update("Deletion of.", key);
+        }
+
+        Process(id, "Denied.");
+    }
+}
+
+private static object PowerUpResult( string id, string PPid = null )   // --PENDING--
+{
+    string notes = GetRef(id, "Notes"); // --PENDING--
+            
+    // separa os termos em Notes!           // --PENDING--
+            
+            
+    // STEP 1 - After a 'timeframeRef' waiting period.
+    if (PPid == null)
+    {
+        // Adds or not a new PP after votes from group members.
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        {
+            BigInteger capacity = notes[0];
+            BigInteger cost = GetRef(id, "Cost");
+            string utility = notes[1];
+            
+            return PP(capacity, cost, utility);     // PPid
+        }
+        else
+        {
+            Process(id, "This PP was not approved yet. Let's wait a bit more.");
+            return false;
+        }
+    }
+
+    // STEP 2 - If a new PP has been approved, starts to raise money for it.
+    if ( GetCrowd(PPid, "startTime").Length == 0 )
+    {
+        CrowdFunding(PPid);
+        Process(PPid, "Shut up and give me money!");
+        return true;
+    }
+    
+    
+    ushort timeToMarket = notes[2];
+    uint endTime = GetCrowd(PPid, "endTime");
+    uint operationDate = endtime + timeToMarket;
+            
+    
+    // STEP 3 - After a 'timeframeCrowd' waiting period.
+    if ( (StartTime() > endTime) & (StartTime() < operationDate) )
+    {
+        if (?contributions = ?target)
+        {
+            UpCrowd( PPid, true ); // Aqui é o único lugar em que isso está acontecendo? É aqui que isso deve ser definido?
+        }
+        
+        // Gets a list of funders of the respective PP.
+        string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
+    
+        // If crowdfunding succeeds.
+        if ( Str2Bool( GetCrowd( PPid, "Success") ) )
+        {
+            // Update the number of fund members database
+            BigInteger numOfFundMemb = ...; // --PENDING--
+            UpPP(id, "numOfFundMemb", numOfFundMemb);
+            Process(id, "New power plant on the way.");
+            return true;
+        }
+        else
+        {
+            foreach (string funder in litsOfFunders)
+            {
+                Refund(PPid, funder);
+            }
+            Process(id, "Fundraising has failed.");
+            return false;
+        }
+    }
+    
+    // STEP 4 - After waiting for the time to market.
+    if ( StartTime() > operationDate )
+    {
+        // When the PP starts to operate, it's time to distribute tokens and shares.
+            
+        // Increases the total power supply of the group.
+        BigInteger capOfPP = GetPP(ICOid, "Capacity").AsBigInteger();
+        BigInteger capOfGroup = TotalSupply() + capOfPP;
+        Storage.Put("TotalSupply", capOfGroup);
+    
+        // The presence of the PP which accounts for on the group.
+        BigInteger sharesOfPP = capOfPP/capOfGroup;
+        
+        foreach (string funder in litsOfFunders)
+        {
+            BigInteger grant = GetBid(ICOid, funder).AsBigInteger();
+            BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos
+            BigInteger quota = tokens * sharesOfPP; // --PENDING-- rever unidades e cálculos
+    
+            Distribute(funder, quota, tokens);
+            Transfer(null, funder, quota, tokens);
+        }
+    
+        Process(id, "A new power plant is now operating.");
+        return true;
+    }
 }
 
 
