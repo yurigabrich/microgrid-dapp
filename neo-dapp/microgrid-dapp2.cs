@@ -53,6 +53,7 @@ private static string[] register => new string[] {"Quota", "Tokens"};
 private const ulong factor = 1000;              // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
 private const byte minOffer = 1;                // Review restriction because it was not used so far. --PENDING--
 private const byte timeframeCrowd = 60;         // Review the sum with uint (is the endtime right?) --PENDING--
+private const byte minTimeToMarket = 30;    // days
 
 // The restrictive message to show up.
 private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
@@ -184,7 +185,7 @@ public static object Main ( string operation, params object[] args )
                 if (args.Length != 4)
                     throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
 
-                if ( (args[3] == 0) || (args[3] < 30) )
+                if ( (args[3] == 0) || (args[3] < minTimeToMarket) )
                     throw new InvalidOperationException("The time to market must be a factual period.");
 
                 return PowerUp( (BigInteger)args[0],   // capacity [MW]
@@ -218,7 +219,7 @@ public static object Main ( string operation, params object[] args )
                     throw new InvalidOperationException("Please provide the admission process ID.");
                 
                 if ( StartTime() <= GetRef( (string)args[0], "endTime" ) )
-                    throw new InvalidOperationException("There is no result yet.");
+                    throw new InvalidOperationException("There isn't a result yet.");
                 
                 return AdmissionResult( (string)args[0] ); // Referendum ID
             }
@@ -229,9 +230,34 @@ public static object Main ( string operation, params object[] args )
                     throw new InvalidOperationException("Please provide the change process ID.");
                 
                 if ( StartTime() <= GetRef( (string)args[0], "endTime" ) )
-                    throw new InvalidOperationException("There is no result yet.");
+                    throw new InvalidOperationException("There isn't a result yet.");
                 
                 ChangeResult( (string)args[0] ); // Referendum ID
+            }
+            
+            if (operation == "power up result")
+            {
+                if ( args.Length == 0 )
+                    throw new InvalidOperationException("Please provide at least the new PP process ID.");
+                    
+                if ( args.Length > 2 )
+                    throw new InvalidOperationException("Please provide at most the new PP process ID, and the PP ID itself.");
+                
+                // STEP 1
+                if ( StartTime() <= GetRef( (string)args[0], "endTime" ) )
+                    throw new InvalidOperationException("There isn't a result about the new PP request yet.");
+                
+                // STEP 2
+                if ( StartTime() <= GetCrowd(PPid, "endTime") )
+                    throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
+                
+                // STEP 3
+                if ( StartTime() <= ( GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market") ) )
+                    throw new InvalidOperationException("The new PP is not ready to operate yet.");
+                
+                // STEP 4
+                PowerUpResult( (string)args[0],     // Referendum ID
+                               (string)args[1] );   // PP ID
             }
         }
 
@@ -703,7 +729,7 @@ private static void ChangeResult( string id )
     }
 }
 
-private static object PowerUpResult( string id, string PPid = null )   // --PENDING--
+private static object PowerUpResult( string id, string PPid = null )
 {
     string notes = GetRef(id, "Notes"); // --PENDING--
             
@@ -720,7 +746,7 @@ private static object PowerUpResult( string id, string PPid = null )   // --PEND
             BigInteger cost = GetRef(id, "Cost");
             string utility = notes[1];
             
-            return PP(capacity, cost, utility);     // PPid
+            return PP(capacity, cost, utility, notes[2]); // PPid
         }
         else
         {
@@ -737,16 +763,12 @@ private static object PowerUpResult( string id, string PPid = null )   // --PEND
         return true;
     }
     
-    
-    ushort timeToMarket = notes[2];
-    uint endTime = GetCrowd(PPid, "endTime");
-    uint operationDate = endtime + timeToMarket;
-            
-    
     // STEP 3 - After a 'timeframeCrowd' waiting period.
+    uint operationDate = GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market"); // ICO_endTime + PP_timeToMarket
+    
     if ( (StartTime() > endTime) & (StartTime() < operationDate) )
     {
-        if (?contributions = ?target)
+        if (?contributions = ?target)   // --PENDING--
         {
             UpCrowd( PPid, true ); // Aqui é o único lugar em que isso está acontecendo? É aqui que isso deve ser definido?
         }
@@ -890,7 +912,7 @@ private static void DelMemb( string address, string opt = "" )
 //---------------------------------------------------------------------------------------------
 // METHODS FOR POWER PLANTS
 // --> create
-private static string PP( string capacity, BigInteger cost, string utility )
+private static string PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
 {
     string id = ID("P", capacity, cost, utility);
     if ( GetPP(id, "Capacity").Length != 0 )
@@ -902,6 +924,7 @@ private static string PP( string capacity, BigInteger cost, string utility )
     Storage.Put( String.Concat( id, "Capacity" ), capacity );
     Storage.Put( String.Concat( id, "Cost" ), cost );
     Storage.Put( String.Concat( id, "Utility" ), utility );
+    Storage.Put( String.Concat( id, "Time To Market" ), timeToMarket );
     // Storage.Put( String.Concat( id, "NumOfFundMemb" ), 0 ); // Expensive to create with null value. Just state it out!
 
     // Increases the total number of power plant units.
@@ -922,21 +945,44 @@ private static byte[] GetPP( string id, string opt )
 }
 
 // --> update
-// The 'utility' is the only option that can be changed.
+// The 'Utility' and the 'Time To Market' are the only options that can be changed.
+// However, the former can be made anytime, while the later is restricted by its deadline of start operation date.
 // To update the other options, delete the current PP and create a new one.
-private static void UpPP( string id, string val )
+private static void UpPP( string id, string opt, object val )
 {
-    // Don't invoke Put if value is unchanged.
-    string orig = GetPP(id, "Utility").AsString();
-    if (orig == val) return;
+    if (opt == "Utility")
+    {
+        // Don't invoke Put if value is unchanged.
+        string orig = GetPP(id, "Utility").AsString();
+        if (orig == val) return;
+        
+        // Do nothing if the new value is empty.
+        if (val.Length == 0) return;
+        
+        // else
+        Storage.Put( String.Concat( id, "Utility" ), val );
+        // And must 'update' each member 'utility' field as well.
+        // 'Utility' should be a pointer and similar to 'Member' dataset.
+        // This was not implemented!
+    }
     
-    // Do nothing if the new value is empty.
-    if (val.Length == 0) return;
-    
-    // else
-    Storage.Put( String.Concat( id, "Utility" ), val );
-    // And must 'update' each member 'utility' field as well.
-    // 'Utility' should be a pointer and similar to 'Member' dataset.
+    if (opt == "Time To Market")
+    {
+        if ( StartTime() <= ( GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market") ) )
+        {
+            // Don't invoke Put if value is unchanged.
+            string orig = GetPP(id, "Time To Market").BigInteger();
+            if (orig == val) return;
+            
+            // Do nothing if the new value is empty.
+            if (val == 0) return;
+            
+            // else
+            Storage.Put( String.Concat( id, "Time To Market" ), val );
+        }
+        
+        throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
+    }
 }
 
 // --> delete
