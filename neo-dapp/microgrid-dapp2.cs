@@ -83,7 +83,7 @@ public static object Main ( string operation, params object[] args )
         if (operation == "admission")
         {
             if ( args.Length != 3 )
-                throw new InvalidOperationException("Please provide the 3 arguments: your account address, full name and power utility name.");
+                throw new InvalidOperationException("Please provide the 3 arguments: your account address, full name, and power utility name.");
 
             if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
                 throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
@@ -415,7 +415,7 @@ public static bool Bid( string ICOid, string member, BigInteger bid )
 }
 
 // To update something on the ledger.
-private object Change( string key, params object[] opts )
+public object Change( string key, params object[] opts )
 {
     // If 'key' is an 'address' ==  member.
     if (key[0] == "A")
@@ -471,7 +471,7 @@ private object Change( string key, params object[] opts )
 }
 
 // The whole process to integrate a new PP on the group power generation.
-private string PowerUp( BigInteger capacity, BigInteger cost, string utility, ushort timeToMarket )
+public string PowerUp( BigInteger capacity, BigInteger cost, string utility, ushort timeToMarket )
 {
     string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility, timeToMarket.ToString() ), cost );
     Process( id, "Request to add a new PP." );
@@ -481,7 +481,7 @@ private string PowerUp( BigInteger capacity, BigInteger cost, string utility, us
 // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
 // The 'fromAddress' will exchange an amount of shares with 'toAddress' by a defined token price,
 // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
-private bool Trade( string fromAddress, string toAddress, BigInteger exchange, BigInteger price )
+public bool Trade( string fromAddress, string toAddress, BigInteger exchange, BigInteger price )
 {
     BigInteger[] toWallet = new BigInteger[];
     BigInteger[] fromWallet = new BigInteger[];
@@ -652,7 +652,7 @@ private static bool isLock( string id )
 // After a period of 'timeframeRef' days a member should invoke this function to state the referendum process.
 // An offchain operation should handle this.
 
-private static void AdmissionResult( string id )
+public static void AdmissionResult( string id )
 {
     if ( Str2Bool( GetRef(id, "Outcome") ) )
     {
@@ -664,7 +664,7 @@ private static void AdmissionResult( string id )
     Membership( address, "Not approved yet." );
 }
 
-private static void ChangeResult( string id )
+public static void ChangeResult( string id )
 {
     string proposal = GetRef(id, "Proposal").AsString();
     
@@ -729,7 +729,7 @@ private static void ChangeResult( string id )
     }
 }
 
-private static object PowerUpResult( string id, string PPid = null ) // --PENDING-- how to garantee that each 'if' will only happen once?
+public static object PowerUpResult( string id, string PPid = null ) // --PENDING-- how to garantee that each 'if' will only happen once?
 {
     string notes = GetRef(id, "Notes"); // --PENDING--
             
