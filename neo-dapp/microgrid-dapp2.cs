@@ -33,7 +33,7 @@ public static BigInteger NumOfMemb() => Storage.Get("NumOfMemb").AsBigInteger();
 public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigInteger();
 
 // The number of days to answer a referendum process.
-private const byte timeframeRef = 30;         // Review the sum with uint (is the endtime right?) --PENDING--
+private const byte timeFrameRef = 30;         // Review the sum with uint (is the endtime right?) --PENDING--
 
 // The time a given function is invoked.
 private static uint StartTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp; // --PENDING--
@@ -52,7 +52,7 @@ private static string[] register => new string[] {"Quota", "Tokens"};
 // New Power Plant crowdfunding settings (ICO of an NFT).
 private const ulong factor = 1000;              // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
 private const byte minOffer = 1;                // Review restriction because it was not used so far. --PENDING--
-private const byte timeframeCrowd = 60;         // Review the sum with uint (is the endtime right?) --PENDING--
+private const byte timeFrameCrowd = 60;         // Review the sum with uint (is the endtime right?) --PENDING--
 private const byte minTimeToMarket = 30;    // days
 
 // The restrictive message to show up.
@@ -282,7 +282,7 @@ public static string Admission( string address, string fullName, string utility 
 }
 
 // To get information about something.
-public static object Summary( string key, string opt = "" )
+public static object Summary( string key, string opt = "" )     //--PENDING-- review dataset of each 'key' after the modifications made on the storage configuration.
 {
     // If 'key' is an 'address' ==  member.
     if (key[0] == "A")
@@ -366,18 +366,18 @@ public static object Summary( string key, string opt = "" )
 // To vote in a given ID process.
 public static bool Vote( string id, string member, bool answer )
 {
-    // Increase the number of votes.
+    // Increases the number of votes.
     BigInteger temp = GetRef(id,"NumOfVotes").AsBigInteger();
     UpRef(id, "NumOfVotes", temp++);
 
     if (answer)
     {
-        // Increase the number of "trues".
+        // Increases the number of "trues".
         BigInteger temp = GetRef(id,"CountTrue").AsBigInteger();
         UpRef(id, "CountTrue", temp++);
     }
 
-    // Publish the vote.
+    // Publishes the vote.
     Ballot(id, member, answer);
 
     return answer;
@@ -411,7 +411,7 @@ public static bool Bid( string ICOid, string member, BigInteger bid )
     
     // If the hole fund process succeed, the money bid must be converted to percentage (bid/cost),
     // so it will be possible to define the quota and the SEB a member has to gain.
-    // It is made on PowerUp().
+    // It is made on PowerUpResult(...).
 }
 
 // To update something on the ledger.
@@ -572,8 +572,8 @@ private static string[] GetContributeValue(string lookForID, string[] listOfIDs)
         // Gets members by a PP.
         foreach (string key in listOfIDs)
         {
-            BigInteger GetBid(lookForID, key).AsBigInteger();
-            if ( temp != 0 ) equivList.append(temp);
+            BigInteger temp = GetBid(lookForID, key).AsBigInteger(); // shares or had contributed to? --PENDING--
+            if ( temp != 0 ) equivList.append(key);
         }
     }
     else
@@ -581,8 +581,8 @@ private static string[] GetContributeValue(string lookForID, string[] listOfIDs)
         // Gets PPs by a member.
         foreach (string key in listOfIDs)
         {
-            BigInteger GetBid(key, lookForID).AsBigInteger();
-            if ( temp != 0 ) equivList.append(temp);
+            BigInteger temp = GetBid(key, lookForID).AsBigInteger(); // shares or had contributed to? --PENDING--
+            if ( temp != 0 ) equivList.append(key);
         }
     }
     
@@ -617,7 +617,7 @@ private static string[] listOfMembers()
     return listMembers;
 }
 
-// Actualy, it restricts a given operation to happen based on a timeframe.
+// Actualy, it restricts a given operation to happen based on a time frame.
 // It must happen during any Referendum (new member, new PP), when a CrowdFunding is raised or when an Update of some information is requested (kind of referendum?).
 
 // All this steps must be provided on the first invoke of the function. So the contract call set the trigger to run in the future. -- WHOLE SHEET!
@@ -649,7 +649,7 @@ private static bool isLock( string id )
 //---------------------------------------------------------------------------------------------
 // ADMINISTRATIVE FUNCTIONS
 
-// After a period of 'timeframeRef' days a member should invoke this function to state the referendum process.
+// After a period of 'timeFrameRef' days a member should invoke this function to state the referendum process.
 // An offchain operation should handle this.
 
 public static void AdmissionResult( string id )
@@ -736,7 +736,7 @@ public static object PowerUpResult( string id, string PPid = null ) // --PENDING
     // separa os termos em Notes!           // --PENDING--
             
             
-    // STEP 1 - After a 'timeframeRef' waiting period.
+    // STEP 1 - After a 'timeFrameRef' waiting period.
     if (PPid == null)
     {
         // Adds or not a new PP after votes from group members.
@@ -763,7 +763,7 @@ public static object PowerUpResult( string id, string PPid = null ) // --PENDING
         return true;
     }
     
-    // STEP 3 - After a 'timeframeCrowd' waiting period.
+    // STEP 3 - After a 'timeFrameCrowd' waiting period.
     
     // Calculates the date the new PP is planned to start to operate, that can be updated until the deadline.
     uint operationDate = GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market"); // ICO_endTime + PP_timeToMarket
@@ -1036,7 +1036,7 @@ private static string Ref( string proposal, string notes, int cost = 0 )
     // Storage.Put( String.Concat( id, "CountTrue"), 0 );    // Expensive to create with null value. Just state it out!
     Storage.Put( String.Concat( id, "Outcome" ), Bool2Str(false) );
     Storage.Put( String.Concat( id, "startTime" ), StartTime() );
-    Storage.Put( String.Concat( id, "endTime" ), StartTime() + timeframeRef );
+    Storage.Put( String.Concat( id, "endTime" ), StartTime() + timeFrameRef );
 
     Process(id, "The referendum process has started.");
     return id;
@@ -1088,7 +1088,7 @@ private static void UpRef( string id, bool val )
 private static void CrowdFunding( string ICOid )
 {
     Storage.Put( String.Concat( ICOid, "startTime" ), StartTime() );
-    Storage.Put( String.Concat( ICOid, "endTime" ), StartTime() + timeframeCrowd );
+    Storage.Put( String.Concat( ICOid, "endTime" ), StartTime() + timeFrameCrowd );
     // Storage.Put( String.Concat( ICOid, "TotalAmount" ), 0 );   // Expensive to create with null value. Just state it out!
     // Storage.Put( String.Concat( ICOid, "Contributions" ), 0 ); // Expensive to create with null value. Just state it out!
     Storage.Put( String.Concat( ICOid, "Success" ), Bool2Str(false) );
