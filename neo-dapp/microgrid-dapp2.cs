@@ -162,11 +162,11 @@ public static object Main ( string operation, params object[] args )
                 if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
                     throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
 
-                if ( GetMemb(args[1], "FullName").Length != null )
-                    throw new InvalidOperationException("The address you are transaction to must be a member too.");
-
                 if ( (args[1][0] != "A") || (args[1].Length == null) )
                     throw new InvalidOperationException("Provide a valid destiny address.");
+                    
+                if ( GetMemb(args[1], "FullName").Length != null )
+                    throw new InvalidOperationException("The address you are transaction to must be a member too.");
 
                 if ( (GetMemb(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
                     throw new InvalidOperationException( "Both members must belong to the same power utility cover area." );
@@ -235,7 +235,7 @@ public static object Main ( string operation, params object[] args )
                 ChangeResult( (string)args[0] ); // Referendum ID
             }
             
-            if (operation == "power up result")
+            if (operation == "power up result") //--PENDING-- restrições erradas! Elas impedem que os STEPS aconteçam!
             {
                 if ( args.Length == 0 )
                     throw new InvalidOperationException("Please provide at least the new PP process ID.");
@@ -740,7 +740,7 @@ public static object PowerUpResult( string id, string PPid = null ) // --PENDING
     if (PPid == null)
     {
         // Adds or not a new PP after votes from group members.
-        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        if ( Str2Bool( GetRef(id, "Outcome") ) ) //--PENDING-- onde os votos estão sendo contabilizados?
         {
             BigInteger capacity = notes[0];
             BigInteger cost = GetRef(id, "Cost");
