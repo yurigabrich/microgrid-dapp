@@ -197,7 +197,7 @@ public static object Main ( string operation, params object[] args )
             if (operation == "change")
             {
                 if (args.Length != 2)
-                    throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something."); // --PENDING-- reescrever
+                    throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
                 
                 if ( (args[0][0] != "A") || args[0][0] != "P"  )
                     throw new InvalidOperationException("Provide a valid member address or PP ID.");
@@ -570,7 +570,7 @@ private static bool Str2Bool( byte[] val )
 }
 
 // To filter the relationship of members and PPs.
-private static string[] GetContributeValue(string lookForID, string[] listOfIDs)
+private static string[] GetContributeValue( string lookForID, string[] listOfIDs )
 {
     //
     string[] equivList = new string[];
@@ -596,6 +596,26 @@ private static string[] GetContributeValue(string lookForID, string[] listOfIDs)
     }
     
     return equivList;
+}
+
+// To calculate the referendum result only once.
+private static void CalcResult( string id )
+{
+    if ( GetRef(id, "HasResult").Length == 0 )
+    {
+        UpRef(id, "HasResult", 1);
+    
+        BigInteger totalOfVotes = GetRef(id, "NumOfVotes").AsBigInteger();
+        BigInteger totalOfTrues = GetRef(id, "CountTrue").AsBigInteger();
+            
+        if ( totalOfTrues > (totalOfVotes / 2) )
+        {
+            // Referendum has succeeded.
+            UpRef(id, true);
+        }
+        
+        // Otherwise, the "Outcome" remains as 'false'.
+    }
 }
 
 // To get the IDs of each PP.
@@ -663,6 +683,9 @@ private static bool isLock( string id ) // --PENDING-- como vou saber por um ún
 
 public static void AdmissionResult( string id )
 {
+    // Calculates the result
+    CalcResult(id);
+    
     if ( Str2Bool( GetRef(id, "Outcome") ) )
     {
         // Add a new member after approval from group members.
@@ -752,15 +775,11 @@ public static object PowerUpResult( string id, string PPid = null )
         // Evaluates the referendum result only once.
         if ( GetRef(id, "HasResult").Length == 0 )
         {
-            UpRef(id, "HasResult", 1);
-        
-            BigInteger totalOfVotes = GetRef(id, "NumOfVotes").AsBigInteger();
-            BigInteger totalOfTrues = GetRef(id, "CountTrue").AsBigInteger();
-                
-            if ( totalOfTrues > (totalOfVotes / 2) )
+            CalcResult(id);
+            
+            if ( Str2Bool( GetRef(id, "Outcome") ) )
             {
                 // Referendum has succeeded.
-                UpRef(id, true);
                 
                 // Adds a new PP.
                 string notes = GetRef(id, "Notes"); // --PENDING--
@@ -778,7 +797,7 @@ public static object PowerUpResult( string id, string PPid = null )
                 return PPid;
             }
             
-            // Otherwise, the "Outcome" remains as 'false'.
+            // Otherwise...
             Process(id, "This PP was not approved yet. Let's wait a bit more.");
             return false;
         }
