@@ -705,7 +705,9 @@ public static void ChangeResult( string id )
         if ( StartTime() <= GetRef(id, "endTime") )
             throw new InvalidOperationException("There isn't a result about the new PP request yet.");
         
-        if ( Str2Bool( GetRef(id, "Outcome") ) )// --PENDING--
+        CalcResult(id);
+        
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
         {
             Process(id, "Approved.");
             UpMemb(key, opts[0], opts[1]);
@@ -717,6 +719,8 @@ public static void ChangeResult( string id )
                 
     if (proposal == "Delete member_")
     {
+        CalcResult(id);
+        
         if ( Str2Bool( GetRef(id, "Outcome") ) )
         {
             Process(id, "Approved.");
@@ -741,6 +745,8 @@ public static void ChangeResult( string id )
     
     if (proposal == "Change utility_")
     {
+        CalcResult(id);
+        
         if ( Str2Bool( GetRef(id, "Outcome") ) )
         {
             Process(id, "Approved.");
@@ -753,6 +759,8 @@ public static void ChangeResult( string id )
         
     if (proposal == "Delete PP_")
     {
+        CalcResult(id);
+        
         if ( Str2Bool( GetRef(id, "Outcome") ) )
         {
             Process(id, "Approved.");
