@@ -132,13 +132,13 @@ public static object Main ( string operation, params object[] args )
             if (operation == "bid")
             {
                 if ( args.Length != 3 )
-                    throw new InvalidOperationException("Please provide the 3 arguments: the ICO id, your account address, and your bid.");
+                    throw new InvalidOperationException("Please provide the 3 arguments: the PP id, your account address, and your bid.");
 
                 if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
                     throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
 
                 if ( (args[0][0] != "P") || (args[0].Length == null) )
-                    throw new InvalidOperationException("Provide a valid ICO ID.");
+                    throw new InvalidOperationException("Provide a valid PP ID.");
 
                 if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
                     throw new InvalidOperationException( "This member cannot profit from this power utility." );
@@ -146,10 +146,10 @@ public static object Main ( string operation, params object[] args )
                 if ( args[2] <= 0 ) return false;
                     throw new InvalidOperationException("Stop being a jerk.");
                 
-                if ( isLock((string)args[0]) )
+                if ( isLock(args[0]) )
                     throw new InvalidOperationException("The campaign has ended.");
 
-                return Bid( (string)args[0],     // ICO id == PP id
+                return Bid( (string)args[0],     // PP id
                             (string)args[1],     // member address
                             (bool)args[2] );     // bid value
             }
@@ -197,19 +197,31 @@ public static object Main ( string operation, params object[] args )
             if (operation == "change")
             {
                 if (args.Length != 2)
-                    throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
+                    throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something."); // --PENDING-- reescrever
+                
+                if ( (args[0][0] != "A") || args[0][0] != "P"  )
+                    throw new InvalidOperationException("Provide a valid member address or PP ID.");
+                    
+                if ( (args[0][0] == "A") || (args[1].Length != 2) || (args[1].Length != 0) )
+                    throw new InvalidOperationException("Provide valid arguments to update an address.");
+                
+                if ( (args[0][0] == "P") || (args[1].Length > 2) )
+                    throw new InvalidOperationException("Provide valid arguments to update a PP subject.");
                 
                 if ( (args[1][0] in profile) & !(Runtime.CheckWitness(args[0])) )
                     throw new InvalidOperationException("Only the member can change its own personal data.");
                 
-                if ( (args[0][0] != "A") | args[0][0] != "P"  )
-                    throw new InvalidOperationException("Provide a valid member address or PP ID.");
+                if ( (args[0][0] == "P") & (args[1].Length == 1) & !(args[1][0] is string) )
+                    throw new InvalidOperationException("Provide a valid power utility name to be replaced by.");
                 
+                if ( (args[0][0] == "P") & (args[1].Length == 2) & !(Runtime.CheckWitness(args[1][0])) )
+                    throw new InvalidOperationException("Only the member can change its bid.");
                 
-                // Can change a bid? Because args[0][0] == "P"                --PENDING--
+                if ( (args[0][0] == "P") & (args[1].Length == 2) & isLock(args[0]) )
+                    throw new InvalidOperationException("The campaign has ended.");
                 
                 return Change( (string)args[0],     // member address or PP id
-                               (object[])args[1] ); // array with desired values --PENDING-- test length
+                               (object[])args[1] ); // array with desired values --PENDING-- test length because of the problem of array of arrays...
             }
             
             // Administrative operations.
@@ -235,7 +247,7 @@ public static object Main ( string operation, params object[] args )
                 ChangeResult( (string)args[0] ); // Referendum ID
             }
             
-            if (operation == "power up result") //--PENDING-- restrições erradas! Elas impedem que os STEPS aconteçam!
+            if (operation == "power up result")
             {
                 if ( args.Length == 0 )
                     throw new InvalidOperationException("Please provide at least the new PP process ID.");
@@ -243,7 +255,6 @@ public static object Main ( string operation, params object[] args )
                 if ( args.Length > 2 )
                     throw new InvalidOperationException("Please provide at most the new PP process ID, and the PP ID itself if any.");
                 
-                // STEP 4
                 PowerUpResult( (string)args[0],     // Referendum ID
                                (string)args[1] );   // PP ID
             }
@@ -429,8 +440,8 @@ public object Change( string key, params object[] opts )
         // Any member can request to delete another member.
         if ( opts.Length == 0 )
         {
-            string id = Ref( "Delete member_", "Distribute the shares and delete the tokens." );
-            Process( id, "Request to dismiss a member." );
+            string id = Ref("Delete member_", key);
+            Process(id, "Request to dismiss a member.");
             return id;
         }
     }
@@ -438,11 +449,18 @@ public object Change( string key, params object[] opts )
     // If 'key' is an 'id' with prefix 'P' == power plant.
     if (key[0] == "P")
     {
-        if ( (opts.Length != 1) & !(opts[0] is string) )
-            throw new InvalidOperationException("Provide a valid power utility name to be replaced by.");
+        // Only the member can change its own bid.
+        // To UPDATE, the params must be ['address', 'new bid value'].
+        if ( opts.Length == 2 )
+        {
+            UpBid(key, opts[0], opts[1]);
+            Update("Bid.", key);
+            return true;
+        }
         
         // Any member can request the change of the 'utility' a PP belongs to.
-        if ( opts.Length != 0 )
+        // To UPDATE, the params must be ['new utility name'].
+        if ( opts.Length == 1 )
         {
             string id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
             Process( id, "Request the change of utility name of a PP." );
@@ -450,12 +468,15 @@ public object Change( string key, params object[] opts )
         }
 
         // Any member can request to DELETE a PP.
-        string id = Ref( "Delete PP_", String.Concat( key, opts[0] ) );
-        Process( id, "Request to delete a PP." );
-        return id;
-        
-        
+        if ( opts.Length == 0 )
+        {
+            string id = Ref("Delete PP_", key) );
+            Process(id, "Request to delete a PP.");
+            return id;
+        }
     }
+    
+    return "There is nothing more to be done.";
 }
 
 // The whole process to integrate a new PP on the group power generation.
@@ -622,7 +643,7 @@ private static string[] listOfMembers()
     *   pubkey = insert the previous copy of the public key byte array
     *   signature = the private key?
     **/
-private static bool isLock( string id )
+private static bool isLock( string id ) // --PENDING-- como vou saber por um único ID se está no tempo do Ref, Crowd ou Time2Market???
 {
     Header header = Blockchain.GetHeader(Blockchain.GetHeight());
     
@@ -638,7 +659,7 @@ private static bool isLock( string id )
 // ADMINISTRATIVE FUNCTIONS
 
 // After a period of 'timeFrameRef' days a member should invoke this function to state the referendum process.
-// An offchain operation should handle this.
+// An off-chain operation should handle this.
 
 public static void AdmissionResult( string id )
 {
@@ -658,7 +679,10 @@ public static void ChangeResult( string id )
     
     if (proposal == "Change register_")
     {
-        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        if ( StartTime() <= GetRef(id, "endTime") )
+            throw new InvalidOperationException("There isn't a result about the new PP request yet.");
+        
+        if ( Str2Bool( GetRef(id, "Outcome") ) )// --PENDING--
         {
             Process(id, "Approved.");
             UpMemb(key, opts[0], opts[1]);
@@ -717,13 +741,8 @@ public static void ChangeResult( string id )
     }
 }
 
-public static object PowerUpResult( string id, string PPid = null ) // --PENDING-- how to garantee that each 'if' will only happen once?
+public static object PowerUpResult( string id, string PPid = null )
 {
-    string notes = GetRef(id, "Notes"); // --PENDING--
-            
-    // separa os termos em Notes!           // --PENDING--
-            
-            
     // STEP 1 - After a 'timeFrameRef' waiting period.
     if (PPid == null)
     {
@@ -742,34 +761,32 @@ public static object PowerUpResult( string id, string PPid = null ) // --PENDING
             {
                 // Referendum has succeeded.
                 UpRef(id, true);
+                
+                // Adds a new PP.
+                string notes = GetRef(id, "Notes"); // --PENDING--
+                
+                // separa os termos em Notes!           // --PENDING--
+                
+                
+                
+                //            PP(capacity, cost, utility, time to market)
+                string PPid = PP(notes[0], GetRef(id, "Cost"), notes[1], notes[2]);
+                
+                // Starts to raise money for it.
+                CrowdFunding(PPid);
+                Process(PPid, "Shut up and give me money!");
+                return PPid;
             }
             
             // Otherwise, the "Outcome" remains as 'false'.
+            Process(id, "This PP was not approved yet. Let's wait a bit more.");
+            return false;
         }
         
-        // Adds or not a new PP after votes from group members.
-        if ( Str2Bool( GetRef(id, "Outcome") ) )
-        {
-            BigInteger capacity = notes[0];
-            BigInteger cost = GetRef(id, "Cost");
-            string utility = notes[1];
-            
-            return PP(capacity, cost, utility, notes[2]); // PPid
-        }
-        
-        Process(id, "This PP was not approved yet. Let's wait a bit more.");
-        return false;
-    }
-
-    // STEP 2 - If a new PP has been approved, starts to raise money for it.
-    if ( GetCrowd(PPid, "startTime").Length == 0 )
-    {
-        CrowdFunding(PPid);
-        Process(PPid, "Shut up and give me money!");
-        return true;
+        return "This process are completed.";
     }
     
-    // STEP 3 - After a 'timeFrameCrowd' waiting period.
+    // STEP 2 - After a 'timeFrameCrowd' waiting period.
     if ( StartTime() <= GetCrowd(PPid, "endTime") )
         throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
     
@@ -790,7 +807,7 @@ public static object PowerUpResult( string id, string PPid = null ) // --PENDING
             // Crowdfunding has succeeded.
             UpCrowd(PPid, true);
             
-            // Updates the number of investors on the database.
+            // Updates the number of investors.
             UpPP(PPid, "numOfFundMemb", listOfFunders.Length);
             
             Process(id, "New power plant on the way.");
@@ -807,11 +824,12 @@ public static object PowerUpResult( string id, string PPid = null ) // --PENDING
         return false;
     }
     
-    // Calculates the date the new PP is planned to start to operate, that can be updated until the deadline.
+    // STEP 3 - After waiting for the time to market.
+    
+    // Calculates the date the new PP is planned to start to operate, that can always be updated until the deadline.
     // operationDate = ICO_endTime + PP_timeToMarket
     uint operationDate = GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market");
     
-    // STEP 4 - After waiting for the time to market.
     if ( StartTime() <= operationDate )
         throw new InvalidOperationException("The new PP is not ready to operate yet.");
     
@@ -819,6 +837,8 @@ public static object PowerUpResult( string id, string PPid = null ) // --PENDING
     if ( GetPP(PPid, "HasStarted").Length == 0 )
     {
         // When the PP is ready to operate, it's time to distribute tokens and shares.
+        
+        
             
         // Increases the total power supply of the group.
         BigInteger capOfPP = GetPP(PPid, "Capacity").AsBigInteger();
@@ -1007,20 +1027,18 @@ private static void UpPP( string id, string opt, object val )
     
     if (opt == "Time To Market")
     {
-        if ( StartTime() <= ( GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market") ) )
-        {
-            // Don't invoke Put if value is unchanged.
-            string orig = GetPP(id, "Time To Market").BigInteger();
-            if (orig == val) return;
-            
-            // Do nothing if the new value is empty.
-            if (val == 0) return;
-            
-            // else
-            Storage.Put( String.Concat( id, "Time To Market" ), val );
-        }
+        if ( StartTime() > ( GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market") ) )
+            throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
         
-        throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
+        // Don't invoke Put if value is unchanged.
+        string orig = GetPP(id, "Time To Market").BigInteger();
+        if (orig == val) return;
+        
+        // Do nothing if the new value is empty.
+        if (val == 0) return;
+        
+        // else
+        Storage.Put( String.Concat( id, "Time To Market" ), val );
     }
 }
 
@@ -1112,7 +1130,7 @@ private static void UpRef( string id, bool val )
 
 
 //---------------------------------------------------------------------------------------------
-// METHODS TO EVALUATE A NEW POWER PLANT (aka an ICO of a NFT)
+// METHODS TO FINANCE A NEW POWER PLANT (aka an ICO of a NFT)
 // --> create
 private static void CrowdFunding( string ICOid )
 {
@@ -1138,7 +1156,7 @@ private static object GetCrowd( string ICOid, string opt )             // retorn
 }
 
 // --> update
-private static bool UpBid( string ICOid, string member, BigInteger bid )
+private static bool UpBid( string ICOid, string member, BigInteger bid ) // --PENDING-- return...
 {
     // Don't invoke Put if value is unchanged.
     BigInteger orig = GetBid(ICOid, member).AsBigInteger();
@@ -1149,6 +1167,10 @@ private static bool UpBid( string ICOid, string member, BigInteger bid )
     
     // else
     Storage.Put( String.Concat( ICOid, member ), bid );
+    
+    
+    // Update other crowd values! --PENDING--
+    
     return true;
 }
 
