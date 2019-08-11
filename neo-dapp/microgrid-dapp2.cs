@@ -444,39 +444,39 @@ public object Change( string key, params object[] opts )
             Process(id, "Request to dismiss a member.");
             return id;
         }
-    }
-    
-    // If 'key' is an 'id' with prefix 'P' == power plant.
-    if (key[0] == "P")
-    {
-        // Only the member can change its own bid.
-        // To UPDATE, the params must be ['address', 'new bid value'].
-        if ( opts.Length == 2 )
-        {
-            UpBid(key, opts[0], opts[1]);
-            Update("Bid.", key);
-            return true;
-        }
         
-        // Any member can request the change of the 'utility' a PP belongs to.
-        // To UPDATE, the params must be ['new utility name'].
-        if ( opts.Length == 1 )
-        {
-            string id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
-            Process( id, "Request the change of utility name of a PP." );
-            return id;
-        }
-
-        // Any member can request to DELETE a PP.
-        if ( opts.Length == 0 )
-        {
-            string id = Ref("Delete PP_", key) );
-            Process(id, "Request to delete a PP.");
-            return id;
-        }
+        return; // It will never happen.
     }
     
-    return "There is nothing more to be done.";
+    // Otherwise, the 'key' is an 'id' with prefix 'P' == power plant.
+
+    // Only the member can change its own bid.
+    // To UPDATE, the params must be ['address', 'new bid value'].
+    if ( opts.Length == 2 )
+    {
+        UpBid(key, opts[0], opts[1]);
+        Update("Bid.", key);
+        return true;
+    }
+    
+    // Any member can request the change of the 'utility' a PP belongs to.
+    // To UPDATE, the params must be ['new utility name'].
+    if ( opts.Length == 1 )
+    {
+        string id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
+        Process( id, "Request the change of utility name of a PP." );
+        return id;
+    }
+
+    // Any member can request to DELETE a PP.
+    if ( opts.Length == 0 )
+    {
+        string id = Ref("Delete PP_", key) );
+        Process(id, "Request to delete a PP.");
+        return id;
+    }
+    
+    return; // It will never happen.
 }
 
 // The whole process to integrate a new PP on the group power generation.
