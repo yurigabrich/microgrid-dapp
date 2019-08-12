@@ -438,14 +438,10 @@ public object Change( string key, params object[] opts )
         }
         
         // Any member can request to delete another member.
-        if ( opts.Length == 0 )
-        {
-            string id = Ref("Delete member_", key);
-            Process(id, "Request to dismiss a member.");
-            return id;
-        }
-        
-        return; // It will never happen.
+        // The 'opts.Length' is empty.
+        string id = Ref("Delete member_", key);
+        Process(id, "Request to dismiss a member.");
+        return id;
     }
     
     // Otherwise, the 'key' is an 'id' with prefix 'P' == power plant.
@@ -469,14 +465,10 @@ public object Change( string key, params object[] opts )
     }
 
     // Any member can request to DELETE a PP.
-    if ( opts.Length == 0 )
-    {
-        string id = Ref("Delete PP_", key) );
-        Process(id, "Request to delete a PP.");
-        return id;
-    }
-    
-    return; // It will never happen.
+    // The 'opts.Length' is empty.
+    string id = Ref("Delete PP_", key) );
+    Process(id, "Request to delete a PP.");
+    return id;
 }
 
 // The whole process to integrate a new PP on the group power generation.
@@ -702,9 +694,6 @@ public static void ChangeResult( string id )
     
     if (proposal == "Change register_")
     {
-        if ( StartTime() <= GetRef(id, "endTime") )
-            throw new InvalidOperationException("There isn't a result about the new PP request yet.");
-        
         CalcResult(id);
         
         if ( Str2Bool( GetRef(id, "Outcome") ) )
