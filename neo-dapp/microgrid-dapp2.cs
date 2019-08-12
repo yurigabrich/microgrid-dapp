@@ -1,3 +1,14 @@
+// TO UNDERSTAND!
+// Unix timestamp : https://unixtime.51240.com/
+// Dependent variables:
+// - timeFrameRef --> número de dias
+// - timeFrameCrowd --> número de dias
+// - minTimeToMarket --> número de dias
+// - timeToMarket --> número de dias
+// - "Start Time"
+// - "End Time"
+// - Does the PresentTime() have the same variable type?
+
 //---------------------------------------------------------------------------------------------
 // EVENTS
 
@@ -27,7 +38,7 @@ public static int[] PowGenLimits() => new int[] {0, 5000000};
 public static BigInteger NumOfPP() => Storage.Get("NumOfPP").AsBigInteger();
 
 // The total number of members.
-public static BigInteger NumOfMemb() => Storage.Get("NumOfMemb").AsBigInteger();
+public static BigInteger NumOfMemb() => Storage.Get("Num of Memb").AsBigInteger();
 
 // The total power supply at the group, i.e., sum of PP's capacity.
 public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigInteger();
@@ -36,7 +47,7 @@ public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigIntege
 private const byte timeFrameRef = 30;         // Review the sum with uint (is the endtime right?) --PENDING--
 
 // The time a given function is invoked.
-private static uint StartTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp; // --PENDING--
+private static uint PresentTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp; // --PENDING-- to test!!!
 
 // Token settings.
 public static string Name() => "Sharing Electricity in Brazil";
@@ -46,12 +57,12 @@ public static byte[] Owner() => ExecutionEngine.ExecutingScriptHash;            
 public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", "NEP-10" };
 
 // Member's dataset.
-private static string[] profile => new string[] {"FullName", "Utility"};
+private static string[] profile => new string[] {"Full Name", "Utility"};
 private static string[] register => new string[] {"Quota", "Tokens"};
 
 // New Power Plant crowdfunding settings (ICO of an NFT).
 private const ulong factor = 1000;              // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
-private const byte minOffer = 1;                // Review restriction because it was not used so far. --PENDING--
+private const byte minOffer = 100;              // --PENDING-- byte vai até qual número?
 private const byte timeFrameCrowd = 60;         // Review the sum with uint (is the endtime right?) --PENDING--
 private const byte minTimeToMarket = 30;    // days
 
@@ -88,7 +99,7 @@ public static object Main ( string operation, params object[] args )
             if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
                 throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
 
-            if ( GetMemb((string)args[0], "FullName").Length != 0 )
+            if ( GetMemb((string)args[0], "Full Name").Length != 0 )
                 throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
             
             return Admission( (string)args[0],   // invoker/caller address
@@ -102,7 +113,7 @@ public static object Main ( string operation, params object[] args )
             if ( args.Length != 1 )
                 throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
-            if ( (GetMemb(caller, "FullName").Length == null) | (args[0][0] == "A") ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+            if ( (GetMemb(caller, "Full Name").Length == null) | (args[0][0] == "A") ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
                 throw Warning();
 
             return Summary( (string)args[0],     // Address/ID
@@ -110,7 +121,7 @@ public static object Main ( string operation, params object[] args )
         }
 
         // Restricted operations.
-        if ( GetMemb(caller, "FullName").Length != null )
+        if ( GetMemb(caller, "Full Name").Length != null )
         {
             // Group operations.
             if (operation == "vote")
@@ -121,7 +132,7 @@ public static object Main ( string operation, params object[] args )
                 if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
                     throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
 
-                if ( isLock((string)args[0]) )
+                if ( isLock( (string)args[0]) )
                     throw new InvalidOperationException("The ballot has ended.");
                 
                 return Vote( (string)args[0],    // referendum id
@@ -143,10 +154,10 @@ public static object Main ( string operation, params object[] args )
                 if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
                     throw new InvalidOperationException( "This member cannot profit from this power utility." );
 
-                if ( args[2] <= 0 ) return false;
-                    throw new InvalidOperationException("Stop being a jerk.");
+                if ( args[2] <= minOffer ) return false;
+                    throw new InvalidOperationException("The minimum bid allowed is R$ {0}.".format(minOffer)); // --PENDING-- formatação do número em texto real!
                 
-                if ( isLock(args[0]) )
+                if ( isLock( args[0] ) )
                     throw new InvalidOperationException("The campaign has ended.");
 
                 return Bid( (string)args[0],     // PP id
@@ -165,7 +176,7 @@ public static object Main ( string operation, params object[] args )
                 if ( (args[1][0] != "A") || (args[1].Length == null) )
                     throw new InvalidOperationException("Provide a valid destiny address.");
                     
-                if ( GetMemb(args[1], "FullName").Length != null )
+                if ( GetMemb(args[1], "Full Name").Length != null )
                     throw new InvalidOperationException("The address you are transaction to must be a member too.");
 
                 if ( (GetMemb(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
@@ -217,7 +228,7 @@ public static object Main ( string operation, params object[] args )
                 if ( (args[0][0] == "P") & (args[1].Length == 2) & !(Runtime.CheckWitness(args[1][0])) )
                     throw new InvalidOperationException("Only the member can change its bid.");
                 
-                if ( (args[0][0] == "P") & (args[1].Length == 2) & isLock(args[0]) )
+                if ( (args[0][0] == "P") & (args[1].Length == 2) & isLock( args[0] ) )
                     throw new InvalidOperationException("The campaign has ended.");
                 
                 return Change( (string)args[0],     // member address or PP id
@@ -230,7 +241,7 @@ public static object Main ( string operation, params object[] args )
                 if ( args.Length != 1 )
                     throw new InvalidOperationException("Please provide the admission process ID.");
                 
-                if ( StartTime() <= GetRef( (string)args[0], "endTime" ) )
+                if ( isLock( (string)args[0] ) )
                     throw new InvalidOperationException("There isn't a result yet.");
                 
                 return AdmissionResult( (string)args[0] ); // Referendum ID
@@ -241,7 +252,7 @@ public static object Main ( string operation, params object[] args )
                 if ( args.Length != 1 )
                     throw new InvalidOperationException("Please provide the change process ID.");
                 
-                if ( StartTime() <= GetRef( (string)args[0], "endTime" ) )
+                if ( isLock( (string)args[0] ) )
                     throw new InvalidOperationException("There isn't a result yet.");
                 
                 ChangeResult( (string)args[0] ); // Referendum ID
@@ -288,12 +299,12 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
     {
         if ((opt == "") || (opt == "detailed"))
         {
-            string[] brief = new string[] { GetMemb(key,"FullName"), GetMemb(key,"Utility"), GetMemb(key,"Quota"), GetMemb(key,"Tokens") };
+            string[] brief = new string[] { GetMemb(key,"Full Name"), GetMemb(key,"Utility"), GetMemb(key,"Quota"), GetMemb(key,"Tokens") };
 
             if (opt == "detailed")
             {
                 string[] PowerPlantsByMember = GetContributeValue( key, listOfPPs() );
-                return brief + PowerPlantsByMember; // wrong concatenation method --PENDING--
+                return brief + PowerPlantsByMember; // how to sum string[]'s? --PENDING--
             }
             return brief;
         }
@@ -313,7 +324,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
                 if (opt == "detailed")
                 {
                     string[] MembersByPowerPlant = GetContributeValue( key, listOfMembers() );
-                    return brief + MembersByPowerPlant; // wrong concatenation method --PENDING--
+                    return brief + MembersByPowerPlant; // how to sum string[]'s? --PENDING--
                 }
                 return brief;
             }
@@ -325,19 +336,19 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
         {
             if ( (opt == "") || (opt == "detailed") )
             {
-                string[] brief = new string[] { GetCrowd(key,"StartTime"), GetCrowd(key,"EndTime"), GetCrowd(key,"TotalAmount"), GetCrowd(key,"Contributions"), GetCrowd(key,"Success") };
+                string[] brief = new string[] { GetCrowd(key,"Start Time"), GetCrowd(key,"End Time"), GetCrowd(key,"Total Amount"), GetCrowd(key,"Contributions"), GetCrowd(key,"Success") };
     
                 if (opt == "detailed")
                 {
-                    string[][] PowerPlantBids = new string[][];
+                    string[][] PowerPlantBids = new string[][]; // testar esta variável e o par de arrays --PENDING--
                     
-                    for each member in Members() // to be implemented {[Member, quota]} ? HOW? --PENDING--
+                    foreach member in Members()
                     {
                         BigInteger bid = GetBid(key, member).AsBigInteger();
                         if ( bid != 0 ) PowerPlantBids.append( [member, bid] );
                     }
                     
-                    return brief + PowerPlantBids; // wrong concatenation method --PENDING--
+                    return brief + PowerPlantBids; // how to sum string[]'s? --PENDING--
                 }
                 return brief;
             }
@@ -366,14 +377,14 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
 public static bool Vote( string id, string member, bool answer )
 {
     // Increases the number of votes.
-    BigInteger temp = GetRef(id,"NumOfVotes").AsBigInteger();
-    UpRef(id, "NumOfVotes", temp++);
+    BigInteger temp = GetRef(id,"Num of Votes").AsBigInteger();
+    UpRef(id, "Num of Votes", temp++);
 
     if (answer)
     {
         // Increases the number of "trues".
-        BigInteger temp = GetRef(id,"CountTrue").AsBigInteger();
-        UpRef(id, "CountTrue", temp++);
+        BigInteger temp = GetRef(id,"Count True").AsBigInteger();
+        UpRef(id, "Count True", temp++);
     }
 
     // Publishes the vote.
@@ -386,7 +397,7 @@ public static bool Vote( string id, string member, bool answer )
 public static bool Bid( string ICOid, string member, BigInteger bid )
 {
     BigInteger target = GetPP(ICOid, "Cost").AsBigInteger();
-    BigInteger funds = GetCrowd(ICOid, "TotalAmount").AsBigInteger();
+    BigInteger funds = GetCrowd(ICOid, "Total Amount").AsBigInteger();
     
     if ( bid > target - funds )
         throw new InvalidOperationException( "You offered more than the amount requested ({0}). Bid again!".format( target - funds ) );
@@ -395,7 +406,7 @@ public static bool Bid( string ICOid, string member, BigInteger bid )
     // All these steps are part of a crowdfunding process, not of a PP registration.
     
     // Increases the value gathered so far.
-    UpCrowd(ICOid, "TotalAmount", funds + bid);
+    UpCrowd(ICOid, "Total Amount", funds + bid);
     
     // Increases the number of contributions.
     BigInteger temp = GetCrowd(ICOid, "Contributions").AsBigInteger();
@@ -510,7 +521,7 @@ public bool Trade( string fromAddress, string toAddress, BigInteger exchange, Bi
 //---------------------------------------------------------------------------------------------
 // SYSTEM FUNCTIONS
 
-// A new PP will just distribute tokens and shares after a crowdfunding process succeed.    // --PENDING-- verificar com o caso de deletar membro!
+// A new PP will only distribute tokens and shares after a crowdfunding process succeed.
 // All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
 private static void Distribute( string toAddress, BigInteger quota, BigInteger tokens )
 {
@@ -573,7 +584,7 @@ private static string[] GetContributeValue( string lookForID, string[] listOfIDs
         // Gets members by a PP.
         foreach (string key in listOfIDs)
         {
-            BigInteger temp = GetBid(lookForID, key).AsBigInteger(); // shares or had contributed to? --PENDING--
+            BigInteger temp = GetBid(lookForID, key).AsBigInteger(); // shares(%) or money? --PENDING--
             if ( temp != 0 ) equivList.append(key);
         }
     }
@@ -582,7 +593,7 @@ private static string[] GetContributeValue( string lookForID, string[] listOfIDs
         // Gets PPs by a member.
         foreach (string key in listOfIDs)
         {
-            BigInteger temp = GetBid(key, lookForID).AsBigInteger(); // shares or had contributed to? --PENDING--
+            BigInteger temp = GetBid(key, lookForID).AsBigInteger(); // shares(%) or money? --PENDING--
             if ( temp != 0 ) equivList.append(key);
         }
     }
@@ -593,12 +604,12 @@ private static string[] GetContributeValue( string lookForID, string[] listOfIDs
 // To calculate the referendum result only once.
 private static void CalcResult( string id )
 {
-    if ( GetRef(id, "HasResult").Length == 0 )
+    if ( GetRef(id, "Has Result").Length == 0 )
     {
-        UpRef(id, "HasResult", 1);
+        UpRef(id, "Has Result", 1);
     
-        BigInteger totalOfVotes = GetRef(id, "NumOfVotes").AsBigInteger();
-        BigInteger totalOfTrues = GetRef(id, "CountTrue").AsBigInteger();
+        BigInteger totalOfVotes = GetRef(id, "Num of Votes").AsBigInteger();
+        BigInteger totalOfTrues = GetRef(id, "Count True").AsBigInteger();
             
         if ( totalOfTrues > (totalOfVotes / 2) )
         {
@@ -615,9 +626,9 @@ private static string[] listOfPPs()
 {
     string[] listPPs = new string[];
     
-    foreach (int num in NumOfPP())
+    for (int num = 0; num < NumOfPP(); num++)
     {
-        string PP = Storage.Get( String.Concat( "P", num.ToString() ) ); // --PENDING--
+        string PP = Storage.Get( String.Concat( "P", num.ToString() ) ); // --PENDING-- Isso está errado! Não tem q retornar o id de cada usina? Foi criado uma ID (duplicada) para esta função! Ver o método de criar PP. Talvez tenha uma API pronta para isso ou que só precise filtrar o resultado!
         listMembers.append(PP);
     }
     
@@ -629,41 +640,29 @@ private static string[] listOfMembers()
 {
     string[] listMembers = new string[];
     
-    foreach (int num in NumOfMemb())
+    for (int num = 0; num < NumOfMemb(); num++)
     {
-        string member = Storage.Get( String.Concat( "M", num.ToString() ) ); // --PENDING--
+        string member = Storage.Get( String.Concat( "M", num.ToString() ) ); // --PENDING-- Isso está errado! Não tem q retornar o id de cada usina? Foi criado uma ID (duplicada) para esta função! Ver o método de criar membro. Talvez tenha uma API pronta para isso ou que só precise filtrar o resultado!
         listMembers.append(member);
     }
     
     return listMembers;
 }
 
-// Actualy, it restricts a given operation to happen based on a time frame.
-// It must happen during any Referendum (new member, new PP), when a CrowdFunding is raised or when an Update of some information is requested (kind of referendum?).
-
-// All this steps must be provided on the first invoke of the function. So the contract call set the trigger to run in the future. -- WHOLE SHEET!
-
-// Check if some operation on the contract is locked for a while.
-/**
-    * The contract implements a function that specifies a certain timestamp.
-    * Before the specified time stated, no one is allowed to withdraw any assets from the contract.
-    * Once the time stated is reached, the contract owners can then withdraw the assets.
-    *
-    * INPUTS
-    *   timestamp = the lock time in the sample code, which is a Unix timestamp.
-    *               You can calculate it yourself or use it: https://unixtime.51240.com/
-    *   pubkey = insert the previous copy of the public key byte array
-    *   signature = the private key?
-    **/
-private static bool isLock( string id ) // --PENDING-- como vou saber por um único ID se está no tempo do Ref, Crowd ou Time2Market???
+// Actualy, it restricts a given operation to happen based on a timestamp.
+// Before a given time frame, no one is allowed to continue the process.
+// The monitoring of the time happens off-chain.
+// Once the time stated is reached, any member can then resume the process.
+private static bool isLock( string id )
 {
-    Header header = Blockchain.GetHeader(Blockchain.GetHeight());
+    if (id[0] == "R")
+    {
+        uint endTime = GetRef(id, "End Time"); // --PENDING-- provavelmente vai dar erro de conversão!
+    }
+    uint endTime = GetCrowd(id, "End Time"); // --PENDING-- provavelmente vai dar erro de conversão!
     
-    
-    uint endTime = GetRef(id, "endTime");                      // provavelmente vai dar erro de conversão!
-    
-    if (header.Timestamp < endTime) return false;
-    return true;
+    if (PresentTime() <= endTime) return true;
+    return false;
 }
 
 
@@ -766,11 +765,11 @@ public static object PowerUpResult( string id, string PPid = null )
     // STEP 1 - After a 'timeFrameRef' waiting period.
     if (PPid == null)
     {
-        if ( StartTime() <= GetRef(id, "endTime") )
+        if ( isLock(id) )
             throw new InvalidOperationException("There isn't a result about the new PP request yet.");
         
         // Evaluates the referendum result only once.
-        if ( GetRef(id, "HasResult").Length == 0 )
+        if ( GetRef(id, "Has Result").Length == 0 )
         {
             CalcResult(id);
             
@@ -803,19 +802,19 @@ public static object PowerUpResult( string id, string PPid = null )
     }
     
     // STEP 2 - After a 'timeFrameCrowd' waiting period.
-    if ( StartTime() <= GetCrowd(PPid, "endTime") )
+    if ( isLock(PPid) )
         throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
     
     // Gets a list of funders of the respective PP.
     string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
     
     // Evaluates the crowdfunding result only once.
-    if ( GetCrowd(PPid, "HasResult").Length == 0 )
+    if ( GetCrowd(PPid, "Has Result").Length == 0 )
     {
-        UpCrowd(PPid, "HasResult", 1);
+        UpCrowd(PPid, "Has Result", 1);
         
         BigInteger target = GetPP(PPid, "Cost").AsBigInteger();
-        BigInteger funding = GetCrowd(PPid, "TotalAmount").AsBigInteger();
+        BigInteger funding = GetCrowd(PPid, "Total Amount").AsBigInteger();
             
         // Starts or not the building of the new PP.
         if (funding == target)
@@ -844,13 +843,13 @@ public static object PowerUpResult( string id, string PPid = null )
     
     // Calculates the date the new PP is planned to start to operate, that can always be updated until the deadline.
     // operationDate = ICO_endTime + PP_timeToMarket
-    uint operationDate = GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market");
+    uint operationDate = GetCrowd(PPid, "End Time") + GetPP(PPid, "Time to Market");
     
-    if ( StartTime() <= operationDate )
+    if ( PresentTime() <= operationDate )
         throw new InvalidOperationException("The new PP is not ready to operate yet.");
     
     // Evaluates the construction only once.
-    if ( GetPP(PPid, "HasStarted").Length == 0 )
+    if ( GetPP(PPid, "Has Started").Length == 0 )
     {
         // When the PP is ready to operate, it's time to distribute tokens and shares.
         
@@ -891,14 +890,14 @@ public static object PowerUpResult( string id, string PPid = null )
 // --> create
 private static void Member( string address, string fullName, string utility, BigInteger quota, BigInteger tokens )
 {
-    Storage.Put( String.Concat( address, "FullName" ), fullName );
+    Storage.Put( String.Concat( address, "Full Name" ), fullName );
     Storage.Put( String.Concat( address, "Utility" ), utility );
     Storage.Put( String.Concat( address, "Quota" ), quota );
     Storage.Put( String.Concat( address, "Tokens" ), tokens );
 
     // Increases the total number of members.
     BigInteger temp = NumOfMemb() + 1;
-    Storage.Put("NumOfMemb", temp);
+    Storage.Put("Num of Memb", temp);
     
     // Stores the address of each member.
     Storage.Put( String.Concat( "M", temp.ToString() ), address );
@@ -953,14 +952,14 @@ private static void DelMemb( string address, string opt = "" )
     // If a member exits the group.
     if (opt == "")
     {
-        Storage.Delete( String.Concat( address, "FullName" ) );
+        Storage.Delete( String.Concat( address, "Full Name" ) );
         Storage.Delete( String.Concat( address, "Utility" ) );
         Storage.Delete( String.Concat( address, "Quota" ) );
         Storage.Delete( String.Concat( address, "Tokens" ) );
         
         // Decreases the total number of members.
         BigInteger temp = NumOfMemb() - 1;
-        Storage.Put("NumOfMemb", temp);
+        Storage.Put("Num of Memb", temp);
         
         // Wipe off the address of the member.
         Storage.Delete( String.Concat( "M", ? ), address ); // -- PENDING --
@@ -985,9 +984,9 @@ private static string PP( string capacity, BigInteger cost, string utility, uint
     Storage.Put( String.Concat( id, "Capacity" ), capacity );
     Storage.Put( String.Concat( id, "Cost" ), cost );
     Storage.Put( String.Concat( id, "Utility" ), utility );
-    Storage.Put( String.Concat( id, "Time To Market" ), timeToMarket );
-    // Storage.Put( String.Concat( id, "NumOfFundMemb" ), 0 ); // Expensive to create with null value. Just state it out!
-    // Storage.Put( String.Concat( id, "HasStarted" ), 0 ); // Expensive to create with null value. Just state it out!
+    Storage.Put( String.Concat( id, "Time to Market" ), timeToMarket );
+    // Storage.Put( String.Concat( id, "Num of Fund Memb" ), 0 ); // Expensive to create with null value. Just state it out!
+    // Storage.Put( String.Concat( id, "Has Started" ), 0 ); // Expensive to create with null value. Just state it out!
 
     // Increases the total number of power plant units.
     BigInteger temp = NumOfPP() + 1;
@@ -1028,33 +1027,33 @@ private static void UpPP( string id, string opt, object val )
         // This was not implemented!
     }
     
-    if (opt == "HasStarted")
+    if (opt == "Has Started")
     {
         // Don't invoke Put if value is unchanged.
-        string orig = GetPP(id, "HasStarted").AsBigInteger();
+        string orig = GetPP(id, "Has Started").AsBigInteger();
         if (orig == val) return;
         
         // Do nothing if the new value is empty.
         if (val.Length == 0) return;
         
         // else
-        Storage.Put( String.Concat( id, "HasStarted" ), val );
+        Storage.Put( String.Concat( id, "Has Started" ), val );
     }
     
-    if (opt == "Time To Market")
+    if (opt == "Time to Market")
     {
-        if ( StartTime() > ( GetCrowd(PPid, "endTime") + GetPP(PPid, "Time To Market") ) )
+        if ( PresentTime() > ( GetCrowd(PPid, "End Time") + GetPP(PPid, "Time to Market") ) )
             throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
         
         // Don't invoke Put if value is unchanged.
-        string orig = GetPP(id, "Time To Market").BigInteger();
+        string orig = GetPP(id, "Time to Market").BigInteger();
         if (orig == val) return;
         
         // Do nothing if the new value is empty.
         if (val == 0) return;
         
         // else
-        Storage.Put( String.Concat( id, "Time To Market" ), val );
+        Storage.Put( String.Concat( id, "Time to Market" ), val );
     }
 }
 
@@ -1064,7 +1063,7 @@ private static void DelPP( string id )
     Storage.Delete( String.Concat( id, "Capacity" ) );
     Storage.Delete( String.Concat( id, "Cost" ) );
     Storage.Delete( String.Concat( id, "Utility" ) );
-    if ( GetPP(id, "NumOfFundMemb") != 0 ) Storage.Delete( String.Concat( id, "NumOfFundMemb" ) );
+    if ( GetPP(id, "Num of Fund Memb") != 0 ) Storage.Delete( String.Concat( id, "Num of Fund Memb" ) );
 
     // Decreases the total number of power plant units.
     BigInteger temp = NumOfPP() - 1;
@@ -1093,13 +1092,13 @@ private static string Ref( string proposal, string notes, int cost = 0 )
     Storage.Put( String.Concat( id, "Proposal" ), proposal );
     Storage.Put( String.Concat( id, "Notes" ), notes );
     Storage.Put( String.Concat( id, "Cost" ), cost );
-    // Storage.Put( String.Concat( id, "MoneyRaised" ), 0 ); // Expensive to create with null value. Just state it out!
-    // Storage.Put( String.Concat( id, "NumOfVotes"), 0 );   // Expensive to create with null value. Just state it out!
-    // Storage.Put( String.Concat( id, "CountTrue"), 0 );    // Expensive to create with null value. Just state it out!
+    // Storage.Put( String.Concat( id, "Money Raised" ), 0 ); // Expensive to create with null value. Just state it out!
+    // Storage.Put( String.Concat( id, "Num of Votes"), 0 );   // Expensive to create with null value. Just state it out!
+    // Storage.Put( String.Concat( id, "Count True"), 0 );    // Expensive to create with null value. Just state it out!
     Storage.Put( String.Concat( id, "Outcome" ), Bool2Str(false) );
-    // Storage.Put( String.Concat( id, "HasResult"), 0 );    // Expensive to create with null value. Just state it out!
-    Storage.Put( String.Concat( id, "startTime" ), StartTime() );
-    Storage.Put( String.Concat( id, "endTime" ), StartTime() + timeFrameRef );
+    // Storage.Put( String.Concat( id, "Has Result"), 0 );    // Expensive to create with null value. Just state it out!
+    Storage.Put( String.Concat( id, "Start Time" ), PresentTime() );
+    Storage.Put( String.Concat( id, "End Time" ), PresentTime() + timeFrameRef );
 
     Process(id, "The referendum process has started.");
     return id;
@@ -1117,7 +1116,7 @@ private static byte[] GetRef( string id, string opt )       // retorna byte[] OU
 // It is only possible to internally change the 'MoneyRaised', the 'NumOfVotes', the 'CountTrue', the 'HasResult' and the 'Outcome'.
 private static void UpRef( string id, string opt, BigInteger val )
 {
-    if ((opt == "NumOfVotes") || (opt == "MoneyRaised") || (opt == "CountTrue") || (opt == "HasResult") )
+    if ((opt == "Num of Votes") || (opt == "Money Raised") || (opt == "Count True") || (opt == "Has Result") )
     {
         // Don't invoke Put if value is unchanged.
         BigInteger orig = GetRef(id, opt).AsBigInteger();
@@ -1150,12 +1149,12 @@ private static void UpRef( string id, bool val )
 // --> create
 private static void CrowdFunding( string ICOid )
 {
-    Storage.Put( String.Concat( ICOid, "startTime" ), StartTime() );
-    Storage.Put( String.Concat( ICOid, "endTime" ), StartTime() + timeFrameCrowd );
-    // Storage.Put( String.Concat( ICOid, "TotalAmount" ), 0 );   // Expensive to create with null value. Just state it out!
+    Storage.Put( String.Concat( ICOid, "Start Time" ), PresentTime() );
+    Storage.Put( String.Concat( ICOid, "End Time" ), PresentTime() + timeFrameCrowd );
+    // Storage.Put( String.Concat( ICOid, "Total Amount" ), 0 );   // Expensive to create with null value. Just state it out!
     // Storage.Put( String.Concat( ICOid, "Contributions" ), 0 ); // Expensive to create with null value. Just state it out!
     Storage.Put( String.Concat( ICOid, "Success" ), Bool2Str(false) );
-    // Storage.Put( String.Concat( ICOid, "HasResult" ), 0 );  // Expensive to create with null value. Just state it out!
+    // Storage.Put( String.Concat( ICOid, "Has Result" ), 0 );  // Expensive to create with null value. Just state it out!
 }
 
 // The function to bid on a crowdfunding is declared above because it is public.
@@ -1193,7 +1192,7 @@ private static bool UpBid( string ICOid, string member, BigInteger bid ) // --PE
 // Only the 'Total Amount', 'Contributions', 'HasResult' and 'Success' can be updated.
 private static void UpCrowd( string ICOid, string opt, BigInteger val )
 {
-    if ( (opt == "TotalAmount") || (opt == "Contributions") || (opt == "HasResult") )
+    if ( (opt == "Total Amount") || (opt == "Contributions") || (opt == "Has Result") )
     {
         // Don't invoke Put if value is unchanged.
         BigInteger orig = GetCrowd(ICOid, opt).AsBigInteger();
@@ -1225,8 +1224,8 @@ private static void Refund( string ICOid, string member )
     Storage.Delete( String.Concat( ICOid, member ) );
     
     // Decreases the total amount of funds
-    BigInteger funds = GetCrowd(ICOid, "TotalAmount");
-    UpCrowd(PPi, "TotalAmount", funds - grant);
+    BigInteger funds = GetCrowd(ICOid, "Total Amount");
+    UpCrowd(PPi, "Total Amount", funds - grant);
 
     // Decreases the total number of contributions.
     BigInteger contributions = GetCrowd(ICOid, "Contributions");
@@ -1242,7 +1241,7 @@ private static void Refund( string ICOid, string member )
 // Actually it is only used to "store" null values cheaply.
 private static void DelCrowd( string ICOid, string opt )    // --PENDING-- Why not keep this information?
 {
-    if ( (opt == "TotalAmount") || (opt == "Contributions") )
+    if ( (opt == "Total Amount") || (opt == "Contributions") )
     {
         Storage.Delete( String.Concat( ICOid, opt ) );
     }
