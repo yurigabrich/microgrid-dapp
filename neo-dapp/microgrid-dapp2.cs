@@ -1,14 +1,3 @@
-// TO UNDERSTAND!
-// Unix timestamp : https://unixtime.51240.com/
-// Dependent variables:
-// - timeFrameRef --> número de dias
-// - timeFrameCrowd --> número de dias
-// - minTimeToMarket --> número de dias
-// - timeToMarket --> número de dias
-// - "Start Time"
-// - "End Time"
-// - Does the PresentTime() have the same variable type?
-
 //---------------------------------------------------------------------------------------------
 // EVENTS
 
@@ -44,10 +33,10 @@ public static BigInteger NumOfMemb() => Storage.Get("Num of Memb").AsBigInteger(
 public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigInteger();
 
 // The number of days to answer a referendum process.
-private const byte timeFrameRef = 30;         // Review the sum with uint (is the endtime right?) --PENDING--
+private const uint timeFrameRef = 259200;   // 30 days
 
 // The time a given function is invoked.
-private static uint PresentTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp; // --PENDING-- to test!!!
+private static uint InvokeTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp; // --PENDING-- to test!!!
 
 // Token settings.
 public static string Name() => "Sharing Electricity in Brazil";
@@ -62,9 +51,9 @@ private static string[] register => new string[] {"Quota", "Tokens"};
 
 // New Power Plant crowdfunding settings (ICO of an NFT).
 private const ulong factor = 1000;              // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
-private const byte minOffer = 100;              // --PENDING-- byte vai até qual número?
-private const byte timeFrameCrowd = 60;         // Review the sum with uint (is the endtime right?) --PENDING--
-private const byte minTimeToMarket = 30;    // days
+private const byte minOffer = 100;              // --PENDING-- byte vai até qual número? R$
+private const uint timeFrameCrowd = 518400;     // 60 days
+private const uint minTimeToMarket = 259200;    // 30 days
 
 // The restrictive message to show up.
 private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
@@ -199,10 +188,10 @@ public static object Main ( string operation, params object[] args )
                 if ( (args[3] == 0) || (args[3] < minTimeToMarket) )
                     throw new InvalidOperationException("The time to market must be a factual period.");
 
-                return PowerUp( (BigInteger)args[0],   // capacity [MW]
-                                (BigInteger)args[1],   // cost [R$]
-                                (string)args[2],       // power utility name
-                                (ushort)args[3] );     // time to market
+                return PowerUp( (BigInteger)args[0],    // capacity [MW]
+                                (BigInteger)args[1],    // cost [R$]
+                                (string)args[2],        // power utility name
+                                (uint)args[3] );        // time to market
             }
 
             if (operation == "change")
@@ -483,7 +472,7 @@ public object Change( string key, params object[] opts )
 }
 
 // The whole process to integrate a new PP on the group power generation.
-public string PowerUp( BigInteger capacity, BigInteger cost, string utility, ushort timeToMarket )
+public string PowerUp( BigInteger capacity, BigInteger cost, string utility, uint timeToMarket )
 {
     string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility, timeToMarket.ToString() ), cost );
     Process( id, "Request to add a new PP." );
@@ -661,7 +650,7 @@ private static bool isLock( string id )
     }
     uint endTime = GetCrowd(id, "End Time"); // --PENDING-- provavelmente vai dar erro de conversão!
     
-    if (PresentTime() <= endTime) return true;
+    if (InvokeTime() <= endTime) return true;
     return false;
 }
 
@@ -845,7 +834,7 @@ public static object PowerUpResult( string id, string PPid = null )
     // operationDate = ICO_endTime + PP_timeToMarket
     uint operationDate = GetCrowd(PPid, "End Time") + GetPP(PPid, "Time to Market");
     
-    if ( PresentTime() <= operationDate )
+    if ( InvokeTime() <= operationDate )
         throw new InvalidOperationException("The new PP is not ready to operate yet.");
     
     // Evaluates the construction only once.
@@ -1042,7 +1031,7 @@ private static void UpPP( string id, string opt, object val )
     
     if (opt == "Time to Market")
     {
-        if ( PresentTime() > ( GetCrowd(PPid, "End Time") + GetPP(PPid, "Time to Market") ) )
+        if ( InvokeTime() > ( GetCrowd(PPid, "End Time") + GetPP(PPid, "Time to Market") ) )
             throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
         
         // Don't invoke Put if value is unchanged.
@@ -1097,8 +1086,8 @@ private static string Ref( string proposal, string notes, int cost = 0 )
     // Storage.Put( String.Concat( id, "Count True"), 0 );    // Expensive to create with null value. Just state it out!
     Storage.Put( String.Concat( id, "Outcome" ), Bool2Str(false) );
     // Storage.Put( String.Concat( id, "Has Result"), 0 );    // Expensive to create with null value. Just state it out!
-    Storage.Put( String.Concat( id, "Start Time" ), PresentTime() );
-    Storage.Put( String.Concat( id, "End Time" ), PresentTime() + timeFrameRef );
+    Storage.Put( String.Concat( id, "Start Time" ), InvokeTime() );
+    Storage.Put( String.Concat( id, "End Time" ), InvokeTime() + timeFrameRef );
 
     Process(id, "The referendum process has started.");
     return id;
@@ -1149,8 +1138,8 @@ private static void UpRef( string id, bool val )
 // --> create
 private static void CrowdFunding( string ICOid )
 {
-    Storage.Put( String.Concat( ICOid, "Start Time" ), PresentTime() );
-    Storage.Put( String.Concat( ICOid, "End Time" ), PresentTime() + timeFrameCrowd );
+    Storage.Put( String.Concat( ICOid, "Start Time" ), InvokeTime() );
+    Storage.Put( String.Concat( ICOid, "End Time" ), InvokeTime() + timeFrameCrowd );
     // Storage.Put( String.Concat( ICOid, "Total Amount" ), 0 );   // Expensive to create with null value. Just state it out!
     // Storage.Put( String.Concat( ICOid, "Contributions" ), 0 ); // Expensive to create with null value. Just state it out!
     Storage.Put( String.Concat( ICOid, "Success" ), Bool2Str(false) );
