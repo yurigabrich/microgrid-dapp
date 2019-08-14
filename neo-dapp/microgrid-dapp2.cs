@@ -61,6 +61,9 @@ private static Exception Warning() => new InvalidOperationException("Only member
 // Caller authenticity...
 public static byte[] Caller() => ...;                                                       // --PENDING--
 
+// Trick to support the conversion from 'int' to 'string'.
+private static string[] Digits() => new string[10] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+
 //---------------------------------------------------------------------------------------------
 // THE MAIN INTERFACE
 
@@ -530,18 +533,18 @@ private static void Distribute( string toAddress, BigInteger quota, BigInteger t
 // To create a custom ID of a process based on its particular specifications.
 private static string ID( object arg1, object arg2, object arg3, object arg4 )  // --PENDING--
 {
-    object[] listOfArgs = new object[4] {arg1, arg2, arg3, arg4};
+    object[] args = new object[4] {arg1, arg2, arg3, arg4};
     
     for (int n = 0; n < 5; n++)
     {
-        if (!(listOfArgs[n] is string))
+        if ( args[n].GetType().Equals(typeof(int)) ) // if 'integer'
         {
-            listOfArgs[n] = (char)listOfArgs[n];
+            args[n] = Int2Str( (int)args[n] );
         }
     }
 
-    string temp1 = String.Concat(arg1, arg2);
-    string temp2 = String.Concat(arg3, arg4);
+    string temp1 = String.Concat(args[0], args[1]);
+    string temp2 = String.Concat(arg[2], arg[3]);
     return String.Concat(temp1, temp2);
     // string to byte[]
     // str.AsByteArray();
@@ -569,7 +572,9 @@ private static string Int2Str(int num, string s = null)
     int quotient = num / 10;
     int remainder = num % 10;
     
-    return Int2Str(quotient, String.Concat( (char)remainder, s) );
+    string trick = Digits()[ remainder ];
+        
+    return Int2Str(quotient, String.Concat(trick, s) );
 }
 
 // To filter the relationship of members and PPs.
