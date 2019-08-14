@@ -36,7 +36,7 @@ public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigIntege
 private const uint timeFrameRef = 259200;   // 30 days
 
 // The time a given function is invoked.
-private static uint InvokeTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp; // --PENDING-- to test!!!
+private static uint InvokeTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
 
 // Token settings.
 public static string Name() => "Sharing Electricity in Brazil";
@@ -50,8 +50,8 @@ private static string[] profile => new string[] {"Full Name", "Utility"};
 private static string[] register => new string[] {"Quota", "Tokens"};
 
 // New Power Plant crowdfunding settings (ICO of an NFT).
-private const ulong factor = 1000;              // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
-private const byte minOffer = 100;              // --PENDING-- byte vai até qual número? R$
+private const uint factor = 1000;               // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
+private const byte minOffer = 100;              // Brazilian Reais (R$)
 private const uint timeFrameCrowd = 518400;     // 60 days
 private const uint minTimeToMarket = 259200;    // 30 days
 
@@ -143,8 +143,8 @@ public static object Main ( string operation, params object[] args )
                 if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
                     throw new InvalidOperationException( "This member cannot profit from this power utility." );
 
-                if ( args[2] <= minOffer ) return false;
-                    throw new InvalidOperationException("The minimum bid allowed is R$ {0}.".format(minOffer)); // --PENDING-- formatação do número em texto real!
+                if ( args[2] <= minOffer )
+                    throw new InvalidOperationException("The minimum bid allowed is R$ {0}.".format(minOffer)); // --PENDING-- format está errado!
                 
                 if ( isLock( args[0] ) )
                     throw new InvalidOperationException("The campaign has ended.");
@@ -331,7 +331,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
                 {
                     string[][] PowerPlantBids = new string[][]; // testar esta variável e o par de arrays --PENDING--
                     
-                    foreach member in Members()
+                    foreach (string member in Members())
                     {
                         BigInteger bid = GetBid(key, member).AsBigInteger();
                         if ( bid != 0 ) PowerPlantBids.append( [member, bid] );
@@ -561,6 +561,17 @@ private static bool Str2Bool( byte[] val )
     return false;
 }
 
+// To affordably convert a integer to a string.
+private static string Int2Str(int num, string s = null)
+{
+    if (num == 0) return s;
+
+    int quotient = num / 10;
+    int remainder = num % 10;
+    
+    return Int2Str(quotient, String.Concat( (char)remainder, s) );
+}
+
 // To filter the relationship of members and PPs.
 private static string[] GetContributeValue( string lookForID, string[] listOfIDs )
 {
@@ -770,6 +781,8 @@ public static object PowerUpResult( string id, string PPid = null )
                 string notes = GetRef(id, "Notes"); // --PENDING--
                 
                 // separa os termos em Notes!           // --PENDING--
+                String.Substring
+                https://docs.microsoft.com/pt-br/dotnet/api/system.string.substring?view=netframework-4.8
                 
                 
                 
