@@ -144,10 +144,10 @@ public static object Main ( string operation, params object[] args )
                     throw new InvalidOperationException("Provide a valid PP ID.");
 
                 if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
-                    throw new InvalidOperationException( "This member cannot profit from this power utility." );
+                    throw new InvalidOperationException("This member cannot profit from this power utility." );
 
                 if ( args[2] <= minOffer )
-                    throw new InvalidOperationException("The minimum bid allowed is R$ {0}.".format(minOffer)); // --PENDING-- format está errado!
+                    throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                 
                 if ( isLock( args[0] ) )
                     throw new InvalidOperationException("The campaign has ended.");
@@ -392,7 +392,7 @@ public static bool Bid( string ICOid, string member, BigInteger bid )
     BigInteger funds = GetCrowd(ICOid, "Total Amount").AsBigInteger();
     
     if ( bid > target - funds )
-        throw new InvalidOperationException( "You offered more than the amount requested ({0}). Bid again!".format( target - funds ) );
+        throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str(target - funds) ), ",00). Bid again!" ));
 
     // WARNING!
     // All these steps are part of a crowdfunding process, not of a PP registration.
