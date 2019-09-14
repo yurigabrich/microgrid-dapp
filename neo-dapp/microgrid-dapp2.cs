@@ -64,6 +64,9 @@ public static byte[] Caller() => ...;                                           
 // Trick to support the conversion from 'int' to 'string'.
 private static string[] Digits() => new string[10] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
 
+// Trick to get the type of a 'string' (and of a 'integer').
+private static char[] Alpha() => new char[] {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+
 //---------------------------------------------------------------------------------------------
 // THE MAIN INTERFACE
 
@@ -296,7 +299,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
             if (opt == "detailed")
             {
                 string[] PowerPlantsByMember = GetContributeValue( key, listOfPPs() );
-                return brief + PowerPlantsByMember; // how to sum string[]'s? --PENDING--
+                return Merge(brief, PowerPlantsByMember);
             }
             return brief;
         }
@@ -316,7 +319,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
                 if (opt == "detailed")
                 {
                     string[] MembersByPowerPlant = GetContributeValue( key, listOfMembers() );
-                    return brief + MembersByPowerPlant; // how to sum string[]'s? --PENDING--
+                    return Merge(brief, MembersByPowerPlant);
                 }
                 return brief;
             }
@@ -340,7 +343,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
                         if ( bid != 0 ) PowerPlantBids.append( [member, bid] );
                     }
                     
-                    return brief + PowerPlantBids; // how to sum string[]'s? --PENDING--
+                    return Merge(brief, PowerPlantBids);
                 }
                 return brief;
             }
@@ -531,23 +534,31 @@ private static void Distribute( string toAddress, BigInteger quota, BigInteger t
 }
 
 // To create a custom ID of a process based on its particular specifications.
-private static string ID( object arg1, object arg2, object arg3, object arg4 )  // --PENDING--
+private static string ID( object arg1, object arg2, object arg3, object arg4 )  // --PENDING-- ainda dando problema :/
 {
     object[] args = new object[4] {arg1, arg2, arg3, arg4};
     
-    for (int n = 0; n < 5; n++)
+    for (int k = 0; k < args.Length; k++)
     {
-        if ( args[n].GetType().Equals(typeof(int)) ) // if 'integer'
+        int count = 0;
+        for (int n = 0; n < Alpha().Length; n++)
         {
-            args[n] = Int2Str( (int)args[n] );
+            if ( Alpha()[n] == ((string)args[k])[0] ) break; // args[k] is a 'string'
+            count++;
+        }
+        
+        if ( count == Alpha().Length ) // args[k] is a 'integer'
+        {
+            // Converts the related argument to string.
+            args[k] = Int2Str( (int)args[k] );
         }
     }
 
     string temp1 = String.Concat(args[0], args[1]);
-    string temp2 = String.Concat(arg[2], arg[3]);
+    string temp2 = String.Concat(args[2], args[3]);
     return String.Concat(temp1, temp2);
     // string to byte[]
-    // str.AsByteArray();
+    // str.AsByteArray(); acho q só funciona como readonly...
 }
 
 // To properly store a boolean variable.
@@ -576,6 +587,27 @@ private static string Int2Str(int num, string s = null)
         
     return Int2Str(quotient, String.Concat(trick, s) );
 }
+
+// To properly merge two arrays of type 'string'. --PENDING-- testar o resultado, pois o compilador já passou.
+private static string[] Merge(string[] A, string[] B)
+{
+    string[] C = new string[ A.Length + B.Length ];
+    
+    int follow = 0;
+    for (int o=0; o < A.Length; o++)
+    {
+        C[o] = A[o];
+        follow = o;
+    }
+    
+    for (int u=0; u < B.Length; u++)
+    {
+        C[follow+u] = B[u];
+    }
+    
+    return C;
+}
+
 
 // To filter the relationship of members and PPs.
 private static string[] GetContributeValue( string lookForID, string[] listOfIDs )
