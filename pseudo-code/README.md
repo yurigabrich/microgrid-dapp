@@ -1,11 +1,27 @@
-# DApp operation layers
+# System UML
 
-![Dapp operation layers](./dapp-op.png)
+![uml](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-1.png)
 
-# DApp fluxogram
 
-![Dapp fluxogram](./flux_dapp.png)
+# Smart contract organization
 
-# DApp UML
+![mtemsm](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-2.png)
 
-Detail UML can be downloaded [here](./uml.pdf).
+
+# Fluxograms of each function
+
+![admission](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-3.png)
+
+![summary](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-4.png)
+
+![vote](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-5.png)
+
+![bid](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-6.png)
+
+![trade](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-7.png)
+
+![power-up](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-8.png)
+
+![change](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-9.png)
+
+ESTÁ PEDINDO LOGIN! :(
