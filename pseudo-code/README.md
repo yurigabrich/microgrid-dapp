@@ -25,3 +25,5 @@
 ![change](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-9.png)
 
 ESTÁ PEDINDO LOGIN! :(
+Tem que carregar a página de visualização antes. Assim, depois da compilação, as url's estarão acessíveis.
+https://www.overleaf.com/read/gdmgvdkpcqjm
