@@ -1,29 +1,36 @@
 # System UML
 
-![uml](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-1.png)
+![uml](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/uml.png)
 
 
 # Smart contract organization
 
-![mtemsm](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-2.png)
+![mtemsm](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/MTEMsm.png)
 
 
 # Flowcharts of each function
 
-![admission](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-3.png)
+## admission
+![admission](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/admission.png)
 
-![summary](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-4.png)
+## summary
+![summary](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/summary.png)
 
-![vote](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-5.png)
+## vote
+![vote](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/vote.png)
 
-![bid](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-6.png)
+## bid
+![bid](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/bid.png)
 
-![trade](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-7.png)
+## trade
+![trade](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/trade.png)
 
-![power-up](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-8.png)
+## power-up
+![power-up](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/power-up.png)
 
-![change](https://www.overleaf.com/project/5d424b4d0ceb7978043b3555/output/output-9.png)
+## change
+![change](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/change.png)
 
-> ESTÁ PEDINDO LOGIN! :(
-> Tem que carregar a página de visualização antes. Assim, depois da compilação, as url's estarão acessíveis.
-> https://www.overleaf.com/read/gdmgvdkpcqjm
+---
+> Most of the images above was created with LaTeX and the codes are available to read at https://www.overleaf.com/read/gdmgvdkpcqjm.
+The exception is the UML, that was created with [draw.io](https://about.draw.io/) -- until get courage to draw with Tikz .
