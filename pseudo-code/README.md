@@ -31,6 +31,11 @@
 ## change
 ![change](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/change.png)
 
----
-> Most of the images above was created with LaTeX and the codes are available to read at https://www.overleaf.com/read/gdmgvdkpcqjm.
+<table>
+<tr>
+<td>
+Most of the images above was created with LaTeX and the codes are available to read at https://www.overleaf.com/read/gdmgvdkpcqjm.
 The exception is the UML, that was created with [draw.io](https://about.draw.io/) -- until get courage to draw with Tikz .
+</td>
+</tr>
+</table>
