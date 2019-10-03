@@ -1,7 +1,7 @@
 # Microgrid Transactive Energy Management Smart Contract
 
 The microgrid concept stands for the integration of distributed generation (DG) of electricity in an existing mid/low voltage power grid infrastructure.
-The size fo the microgrid is measured by its power generation capacity, and it can also have other nomenclatures due to this specification, such as mini-grid or nano grid.
+The size fo the microgrid is measured by its power generation capacity, and it can also have other nomenclatures due to this specification, such as mini-grid or nanogrid.
 Independently of its size, it may operate disconnected from the main grid as well.
 Either to feed the local point of generation or nearby points of power consumption.
 
@@ -12,7 +12,7 @@ Unfortunately, proper coordination between this market and the current electric 
 The transactive energy (TE) is the concept looking to solve this issue.
 The objective is to have a system to better integrate DERs, to provide transparent energy prices, and to allow consumers of all sizes to trade energy without compromise the quality and reliability of the main electricity grid.
 
-A *one-size-fits-all* solution is impracticable but blockchain comes as a good rescue.
+A *one-size-fits-all* solution is impracticable but blockchain comes in on good rescue.
 Although electric specifications of the distribution grid are almost the same worldwide, the electric sector directives might follow local energy capacity and potential, economic ambitions and mid-/long-term planning of the govern.
 This way several blockchain solutions are being developed under the aforementioned requirements.
 
