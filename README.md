@@ -1,4 +1,4 @@
-# Microgrid Transactive Energy Management Smart Contract
+# Microgrid Transactive Energy Smart Contract
 
 The microgrid concept stands for the integration of distributed generation (DG) of electricity in an existing mid/low voltage power grid infrastructure.
 The size fo the microgrid is measured by its power generation capacity, and it can also have other nomenclatures due to this specification, such as mini-grid or nanogrid.
@@ -16,8 +16,8 @@ A *one-size-fits-all* solution is impracticable but blockchain comes in on good 
 Although electric specifications of the distribution grid are almost the same worldwide, the electric sector directives might follow local energy capacity and potential, economic ambitions and mid-/long-term planning of the govern.
 This way several blockchain solutions are being developed under the aforementioned requirements.
 
-The current **Microgrid Transactive Energy Management Smart Contract** is the result of a master degree on the look for a solution to implement the TE in the Brazilian micro/mini-grid context.
-The thesis is also available on this repo [[PDF is coming...]]().
+The current **Microgrid Transactive Energy Smart Contract** is the result of a master degree on the look for a solution to implement the TE in the Brazilian micro/mini-grid context through a blockchain application.
+The thesis is also available online at the [Brazilian Thesis and Dissertation Catalog](http://catalogodeteses.capes.gov.br/catalogo-teses/#!/) [`Coming soon!`].
 The smart contract developed is only a small step towards a full micro/mini-grid distributed application (dApp) but enough to assist the power exchange between consumers and prosumers (*pro*ducers + con*sumers*) through a transparent and secure management platform.
 
 ## Smart Contract
