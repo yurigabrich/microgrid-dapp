@@ -156,9 +156,9 @@ public static object Main ( string operation, params object[] args )
                 if ( isLock( args[0] ) )
                     throw new InvalidOperationException("The campaign has ended.");
 
-                return Bid( (string)args[0],     // PP id
-                            (string)args[1],     // member address
-                            (bool)args[2] );     // bid value
+                return Bid( (string)args[0],        // PP id
+                            (string)args[1],        // member address
+                            (BigInteger)args[2] );  // bid value
             }
 
             if (operation == "trade")
@@ -389,13 +389,13 @@ public static bool Vote( string id, string member, bool answer )
     return answer;
 }
 
-// To make a bid in a new PP crowdfunding process (ICO of a NFT).
+// To make a bid in a new PP crowdfunding process.
 public static bool Bid( string ICOid, string member, BigInteger bid )
 {
     BigInteger target = GetPP(ICOid, "Cost").AsBigInteger();
     BigInteger funds = GetCrowd(ICOid, "Total Amount").AsBigInteger();
     
-    if ( bid > target - funds )
+    if ( bid > (target - funds) )
         throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str(target - funds) ), ",00). Bid again!" ));
 
     // WARNING!
@@ -618,30 +618,29 @@ private static string Rec(string start, string end)
 // To filter the relationship of members and PPs.
 private static string[] GetContributeValue( string lookForID, string[] listOfIDs )
 {
-    //
     string[] equivList = new string[];
     
     // Gets values by each ID registered on the contract storage space.
     if ( lookForID[0] == "P" )
     {
-        // Gets members by a PP.
+        // Gets members by a PP funding process.
         foreach (string key in listOfIDs)
         {
-            BigInteger temp = GetBid(lookForID, key).AsBigInteger(); // shares(%) or money? --PENDING--
+            BigInteger temp = GetBid(lookForID, key).AsBigInteger();
             if ( temp != 0 ) equivList.append(key);
         }
     }
     else
     {
-        // Gets PPs by a member.
+        // Gets PPs by a member investments.
         foreach (string key in listOfIDs)
         {
-            BigInteger temp = GetBid(key, lookForID).AsBigInteger(); // shares(%) or money? --PENDING--
+            BigInteger temp = GetBid(key, lookForID).AsBigInteger();
             if ( temp != 0 ) equivList.append(key);
         }
     }
     
-    return equivList;
+    return equivList; // Returns how much a member has contributed to a PP crowdfunding.
 }
 
 // To calculate the referendum result only once.
