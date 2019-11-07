@@ -18,14 +18,14 @@ This way several blockchain solutions are being developed under the aforemention
 
 The current **Microgrid Transactive Energy Smart Contract** is the result of a master degree on the look for a solution to implement the TE in the Brazilian micro/mini-grid context through a blockchain application.
 The thesis is also available online at the [Brazilian Thesis and Dissertation Catalog](http://catalogodeteses.capes.gov.br/catalogo-teses/#!/) [`Coming soon!`].
-The smart contract developed is only a small step towards a full micro/mini-grid distributed application (dApp) but enough to assist the power exchange between consumers and prosumers (*pro*ducers + con*sumers*) through a transparent and secure management platform.
+The smart contract developed is only a small step towards a full micro/mini-grid distributed application (Dapp) but enough to assist the power exchange between consumers and prosumers (*pro*ducers + con*sumers*) through a transparent and secure management platform.
 
 ## Smart Contract
 
 The current project was designed for interacting with the [NEO Blockchain](https://github.com/neo-project/neo) and can be tested online with [NeoCompiler Eco](https://github.com/NeoResearch/neocompiler-eco) at the [EcoLab](https://neocompiler.io/#!/ecolab/compilers).
-The `C#` algorithm implementation is on the [folder `dapp-csh`](neo-dapp/microgrid-dapp.cs).
+The `C#` algorithm implementation is on the [folder neo-dapp](/neo-dapp) under the file [`microgrid-dapp.cs`](/microgrid-dapp.cs).
 
-As additional language implementations are expected, on the folder [pseudo-code/README.md](pseudo-code/README.md) can be found generic flowcharts and pseudocodes of the proposed system, (initially) echoed from the thesis.
+As additional language implementations are expected, on the folder [pseudo-code](/pseudo-code) can be found generic flowcharts and information of the proposed system, (initially) echoed from the thesis.
 
 ## Open source license
 
