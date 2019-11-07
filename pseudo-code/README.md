@@ -10,25 +10,31 @@
 
 # Flowcharts of each function
 
-## admission
+## General operation
+
+### admission
 ![admission](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/admission.png)
 
-## summary
+## Partially restricted operation
+
+### summary
 ![summary](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/summary.png)
 
-## vote
+## Restricted operations
+
+### vote
 ![vote](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/vote.png)
 
-## bid
+### bid
 ![bid](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/bid.png)
 
-## trade
+### trade
 ![trade](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/trade.png)
 
-## power-up
+### power-up
 ![power-up](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/power-up.png)
 
-## change
+### change
 ![change](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/change.png)
 
 <table>
