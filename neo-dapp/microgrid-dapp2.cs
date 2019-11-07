@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------------------------
-// EVENTS 2
+// EVENTS
 
 [DisplayName("transaction")]
 public static event Action<string, string, BigInteger, BigInteger> Transfer;
@@ -49,7 +49,7 @@ public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", 
 private static string[] profile => new string[] {"Full Name", "Utility"};
 private static string[] register => new string[] {"Quota", "Tokens"};
 
-// New Power Plant crowdfunding settings (ICO of an NFT).
+// New Power Plant crowdfunding settings.
 private const uint factor = 1000;               // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
 private const byte minOffer = 100;              // Brazilian Reais (R$)
 private const uint timeFrameCrowd = 518400;     // 60 days
@@ -74,11 +74,12 @@ public static object Main ( string operation, params object[] args )
 {
     if ( Runtime.Trigger == TriggerType.Verification )
     {
-        if ( Member.Get() == null ) // --PENDING--
+        // Como garantir que o primeiro 'invoker' do contrato seja o primeiro membro e que isso aconteça somente 1 única vez? --PENDING--
+        if ( Member.Get() == null )
         {
-            if (args.Length != 2) return false; // --PENDING--
-            Member( caller, args[0], args[1], 100, 0 ); // --PENDING--
-            return "New GGM blockchain initiated."; // --PENDING--
+            if (args.Length != 2) return false;
+            Member( caller, args[0], args[1], 100, 0 );
+            return "New GGM blockchain initiated.";
         }
 
         return false;
@@ -679,7 +680,7 @@ private static string[] listOfMembers()
     
     for (int num = 0; num < NumOfMemb(); num++)
     {
-        string member = Storage.Get( String.Concat( "M", num.ToString() ) ); // --PENDING-- Isso está errado! Não tem q retornar o id de cada usina? Foi criado uma ID (duplicada) para esta função! Ver o método de criar membro. Talvez tenha uma API pronta para isso ou que só precise filtrar o resultado!
+        string member = Storage.Get( String.Concat( "M", num.ToString() ) ); // --PENDING-- Isso está errado! Não tem q retornar o id de cada membro? Foi criado uma ID (duplicada) para esta função! Ver o método de criar membro. Talvez tenha uma API pronta para isso ou que só precise filtrar o resultado!
         listMembers.append(member);
     }
     
@@ -1184,7 +1185,7 @@ private static void UpRef( string id, bool val )
 
 
 //---------------------------------------------------------------------------------------------
-// METHODS TO FINANCE A NEW POWER PLANT (aka an ICO of a NFT)
+// METHODS TO FINANCE A NEW POWER PLANT
 // --> create
 private static void CrowdFunding( string ICOid )
 {
@@ -1204,20 +1205,21 @@ private static BigInteger GetBid( string ICOid, string member )
     return Storage.Get( String.Concat( ICOid, member ) );
 }
 
-private static object GetCrowd( string ICOid, string opt )             // retorna byte[] OU object? --PENDING--
+private static object GetCrowd( string ICOid, string opt )              // retorna byte[] OU object? --PENDING--
 {
     return Storage.Get( String.Concat( ICOid, opt ) );
 }
 
 // --> update
-private static bool UpBid( string ICOid, string member, BigInteger bid ) // --PENDING-- return...
+private static bool UpBid( string ICOid, string member, BigInteger bid ) // --PENDING-- return... Preciso retornar alguma coisa?
 {
     // Don't invoke Put if value is unchanged.
     BigInteger orig = GetBid(ICOid, member).AsBigInteger();
     if (orig == bid) return;
      
     // Delete the storage if the new value is zero.
-    if (bid == 0) return Refund(ICOid, member);                               Storage.Delete( String.Concat(id, opt) );
+    if (bid == 0) return Refund(ICOid, member);
+    Storage.Delete( String.Concat(id, opt) );
     
     // else
     Storage.Put( String.Concat( ICOid, member ), bid );
