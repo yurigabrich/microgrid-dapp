@@ -1,5 +1,5 @@
 //---------------------------------------------------------------------------------------------
-// EVENTS
+// EVENTS 2
 
 [DisplayName("transaction")]
 public static event Action<string, string, BigInteger, BigInteger> Transfer;
