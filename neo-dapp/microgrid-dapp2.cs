@@ -24,13 +24,13 @@ public static event Action<string, BigInteger> Refund;
 public static int[] PowGenLimits() => new int[] {0, 5000000};
 
 // The total number of power plant units.
-public static BigInteger NumOfPP() => Storage.Get("NumOfPP").AsBigInteger();
+public static int NumOfPP() => Storage.Get("NumOfPP");
 
 // The total number of members.
-public static BigInteger NumOfMemb() => Storage.Get("Num of Memb").AsBigInteger();
+public static int NumOfMemb() => Storage.Get("NumOfMemb");
 
 // The total power supply at the group, i.e., sum of PP's capacity.
-public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigInteger();
+public static int TotalSupply() => Storage.Get("TotalSupply");
 
 // The number of days to answer a referendum process.
 private const uint timeFrameRef = 259200;   // 30 days
@@ -46,7 +46,7 @@ public static byte[] Owner() => ExecutionEngine.ExecutingScriptHash;            
 public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", "NEP-10" };
 
 // Member's dataset.
-private static string[] profile => new string[] {"Full Name", "Utility"};
+private static string[] profile => new string[] {"FullName", "Utility"};
 private static string[] register => new string[] {"Quota", "Tokens"};
 
 // New Power Plant crowdfunding settings.
@@ -95,7 +95,7 @@ public static object Main ( string operation, params object[] args )
             if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
                 throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
 
-            if ( GetMemb((string)args[0], "Full Name").Length != 0 )
+            if ( GetMemb((string)args[0], "FullName").Length != 0 )
                 throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
             
             return Admission( (string)args[0],   // invoker/caller address
@@ -109,7 +109,7 @@ public static object Main ( string operation, params object[] args )
             if ( args.Length != 1 )
                 throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
-            if ( (GetMemb(caller, "Full Name").Length == null) | (args[0][0] == "A") ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+            if ( (GetMemb(caller, "FullName").Length == null) | (args[0][0] == "A") ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
                 throw Warning();
 
             return Summary( (string)args[0],     // Address/ID
@@ -117,7 +117,7 @@ public static object Main ( string operation, params object[] args )
         }
 
         // Restricted operations.
-        if ( GetMemb(caller, "Full Name").Length != null )
+        if ( GetMemb(caller, "FullName").Length != null )
         {
             // Group operations.
             if (operation == "vote")
@@ -172,7 +172,7 @@ public static object Main ( string operation, params object[] args )
                 if ( (args[1][0] != "A") || (args[1].Length == null) )
                     throw new InvalidOperationException("Provide a valid destiny address.");
                     
-                if ( GetMemb(args[1], "Full Name").Length != null )
+                if ( GetMemb(args[1], "FullName").Length != null )
                     throw new InvalidOperationException("The address you are transaction to must be a member too.");
 
                 if ( (GetMemb(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
@@ -295,11 +295,11 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
     {
         if ((opt == "") || (opt == "detailed"))
         {
-            string[] brief = new string[] { GetMemb(key,"Full Name"), GetMemb(key,"Utility"), GetMemb(key,"Quota"), GetMemb(key,"Tokens") };
+            string[] brief = new string[] { GetMemb(key,"FullName"), GetMemb(key,"Utility"), GetMemb(key,"Quota"), GetMemb(key,"Tokens") };
 
             if (opt == "detailed")
             {
-                string[] PowerPlantsByMember = GetContributeValue( key, listOfPPs() );
+                string[] PowerPlantsByMember = GetContributeValue( key, ListOfPPs() ); // 'ListOfPPs()' mudar para uma variável a ser passada, um input 'listOfPPs'
                 return Merge(brief, PowerPlantsByMember);
             }
             return brief;
@@ -319,7 +319,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
     
                 if (opt == "detailed")
                 {
-                    string[] MembersByPowerPlant = GetContributeValue( key, listOfMembers() );
+                    string[] MembersByPowerPlant = GetContributeValue( key, ListOfMembers() ); // 'ListOfMembers' tem q mudar para 'input' --PENDING--
                     return Merge(brief, MembersByPowerPlant);
                 }
                 return brief;
@@ -609,11 +609,11 @@ private static string[] Merge(string[] A, string[] B)
     return C;
 }
 
+// To affordably concatenate string variables.
 private static string Rec(string start, string end)
 {
     return String.Concat(start, end);
 }
-
 
 // To filter the relationship of members and PPs.
 private static string[] GetContributeValue( string lookForID, string[] listOfIDs )
@@ -663,32 +663,24 @@ private static void CalcResult( string id )
     }
 }
 
-// To get the IDs of each PP.
-private static string[] listOfPPs()
+// To display the IDs of each PP to be later used on other functions. //--PENDING-- talvez não deva estar nessa classificação e vai mudar o diagrama
+private static void ListOfPPs()
 {
-    string[] listPPs = new string[];
-    
-    for (int num = 0; num < NumOfPP(); num++)
+    for (int num = 1; num < NumOfPP()+1; num++)
     {
-        string PP = Storage.Get( String.Concat( "P", num.ToString() ) ); // --PENDING-- Isso está errado! Não tem q retornar o id de cada usina? Foi criado uma ID (duplicada) para esta função! Ver o método de criar PP. Talvez tenha uma API pronta para isso ou que só precise filtrar o resultado!
-        listMembers.append(PP);
+        string PPid = Storage.Get( String.Concat( "P", Int2Str(num) )).AsString();
+        Runtime.Notify( PPid );
     }
-    
-    return listPPs;
 }
 
-// To get the address of each member.
-private static string[] listOfMembers()
+// To display the address of each member to be later used on other functions. //--PENDING-- talvez não deva estar nessa classificação e vai mudar o diagrama
+private static void ListOfMembers()
 {
-    string[] listMembers = new string[];
-    
-    for (int num = 0; num < NumOfMemb(); num++)
+    for (int num = 1; num < NumOfMemb()+1; num++)
     {
-        string member = Storage.Get( String.Concat( "M", num.ToString() ) ); // --PENDING-- Isso está errado! Não tem q retornar o id de cada membro? Foi criado uma ID (duplicada) para esta função! Ver o método de criar membro. Talvez tenha uma API pronta para isso ou que só precise filtrar o resultado!
-        listMembers.append(member);
+        string memberAddress = Storage.Get( String.Concat( "M", Int2Str(num) )).AsString();
+        Runtime.Notify( memberAddress );
     }
-    
-    return listMembers;
 }
 
 // Actualy, it restricts a given operation to happen based on a timestamp.
@@ -757,7 +749,7 @@ public static void ChangeResult( string id )
             BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
             BigInteger give_out = portion/(NumOfMemb() - 1);
             
-            foreach (string member in listOfMembers())
+            foreach (string member in ListOfMembers()) // 'ListOfMembers' tem q mudar para 'input' --PENDING--
             {
                 // In an infinitesimal period of time the group will be disbalanced
                 // until the related member be completely deleted.
@@ -850,7 +842,7 @@ public static object PowerUpResult( string id, string PPid = null )
         throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
     
     // Gets a list of funders of the respective PP.
-    string[] litsOfFunders = GetContributeValue( PPid, listOfMembers() );
+    string[] litsOfFunders = GetContributeValue( PPid, ListOfMembers() ); // 'ListOfMembers' tem q mudar para 'input' --PENDING--
     
     // Evaluates the crowdfunding result only once.
     if ( GetCrowd(PPid, "Has Result").Length == 0 )
@@ -934,14 +926,14 @@ public static object PowerUpResult( string id, string PPid = null )
 // --> create
 private static void Member( string address, string fullName, string utility, BigInteger quota, BigInteger tokens )
 {
-    Storage.Put( String.Concat( address, "Full Name" ), fullName );
+    Storage.Put( String.Concat( address, "FullName" ), fullName );
     Storage.Put( String.Concat( address, "Utility" ), utility );
     Storage.Put( String.Concat( address, "Quota" ), quota );
     Storage.Put( String.Concat( address, "Tokens" ), tokens );
 
     // Increases the total number of members.
     BigInteger temp = NumOfMemb() + 1;
-    Storage.Put("Num of Memb", temp);
+    Storage.Put("NumOfMemb", temp);
     
     // Stores the address of each member.
     Storage.Put( String.Concat( "M", temp.ToString() ), address );
@@ -996,14 +988,14 @@ private static void DelMemb( string address, string opt = "" )
     // If a member exits the group.
     if (opt == "")
     {
-        Storage.Delete( String.Concat( address, "Full Name" ) );
+        Storage.Delete( String.Concat( address, "FullName" ) );
         Storage.Delete( String.Concat( address, "Utility" ) );
         Storage.Delete( String.Concat( address, "Quota" ) );
         Storage.Delete( String.Concat( address, "Tokens" ) );
         
         // Decreases the total number of members.
         BigInteger temp = NumOfMemb() - 1;
-        Storage.Put("Num of Memb", temp);
+        Storage.Put("NumOfMemb", temp);
         
         // Wipe off the address of the member.
         Storage.Delete( String.Concat( "M", ? ), address ); // -- PENDING --
@@ -1037,7 +1029,7 @@ private static string PP( string capacity, BigInteger cost, string utility, uint
     Storage.Put("NumOfPP", temp);
     
     // Stores the ID of each PP.
-    Storage.Put( String.Concat( "P", temp.ToString() ), id );
+    Storage.Put( String.Concat( "P", Int2Str(temp) ), id );
 
     Process(id, "New PP created.")
     return id;
