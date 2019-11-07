@@ -23,7 +23,7 @@ The smart contract developed is only a small step towards a full micro/mini-grid
 ## Smart Contract
 
 The current project was designed for interacting with the [NEO Blockchain](https://github.com/neo-project/neo) and can be tested online with [NeoCompiler Eco](https://github.com/NeoResearch/neocompiler-eco) at the [EcoLab](https://neocompiler.io/#!/ecolab/compilers).
-The `C#` algorithm implementation is on the [folder neo-dapp](/neo-dapp) under the file [`microgrid-dapp.cs`](/microgrid-dapp.cs).
+The `C#` algorithm implementation is on the [folder neo-dapp](/neo-dapp) under the file [`microgrid-dapp.cs`](/neo-dapp/microgrid-dapp.cs).
 
 As additional language implementations are expected, on the folder [pseudo-code](/pseudo-code) can be found generic flowcharts and information of the proposed system, (initially) echoed from the thesis.
 
