@@ -535,31 +535,31 @@ private static void Distribute( string toAddress, BigInteger quota, BigInteger t
 }
 
 // To create a custom ID of a process based on its particular specifications.
-private static string ID( object arg1, object arg2, object arg3, object arg4 )  // --PENDING-- ainda dando problema :/
+private static string ID( params object[] args )
 {
-    object[] args = new object[4] {arg1, arg2, arg3, arg4};
+    string str = null;
     
     for (int k = 0; k < args.Length; k++)
     {
         int count = 0;
         for (int n = 0; n < Alpha().Length; n++)
         {
-            if ( Alpha()[n] == ((string)args[k])[0] ) break; // args[k] is a 'string'
+            if ( Alpha()[n] == ((string)args[k])[0] ) // args[k] is a 'string'
+            {
+                str = Rec( str, (string)args[k] );
+                break;
+            }
             count++;
         }
         
         if ( count == Alpha().Length ) // args[k] is a 'integer'
         {
-            // Converts the related argument to string.
-            args[k] = Int2Str( (int)args[k] );
+            // Converts the related argument to string and concatenate.
+            str = Rec( str, Int2Str( (int)args[k] ) );
         }
     }
 
-    string temp1 = String.Concat(args[0], args[1]);
-    string temp2 = String.Concat(args[2], args[3]);
-    return String.Concat(temp1, temp2);
-    // string to byte[]
-    // str.AsByteArray(); acho q só funciona como readonly...
+    return str;
 }
 
 // To properly store a boolean variable.
@@ -607,6 +607,11 @@ private static string[] Merge(string[] A, string[] B)
     }
     
     return C;
+}
+
+private static string Rec(string start, string end)
+{
+    return String.Concat(start, end);
 }
 
 
