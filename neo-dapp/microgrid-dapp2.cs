@@ -349,18 +349,19 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
             if ( (opt == "") || (opt == "detailed") )
             {
                 string[] brief = new string[] { GetCrowd(key,"Start Time"), GetCrowd(key,"End Time"), GetCrowd(key,"Total Amount"), GetCrowd(key,"Contributions"), GetCrowd(key,"Success") };
-    
+                
                 if (opt == "detailed")
                 {
-                    string[][] PowerPlantBids = new string[][]; // testar esta variável e o par de arrays --PENDING--
-                    
-                    foreach (string member in Members())
+                    foreach (int num in NumOfMemb())
                     {
-                        BigInteger bid = GetBid(key, member).AsBigInteger();
-                        if ( bid != 0 ) PowerPlantBids.append( [member, bid] );
+                        string memberAddress = Storage.Get( String.Concat( "M", Int2Str(num) )).AsString();
+                        BigInteger bid = GetBid(key, memberAddress).AsBigInteger();
+                        
+                        if ( bid != 0 )
+                        {
+                            Runtime.Notify( [memberAddress, bid] );
+                        }
                     }
-                    
-                    return Merge(brief, PowerPlantBids);
                 }
                 return brief;
             }
