@@ -265,6 +265,22 @@ public static object Main ( string operation, params object[] args )
                 PowerUpResult( (string)args[0],     // Referendum ID
                                (string)args[1] );   // PP ID
             }
+
+            if (operation == "list of power plants")
+            {
+                if ( args.Length != 0 )
+                    throw new InvalidOperationException("This function does not need attributes.");
+                
+                ListOfPPs();
+            }
+
+            if (operation == "list of members")
+            {
+                if ( args.Length != 0 )
+                    throw new InvalidOperationException("This function does not need attributes.");
+                
+                ListOfMembers();
+            }
         }
 
         throw Warning();
@@ -279,7 +295,7 @@ public static object Main ( string operation, params object[] args )
 // GROUP FUNCTIONS - The restrictions are made on the 'Main'.
 
 // To request to join the group.
-public static string Admission( string address, string fullName, string utility )
+public static string Admission( string address, string fullName, string utility, params string[] list )
 {
     string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
     Membership( address, "Request for admission." );
@@ -299,7 +315,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
 
             if (opt == "detailed")
             {
-                string[] PowerPlantsByMember = GetContributeValue( key, ListOfPPs() ); // 'ListOfPPs()' mudar para uma variável a ser passada, um input 'listOfPPs'
+                string[] PowerPlantsByMember = GetContributeValue( key, list ); // list of PPs
                 return Merge(brief, PowerPlantsByMember);
             }
             return brief;
@@ -319,7 +335,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
     
                 if (opt == "detailed")
                 {
-                    string[] MembersByPowerPlant = GetContributeValue( key, ListOfMembers() ); // 'ListOfMembers' tem q mudar para 'input' --PENDING--
+                    string[] MembersByPowerPlant = GetContributeValue( key, list ); // list of members
                     return Merge(brief, MembersByPowerPlant);
                 }
                 return brief;
@@ -473,7 +489,7 @@ public object Change( string key, params object[] opts )
 
     // Any member can request to DELETE a PP.
     // The 'opts.Length' is empty.
-    string id = Ref("Delete PP_", key) );
+    string id = Ref("Delete PP_", key);
     Process(id, "Request to delete a PP.");
     return id;
 }
@@ -663,26 +679,6 @@ private static void CalcResult( string id )
     }
 }
 
-// To display the IDs of each PP to be later used on other functions. //--PENDING-- talvez não deva estar nessa classificação e vai mudar o diagrama
-private static void ListOfPPs()
-{
-    for (int num = 1; num < NumOfPP()+1; num++)
-    {
-        string PPid = Storage.Get( String.Concat( "P", Int2Str(num) )).AsString();
-        Runtime.Notify( PPid );
-    }
-}
-
-// To display the address of each member to be later used on other functions. //--PENDING-- talvez não deva estar nessa classificação e vai mudar o diagrama
-private static void ListOfMembers()
-{
-    for (int num = 1; num < NumOfMemb()+1; num++)
-    {
-        string memberAddress = Storage.Get( String.Concat( "M", Int2Str(num) )).AsString();
-        Runtime.Notify( memberAddress );
-    }
-}
-
 // Actualy, it restricts a given operation to happen based on a timestamp.
 // Before a given time frame, no one is allowed to continue the process.
 // The monitoring of the time happens off-chain.
@@ -721,7 +717,7 @@ public static void AdmissionResult( string id )
     Membership( address, "Not approved yet." );
 }
 
-public static void ChangeResult( string id )
+public static void ChangeResult( string id, params string[] listOfMembers)
 {
     string proposal = GetRef(id, "Proposal").AsString();
     
@@ -732,7 +728,7 @@ public static void ChangeResult( string id )
         if ( Str2Bool( GetRef(id, "Outcome") ) )
         {
             Process(id, "Approved.");
-            UpMemb(key, opts[0], opts[1]);
+            UpMemb(key, opts[0], opts[1]); // missing dependency --PENDING--
             Update("Registration data.", key);
         }
         
@@ -749,7 +745,7 @@ public static void ChangeResult( string id )
             BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
             BigInteger give_out = portion/(NumOfMemb() - 1);
             
-            foreach (string member in ListOfMembers()) // 'ListOfMembers' tem q mudar para 'input' --PENDING--
+            foreach (string member in listOfMembers)
             {
                 // In an infinitesimal period of time the group will be disbalanced
                 // until the related member be completely deleted.
@@ -772,7 +768,7 @@ public static void ChangeResult( string id )
         if ( Str2Bool( GetRef(id, "Outcome") ) )
         {
             Process(id, "Approved.");
-            UpPP(key, opts[0]);
+            UpPP(key, opts[0]);  // missing dependency --PENDING--
             Update("Belonging of.", key);
         }
 
@@ -794,7 +790,7 @@ public static void ChangeResult( string id )
     }
 }
 
-public static object PowerUpResult( string id, string PPid = null )
+public static object PowerUpResult( string id, string PPid = null, params string[] listOfMembers )
 {
     // STEP 1 - After a 'timeFrameRef' waiting period.
     if (PPid == null)
@@ -842,7 +838,7 @@ public static object PowerUpResult( string id, string PPid = null )
         throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
     
     // Gets a list of funders of the respective PP.
-    string[] litsOfFunders = GetContributeValue( PPid, ListOfMembers() ); // 'ListOfMembers' tem q mudar para 'input' --PENDING--
+    string[] litsOfFunders = GetContributeValue( PPid, listOfMembers );
     
     // Evaluates the crowdfunding result only once.
     if ( GetCrowd(PPid, "Has Result").Length == 0 )
@@ -918,6 +914,26 @@ public static object PowerUpResult( string id, string PPid = null )
     }
     
     return "There is nothing more to be done.";
+}
+
+// To display the IDs of each PP to be later used on other functions.
+private static void ListOfPPs()
+{
+    for (int num = 1; num < NumOfPP()+1; num++)
+    {
+        string PPid = Storage.Get( String.Concat( "P", Int2Str(num) )).AsString();
+        Runtime.Notify( PPid );
+    }
+}
+
+// To display the address of each member to be later used on other functions.
+private static void ListOfMembers()
+{
+    for (int num = 1; num < NumOfMemb()+1; num++)
+    {
+        string memberAddress = Storage.Get( String.Concat( "M", Int2Str(num) )).AsString();
+        Runtime.Notify( memberAddress );
+    }
 }
 
 
