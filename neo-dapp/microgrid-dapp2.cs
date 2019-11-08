@@ -315,8 +315,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
 
             if (opt == "detailed")
             {
-                string[] PowerPlantsByMember = GetContributeValue( key, list ); // list of PPs
-                return Merge(brief, PowerPlantsByMember);
+                GetContributeValue( key, list ); // list of PPs
             }
             return brief;
         }
@@ -335,8 +334,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
     
                 if (opt == "detailed")
                 {
-                    string[] MembersByPowerPlant = GetContributeValue( key, list ); // list of members
-                    return Merge(brief, MembersByPowerPlant);
+                    GetContributeValue( key, list ); // list of members                    
                 }
                 return brief;
             }
@@ -349,7 +347,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
             if ( (opt == "") || (opt == "detailed") )
             {
                 string[] brief = new string[] { GetCrowd(key,"Start Time"), GetCrowd(key,"End Time"), GetCrowd(key,"Total Amount"), GetCrowd(key,"Contributions"), GetCrowd(key,"Success") };
-                
+
                 if (opt == "detailed")
                 {
                     foreach (int num in NumOfMemb())
@@ -606,26 +604,6 @@ private static string Int2Str(int num, string s = null)
     return Int2Str(quotient, String.Concat(trick, s) );
 }
 
-// To properly merge two arrays of type 'string'. --PENDING-- testar o resultado, pois o compilador já passou.
-private static string[] Merge(string[] A, string[] B)
-{
-    string[] C = new string[ A.Length + B.Length ];
-    
-    int follow = 0;
-    for (int o=0; o < A.Length; o++)
-    {
-        C[o] = A[o];
-        follow = o;
-    }
-    
-    for (int u=0; u < B.Length; u++)
-    {
-        C[follow+u] = B[u];
-    }
-    
-    return C;
-}
-
 // To affordably concatenate string variables.
 private static string Rec(string start, string end)
 {
@@ -633,31 +611,36 @@ private static string Rec(string start, string end)
 }
 
 // To filter the relationship of members and PPs.
-private static string[] GetContributeValue( string lookForID, string[] listOfIDs )
+// Displays how much a member has contributed to a PP crowdfunding.
+private static void GetContributeValue( string lookForID, string[] listOfIDs )
 {
-    string[] equivList = new string[];
-    
     // Gets values by each ID registered on the contract storage space.
     if ( lookForID[0] == "P" )
     {
-        // Gets members by a PP funding process.
-        foreach (string key in listOfIDs)
+        // Gets members' bid by a PP funding process.
+        foreach (string memberAddress in listOfIDs)
         {
-            BigInteger temp = GetBid(lookForID, key).AsBigInteger();
-            if ( temp != 0 ) equivList.append(key);
+            BigInteger bid = GetBid(lookForID, memberAddress).AsBigInteger();
+            
+            if ( bid != 0 )
+            {
+                Runtime.Notify( [memberAddress, bid] );
+            }
         }
     }
-    else
+    else // lookForID[0] == "A"
     {
         // Gets PPs by a member investments.
-        foreach (string key in listOfIDs)
+        foreach (string PPid in listOfIDs)
         {
-            BigInteger temp = GetBid(key, lookForID).AsBigInteger();
-            if ( temp != 0 ) equivList.append(key);
+            BigInteger bid = GetBid(PPid, lookForID).AsBigInteger();
+            
+            if ( bid != 0 )
+            {
+                Runtime.Notify( [memberAddress, bid] );
+            }
         }
     }
-    
-    return equivList; // Returns how much a member has contributed to a PP crowdfunding.
 }
 
 // To calculate the referendum result only once.
@@ -791,7 +774,7 @@ public static void ChangeResult( string id, params string[] listOfMembers)
     }
 }
 
-public static object PowerUpResult( string id, string PPid = null, params string[] listOfMembers )
+public static object PowerUpResult( string id, string PPid = null, params string[] listOfFunders )
 {
     // STEP 1 - After a 'timeFrameRef' waiting period.
     if (PPid == null)
@@ -837,9 +820,6 @@ public static object PowerUpResult( string id, string PPid = null, params string
     // STEP 2 - After a 'timeFrameCrowd' waiting period.
     if ( isLock(PPid) )
         throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
-    
-    // Gets a list of funders of the respective PP.
-    string[] litsOfFunders = GetContributeValue( PPid, listOfMembers );
     
     // Evaluates the crowdfunding result only once.
     if ( GetCrowd(PPid, "Has Result").Length == 0 )
