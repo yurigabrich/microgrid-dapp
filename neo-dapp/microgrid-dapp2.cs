@@ -611,25 +611,25 @@ private static string Rec(string start, string end)
 }
 
 // To affordably split string variables.
-private static string Split(string notes, int slice)
+private static object[] Split(string notes, int start, int slice)
 {
     while (slice != 0)
     {
-        string sub = notes.Substring(0, slice);
+        string sub = notes.Substring(start, slice);
         string temp = sub.Substring(slice-1, 1);
         
         for ( int num = 0; num < Digits().Length; num++ )
         {
             if ( temp == Digits()[num] )
             {
-                return sub;
+                return new object[] {sub, slice};
             }
         }
         
         slice--;
     }
     
-    return notes;
+    return new object[] {notes, start};
 }
 
 // To filter the relationship of members and PPs.
