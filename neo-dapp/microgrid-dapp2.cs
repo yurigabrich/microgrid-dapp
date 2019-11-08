@@ -195,10 +195,10 @@ public static object Main ( string operation, params object[] args )
                 if ( (args[3] == 0) || (args[3] < minTimeToMarket) )
                     throw new InvalidOperationException("The time to market must be a factual period.");
 
-                return PowerUp( (BigInteger)args[0],    // capacity [MW]
-                                (BigInteger)args[1],    // cost [R$]
-                                (string)args[2],        // power utility name
-                                (uint)args[3] );        // time to market
+                return PowerUp( (int)args[0],       // capacity [MW]
+                                (int)args[1],       // cost [R$]
+                                (string)args[2],    // power utility name
+                                (uint)args[3] );    // time to market
             }
 
             if (operation == "change")
@@ -299,7 +299,6 @@ public static string Admission( string address, string fullName, string utility,
 {
     string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
     Membership( address, "Request for admission." );
-    
     return id;
 }
 
@@ -494,9 +493,10 @@ public object Change( string key, params object[] opts )
 }
 
 // The whole process to integrate a new PP on the group power generation.
-public string PowerUp( BigInteger capacity, BigInteger cost, string utility, uint timeToMarket )
+public string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
 {
-    string id = Ref( "New PP request_", String.Concat( capacity.ToString(), utility, timeToMarket.ToString() ), cost );
+    string notes = Rec( Rec( Int2Str(capacity), utility) , Int2Str(timeToMarket) );
+    string id = Ref( "New PP request_", notes, cost );
     Process( id, "Request to add a new PP." );
     return id;
 }
@@ -608,6 +608,28 @@ private static string Int2Str(int num, string s = null)
 private static string Rec(string start, string end)
 {
     return String.Concat(start, end);
+}
+
+// To affordably split string variables.
+private static string Split(string notes, int slice)
+{
+    while (slice != 0)
+    {
+        string sub = notes.Substring(0, slice);
+        string temp = sub.Substring(slice-1, 1);
+        
+        for ( int num = 0; num < Digits().Length; num++ )
+        {
+            if ( temp == Digits()[num] )
+            {
+                return sub;
+            }
+        }
+        
+        slice--;
+    }
+    
+    return notes;
 }
 
 // To filter the relationship of members and PPs.
@@ -789,16 +811,28 @@ public static object PowerUpResult( string id, string PPid = null, params string
             
             if ( Str2Bool( GetRef(id, "Outcome") ) )
             {
-                // Referendum has succeeded.
-                
-                // Adds a new PP.
-                string notes = GetRef(id, "Notes"); // --PENDING--
+                // Referendum has succeeded. It's time to add a new PP.
+
+                string notes = GetRef(id, "Notes");
                 
                 // separa os termos em Notes!           // --PENDING--
-                String.Substring
-                https://docs.microsoft.com/pt-br/dotnet/api/system.string.substring?view=netframework-4.8
+                notes.Substring
                 
+// ------------------------------------------------------------------AQUI-------------------------------------
                 
+                capSlice = PowGenLimits()[1].Length; // max capacity
+                
+                while (capSlice != 0)
+                {
+                    cap = notes.Substring(0, capSlice);
+                    if ( cap[-1] in Digits() )
+                    {
+                        int capacity = (int)cap;
+                        break
+                    }
+
+                    capSlice--;
+                }
                 
                 //            PP(capacity, cost, utility, time to market)
                 string PPid = PP(notes[0], GetRef(id, "Cost"), notes[1], notes[2]);
