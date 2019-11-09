@@ -613,20 +613,29 @@ private static string Rec(string start, string end)
 // To affordably split string variables.
 private static object[] Split(string notes, int start, int slice)
 {
-    while (slice != 0)
+    int step = 1;
+    
+    while (step < slice)
     {
-        string sub = notes.Substring(start, slice);
-        string temp = sub.Substring(slice-1, 1);
+        string sub = notes.Substring(start, step);
+        string looksNext = notes.Substring(step, 1);
         
-        for ( int num = 0; num < Digits().Length; num++ )
+        int num = 0;
+        while ( num < Digits().Length )
         {
-            if ( temp == Digits()[num] )
+            if ( looksNext == Digits()[num] )
             {
-                return new object[] {sub, slice};
+                break;
             }
+            num++;
         }
         
-        slice--;
+        if ( num == 10 )
+        {
+            return new object[] {sub, step};
+        }
+        
+        step++;
     }
     
     return new object[] {notes, start};
