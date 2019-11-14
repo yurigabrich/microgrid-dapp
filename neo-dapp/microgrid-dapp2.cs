@@ -610,35 +610,42 @@ private static string Rec(string start, string end)
     return String.Concat(start, end);
 }
 
-// To affordably split string variables.
-private static object[] Split(string notes, int start, int slice)
+// To affordably split string variables. Text and number must be intercalated!
+private static object[] Split(string notes, int start, int slice, bool lookForNum)
 {
-    int step = 1;
+    int step = 0;
     
     while (step < slice)
     {
-        string sub = notes.Substring(start, step);
-        string looksNext = notes.Substring(step, 1);
+        string temp = notes.Substring(start + step, 1);
         
         int num = 0;
         while ( num < Digits().Length )
         {
-            if ( looksNext == Digits()[num] )
+            if ( temp == Digits()[num] )
             {
                 break;
             }
             num++;
         }
         
-        if ( num == 10 )
+        if (lookForNum)
         {
-            return new object[] {sub, step};
+            if (num == 10)
+            {
+                break;
+            }
         }
-        
+        else
+        {
+            if (num != 10)
+            {
+                break;
+            }
+        }
         step++;
     }
-    
-    return new object[] {notes, start};
+    return new object[] {notes.Substring(start, step), start + step};
 }
 
 // To filter the relationship of members and PPs.
