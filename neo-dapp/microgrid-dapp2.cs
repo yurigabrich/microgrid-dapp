@@ -919,23 +919,26 @@ public static object PowerUpResult( string id, string PPid = null, params string
         
             
         // Increases the total power supply of the group.
-        BigInteger capOfPP = GetPP(PPid, "Capacity").AsBigInteger();
-        BigInteger capOfGroup = TotalSupply() + capOfPP;
+        BigInteger capOfPP = GetPP(PPid, "Capacity");               // [MW]
+        BigInteger capOfGroup = TotalSupply() + capOfPP;            // [MW]
         Storage.Put("TotalSupply", capOfGroup);
     
-        // Identify how much the new Power Plant takes part on the group total power supply.
+        // Identifies how much the new Power Plant takes part on the group total power supply.
         BigInteger sharesOfPP = capOfPP/capOfGroup;                 // [pu]
         
         foreach (string funder in litsOfFunders)
         {
             // Gets the member contribution.
-            BigInteger grant = GetBid(PPid, funder).AsBigInteger(); // [R$]
+            BigInteger grant = GetBid(PPid, funder);                // [R$]
+
+            // Identifies the member participaction rate.
+            BigInteger rate = grant/(GetRef(PPid, "Cost"));         // [pu]
             
-            // How much a member has from the new PP's capacity.
-            BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos (R$/MW ou kW/MW ?)
+            // Defines how much of crypto-currency a member acquires from the new PP's capacity.
+            BigInteger tokens = (rate * capOfPP)/factor;            // [MW/1000 = kW == SEB]
             
-            // How much a member has from the updated total power supply.
-            BigInteger quota = tokens * sharesOfPP; // --PENDING-- rever unidades e cálculos (R$/MW ou kW/MW ?)
+            // Defines how much of energy a member is entitled over the total power supply.
+            BigInteger quota = rate * sharesOfPP * capOfGroup;      // [MW]
     
             Distribute(funder, quota, tokens);
         }
