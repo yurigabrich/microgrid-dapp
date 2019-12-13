@@ -40,7 +40,7 @@ private static uint InvokeTime() => Blockchain.GetHeader(Blockchain.GetHeight())
 public static string Name() => "Sharing Electricity in Brazil";
 public static string Symbol() => "SEB";
 public static byte Decimals() => 3;                                                         // {0, 5000}
-public static byte[] Owner() => ExecutionEngine.ExecutingScriptHash;                        // aka GetReceiver() -- this smart contract
+public static byte[] Owner() => ExecutionEngine.ExecutingScriptHash;                        // aka GetReceiver() -- this smart contract == this smart contract ScriptHash
 public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", "NEP-10" };
 
 // Member's dataset.
@@ -56,8 +56,11 @@ private const uint minTimeToMarket = 259200;    // 30 days
 // The restrictive message to show up.
 private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
 
-// Caller authenticity...
-public static byte[] Caller() => ...;                                                       // --PENDING--
+// To lock the registering process without voting.
+private static void OnlyOnce() => Storage.Put("firstCall", 1);
+
+// Caller identification.
+public static byte[] Caller() => 0; // --PENDING!-- isso está errado e 'ExecutionEngine.CallingScriptHash' não funciona direito
 
 // Trick to support the conversion from 'int' to 'string'.
 private static string[] Digits() => new string[10] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
@@ -70,19 +73,7 @@ private static char[] Alpha() => new char[] {'A', 'B', 'C', 'D', 'E', 'F', 'G', 
 
 public static object Main ( string operation, params object[] args )
 {
-    if ( Runtime.Trigger == TriggerType.Verification )
-    {
-        // Como garantir que o primeiro 'invoker' do contrato seja o primeiro membro e que isso aconteça somente 1 única vez? --PENDING--
-        if ( Member.Get() == null )
-        {
-            if (args.Length != 2) return false;
-            Member( caller, args[0], args[1], 100, 0 );
-            return "New GGM blockchain initiated.";
-        }
-
-        return false;
-    }
-    else if ( Runtime.Trigger == TriggerType.Application )
+    // if ( Runtime.Trigger == TriggerType.Application )
     {
         // General operation.
         if (operation == "admission")
@@ -96,6 +87,18 @@ public static object Main ( string operation, params object[] args )
             if ( GetMemb((string)args[0], "FullName").Length != 0 )
                 throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
             
+            if ( Storage.Get("firstCall").AsBigInteger() == 0 )
+            {
+                // No admission process is required.
+
+                // Locks this 'if' statement.
+                OnlyOnce();
+                
+                // Defines the 'invoker/caller' as the first member.
+                Membership( (string)args[0], "Welcome on board!" );
+                return Member( (string)args[0], (string)args[1], (string)args[2], 0, 0 );
+            }
+
             return Admission( (string)args[0],   // invoker/caller address
                               (string)args[1],   // fullName
                               (string)args[2] ); // utility
