@@ -1322,8 +1322,9 @@ private static void Refund( string ICOid, string member )
 
 // Only the 'Total Amount' and 'Contributions' can be "deleted"
 // because the failure of a crowdfunding must be preserved.
-// Actually it is only used to "store" null values cheaply.
-private static void DelCrowd( string ICOid, string opt )    // --PENDING-- Why not keep this information?
+// Actually it is only used to "store" null values cheaply, and
+// it must solely happen if the refund (due to a bid cancel) reaches zero.
+private static void DelCrowd( string ICOid, string opt )
 {
     if ( (opt == "Total Amount") || (opt == "Contributions") )
     {
