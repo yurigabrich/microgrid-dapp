@@ -13,8 +13,6 @@ public static event Action<string, string, bool> Ballot;
 public static event Action<string, string, BigInteger> Offer;
 [DisplayName("change")]
 public static event Action<string, string> Update;
-[DisplayName("refund")]
-public static event Action<string, BigInteger> Refund;
 
 
 //---------------------------------------------------------------------------------------------
@@ -1310,7 +1308,7 @@ private static void Refund( string ICOid, string member )
     BigInteger grant = GetBid(ICOid, member);
     Storage.Delete( String.Concat( ICOid, member ) );
     
-    // Decreases the total amount of funds
+    // Decreases the total amount of funds.
     BigInteger funds = GetCrowd(ICOid, "Total Amount");
     UpCrowd(PPi, "Total Amount", funds - grant);
 
@@ -1318,9 +1316,8 @@ private static void Refund( string ICOid, string member )
     BigInteger contributions = GetCrowd(ICOid, "Contributions");
     UpCrowd(ICOid, "Contributions", contributions--);
     
-    // Sends the money back to the member.
-    Trade(ICOid, member, 0, grant); // --PENDING-- aqui é SEB ou REAIS?
-    Refund(member, grant);
+    // Notifies about the cancel of the bid.
+    Transfer(ICOid, member, 0, (-1 * grant));
 }
 
 // Only the 'Total Amount' and 'Contributions' can be "deleted"
