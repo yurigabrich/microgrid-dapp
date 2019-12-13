@@ -50,7 +50,7 @@ private static string[] profile => new string[] {"FullName", "Utility"};
 private static string[] register => new string[] {"Quota", "Tokens"};
 
 // New Power Plant crowdfunding settings.
-private const uint factor = 1000;               // Review at PowerUP() last operations --PENDING-- 1kW =?= 1SEB
+private const uint factor = 1000;               // 1kW == 1SEB
 private const byte minOffer = 100;              // Brazilian Reais (R$)
 private const uint timeFrameCrowd = 518400;     // 60 days
 private const uint minTimeToMarket = 259200;    // 30 days
@@ -923,13 +923,13 @@ public static object PowerUpResult( string id, string PPid = null, params string
         BigInteger capOfGroup = TotalSupply() + capOfPP;
         Storage.Put("TotalSupply", capOfGroup);
     
-        // How much the new Power Plant takes part on the group total power supply.
-        BigInteger sharesOfPP = capOfPP/capOfGroup;
+        // Identify how much the new Power Plant takes part on the group total power supply.
+        BigInteger sharesOfPP = capOfPP/capOfGroup;                 // [pu]
         
         foreach (string funder in litsOfFunders)
         {
             // Gets the member contribution.
-            BigInteger grant = GetBid(PPid, funder).AsBigInteger();
+            BigInteger grant = GetBid(PPid, funder).AsBigInteger(); // [R$]
             
             // How much a member has from the new PP's capacity.
             BigInteger tokens = grant/capOfPP; // --PENDING-- rever unidades e cálculos (R$/MW ou kW/MW ?)
