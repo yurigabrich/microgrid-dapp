@@ -81,10 +81,10 @@ public static object Main ( string operation, params object[] args )
             if ( args.Length != 3 )
                 throw new InvalidOperationException("Please provide the 3 arguments: your account address, full name, and power utility name.");
 
-            if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
+            if ( !Runtime.CheckWitness((byte[])args[0]) )
                 throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
 
-            if ( GetMemb((string)args[0], "FullName").Length != 0 )
+            if ( GetMemb((byte[])args[0], "FullName").Length != 0 )
                 throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
             
             if ( Storage.Get("firstCall").AsBigInteger() == 0 )
@@ -95,11 +95,11 @@ public static object Main ( string operation, params object[] args )
                 OnlyOnce();
                 
                 // Defines the 'invoker/caller' as the first member.
-                Membership( (string)args[0], "Welcome on board!" );
-                return Member( (string)args[0], (string)args[1], (string)args[2], 0, 0 );
+                Membership( (byte[])args[0], "Welcome on board!" );
+                return Member( (byte[])args[0], (string)args[1], (string)args[2], 0, 0 );
             }
 
-            return Admission( (string)args[0],   // invoker/caller address
+            return Admission( (byte[])args[0],   // invoker/caller address
                               (string)args[1],   // fullName
                               (string)args[2] ); // utility
         }
@@ -126,14 +126,14 @@ public static object Main ( string operation, params object[] args )
                 if ( args.Length != 3 )
                     throw new InvalidOperationException("Please provide the 3 arguments: the referendum id, your account address, and your vote.");
 
-                if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
+                if ( !Runtime.CheckWitness((byte[])args[1]) )
                     throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
 
                 if ( isLock( (string)args[0]) )
                     throw new InvalidOperationException("The ballot has ended.");
                 
                 return Vote( (string)args[0],    // referendum id
-                             (string)args[1],    // member address
+                             (byte[])args[1],    // member address
                              (bool)args[2] );    // answer
             }
 
@@ -142,7 +142,7 @@ public static object Main ( string operation, params object[] args )
                 if ( args.Length != 3 )
                     throw new InvalidOperationException("Please provide the 3 arguments: the PP id, your account address, and your bid.");
 
-                if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
+                if ( !Runtime.CheckWitness((byte[])args[1]) )
                     throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
 
                 if ( (args[0][0] != "P") || (args[0].Length == null) )
@@ -158,7 +158,7 @@ public static object Main ( string operation, params object[] args )
                     throw new InvalidOperationException("The campaign has ended.");
 
                 return Bid( (string)args[0],        // PP id
-                            (string)args[1],        // member address
+                            (byte[])args[1],        // member address
                             (BigInteger)args[2] );  // bid value
             }
 
@@ -167,7 +167,7 @@ public static object Main ( string operation, params object[] args )
                 if ( args.Length != 4 )
                     throw new InvalidOperationException("Please provide the 4 arguments: your account address, the address of who you are transaction to, the quota value, and the amount of tokens.");
 
-                if ( !Runtime.CheckWitness((string)args[0]) ) // --PENDING-- aqui o args[0] deve ser byte[]...
+                if ( !Runtime.CheckWitness((byte[])args[0]) )
                     throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
 
                 if ( (args[1][0] != "A") || (args[1].Length == null) )
@@ -182,8 +182,8 @@ public static object Main ( string operation, params object[] args )
                 if ( (args[2] <= 0) & (args[3] <= 0) )
                     throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 4th argument empty. Otherwise, to donate tokens let ONLY the 3rd argument empty.");
                 
-                return Trade( (string)args[0],       // from address
-                              (string)args[1],       // to address
+                return Trade( (byte[])args[0],       // from address
+                              (byte[])args[1],       // to address
                               (BigInteger)args[2],   // quota exchange
                               (BigInteger)args[3] ); // token price
             }
