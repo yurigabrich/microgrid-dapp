@@ -2,15 +2,15 @@
 // EVENTS
 
 [DisplayName("transaction")]
-public static event Action<string, string, BigInteger, BigInteger> Transfer;
+public static event Action<byte[], byte[], BigInteger, BigInteger> Transfer;
 [DisplayName("membership")]
-public static event Action<string, string> Membership;
+public static event Action<byte[], string> Membership;
 [DisplayName("process")]
 public static event Action<string, string> Process;
 [DisplayName("ballot")]
-public static event Action<string, string, bool> Ballot;
+public static event Action<string, byte[], bool> Ballot;
 [DisplayName("offer")]
-public static event Action<string, string, BigInteger> Offer;
+public static event Action<string, byte[], BigInteger> Offer;
 [DisplayName("change")]
 public static event Action<string, string> Update;
 
@@ -296,7 +296,7 @@ public static object Main ( string operation, params object[] args )
 // GROUP FUNCTIONS - The restrictions are made on the 'Main'.
 
 // To request to join the group.
-public static string Admission( string address, string fullName, string utility, params string[] list )
+public static string Admission( byte[] address, string fullName, string utility, params string[] list )
 {
     string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
     Membership( address, "Request for admission." );
@@ -385,7 +385,7 @@ public static object Summary( string key, string opt = "" )     //--PENDING-- re
 }
 
 // To vote in a given ID process.
-public static bool Vote( string id, string member, bool answer )
+public static bool Vote( string id, byte[] member, bool answer )
 {
     // Increases the number of votes.
     BigInteger temp = GetRef(id,"Num of Votes").AsBigInteger();
@@ -405,7 +405,7 @@ public static bool Vote( string id, string member, bool answer )
 }
 
 // To make a bid in a new PP crowdfunding process.
-public static bool Bid( string ICOid, string member, BigInteger bid )
+public static bool Bid( string ICOid, byte[] member, BigInteger bid )
 {
     BigInteger target = GetPP(ICOid, "Cost").AsBigInteger();
     BigInteger funds = GetCrowd(ICOid, "Total Amount").AsBigInteger();
@@ -424,8 +424,8 @@ public static bool Bid( string ICOid, string member, BigInteger bid )
     UpCrowd(ICOid, "Contributions", temp++);
     
     // Tracks bid by member for each ICOid.
-    BigInteger previous = Storage.Get( String.Concat(ICOid, member) ).AsBigInteger();
-    Storage.Put( String.Concat(ICOid, member), previous + bid );
+    BigInteger previous = Storage.Get( String.Concat(ICOid, member) ).AsBigInteger();   //--PENDING-- replace for a 'map'
+    Storage.Put( String.Concat(ICOid, member), previous + bid );   //--PENDING-- replace for a 'map'
     Offer(ICOid, member, bid);
     
     return true;
@@ -505,7 +505,7 @@ public string PowerUp( int capacity, int cost, string utility, uint timeToMarket
 // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
 // The 'fromAddress' will exchange an amount of shares with 'toAddress' by a defined token price,
 // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
-public bool Trade( string fromAddress, string toAddress, BigInteger exchange, BigInteger price )
+public bool Trade( byte[] fromAddress, byte[] toAddress, BigInteger exchange, BigInteger price )
 {
     BigInteger[] toWallet = new BigInteger[];
     BigInteger[] fromWallet = new BigInteger[];
@@ -991,7 +991,7 @@ private static void Member( string address, string fullName, string utility, Big
 }
 
 // --> read
-private static byte[] GetMemb( string address, string opt )
+private static byte[] GetMemb( byte[] address, string opt )
 {
     return Storage.Get( String.Concat( address, opt ) );
 }
