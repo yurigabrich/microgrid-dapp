@@ -46,6 +46,14 @@ public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", 
 // Member's dataset.
 private static string[] profile => new string[] {"FullName", "Utility"};
 private static string[] register => new string[] {"Quota", "Tokens"};
+private struct MemberData
+{
+    public static StorageMap ID => Storage.CurrentContext.CreateMap(nameof(ID));
+    public static StorageMap FullName => Storage.CurrentContext.CreateMap(nameof(FullName));
+    public static StorageMap Utility => Storage.CurrentContext.CreateMap(nameof(Utility));
+    public static StorageMap Quota => Storage.CurrentContext.CreateMap(nameof(Quota));
+    public static StorageMap Tokens => Storage.CurrentContext.CreateMap(nameof(Tokens));
+}
 
 // New Power Plant crowdfunding settings.
 private const uint factor = 1000;               // 1kW == 1SEB
@@ -605,6 +613,19 @@ private static string Int2Str(int num, string s = null)
     return Int2Str(quotient, String.Concat(trick, s) );
 }
 
+// Polimorfism to deal with BigInteger instead of Integer --PENDING-- evaluate if both methods is required.
+private static string Int2Str(BigInteger num, string s = null)
+{
+    if (num == 0) return s;
+
+    BigInteger quotient = num / 10;
+    BigInteger remainder = num % 10;
+    
+    string trick = Digits()[ (int)remainder ];
+        
+    return Int2Str(quotient, String.Concat(trick, s) );
+}
+
 // To affordably concatenate string variables.
 private static string Rec(string start, string end)
 {
@@ -975,31 +996,37 @@ private static void ListOfMembers()
 //---------------------------------------------------------------------------------------------
 // METHODS FOR MEMBERS
 // --> create
-private static void Member( string address, string fullName, string utility, BigInteger quota, BigInteger tokens )
+private static void Member( byte[] address, string fullName, string utility, BigInteger quota, BigInteger tokens )
 {
-    Storage.Put( String.Concat( address, "FullName" ), fullName );
-    Storage.Put( String.Concat( address, "Utility" ), utility );
-    Storage.Put( String.Concat( address, "Quota" ), quota );
-    Storage.Put( String.Concat( address, "Tokens" ), tokens );
+    MemberData.FullName.Put(address, fullName);
+    MemberData.Utility.Put(address, utility);
+    MemberData.Quota.Put(address, quota);
+    MemberData.Tokens.Put(address, tokens);
 
     // Increases the total number of members.
     BigInteger temp = NumOfMemb() + 1;
     Storage.Put("NumOfMemb", temp);
     
     // Stores the address of each member.
-    Storage.Put( String.Concat( "M", temp.ToString() ), address );
+    // MemberData.ID.Put( String.Concat( "M", Int2Str(temp) ), address ); // Get rid off the challenge to map a variable type "Mx".
+    MemberData.ID.Put(address, address); // --PENDING-- test this on other functions (for instance, to get the list of members)
 }
 
 // --> read
-private static byte[] GetMemb( byte[] address, string opt )
+private static object GetMemb( byte[] address, string opt )
 {
-    return Storage.Get( String.Concat( address, opt ) );
+    if (opt == "fullname") return MemberData.FullName.Get(address);
+    if (opt == "utility") return MemberData.Utility.Get(address);
+    if (opt == "quota") return MemberData.Quota.Get(address);
+    if (opt == "tokens") return MemberData.Tokens.Get(address);
+            
+    return false; // Must never happen.
 }
 
 // --> update
 // Detailed restrictions to update 'profile' or 'register' data are set
 // on the function 'Change'. Here this feature is handled by polymorphism.
-private static void UpMemb( string address, string opt, string val )
+private static Object UpMemb( byte[] address, string opt, string val )
 {
     // Don't invoke Put if value is unchanged.
     string orig = GetMemb(address, opt).AsString();
@@ -1008,15 +1035,18 @@ private static void UpMemb( string address, string opt, string val )
     // Use Delete rather than Put if the new value is empty.
     if (val.Length == 0)
     {
-       DelMemb(address, opt);
+        DelMemb(address, opt);
     }
     else
     {
-       Storage.Put( String.Concat( address, opt ), val );
+        if (opt == "fullname") MemberData.FullName.Put(address, val);
+        if (opt == "utility") MemberData.Utility.Put(address, val);
     }
+
+    return true;
 }
 
-private static void UpMemb( string address, string opt, BigInteger val )
+private static Object UpMemb( byte[] address, string opt, BigInteger val )
 {
     // Don't invoke Put if value is unchanged.
     BigInteger orig = GetMemb(address, opt).AsBigInteger();
@@ -1025,35 +1055,51 @@ private static void UpMemb( string address, string opt, BigInteger val )
     // Use Delete rather than Put if the new value is zero.
     if (val == 0)
     {
-       DelMemb(address, opt);
+        DelMemb(address, opt);
     }
     else
     {
-       Storage.Put( String.Concat( address, opt ), val );
+        if (opt == "quota") MemberData.Quota.Put(address, val);
+        if (opt == "tokens") MemberData.Tokens.Put(address, val);
     }
+
+    return true;
 }
 
 // --> delete
-private static void DelMemb( string address, string opt = "" )
+private static void DelMemb( byte[] address, string opt = "" )
 {
-    // If a member exits the group.
-    if (opt == "")
+    // To support an economic action for the update method.
+    if (opt == "fullname")
     {
-        Storage.Delete( String.Concat( address, "FullName" ) );
-        Storage.Delete( String.Concat( address, "Utility" ) );
-        Storage.Delete( String.Concat( address, "Quota" ) );
-        Storage.Delete( String.Concat( address, "Tokens" ) );
+        MemberData.FullName.Delete(address);
+    }
+    else if (opt == "utility")
+    {
+        MemberData.Utility.Delete(address);
+    }
+    else if (opt == "quota")
+    {
+        MemberData.Quota.Delete(address);
+    }
+    else if (opt == "tokens")
+    {
+        MemberData.Tokens.Delete(address);
+    }
+    else // If a member exits the group (opt == "").
+    {
+        MemberData.FullName.Delete(address);
+        MemberData.Utility.Delete(address);
+        MemberData.Quota.Delete(address);
+        MemberData.Tokens.Delete(address);
         
         // Decreases the total number of members.
         BigInteger temp = NumOfMemb() - 1;
         Storage.Put("NumOfMemb", temp);
         
         // Wipe off the address of the member.
-        Storage.Delete( String.Concat( "M", ? ), address ); // -- PENDING --
+        MemberData.ID.Delete(address);
     }
-
-    // To support an economic action for the update method.
-    Storage.Delete( String.Concat( address, opt ) );
 }
 
 //---------------------------------------------------------------------------------------------
