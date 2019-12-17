@@ -22,13 +22,13 @@ public static event Action<string, string> Update;
 public static int[] PowGenLimits() => new int[] {0, 5000000};
 
 // The total number of power plant units.
-public static int NumOfPP() => Storage.Get("NumOfPP");
+public static BigInteger NumOfPP() => Storage.Get("NumOfPP").AsBigInteger();
 
 // The total number of members.
-public static int NumOfMemb() => Storage.Get("NumOfMemb");
+public static BigInteger NumOfMemb() => Storage.Get("NumOfMemb").AsBigInteger();
 
 // The total power supply at the group, i.e., sum of PP's capacity.
-public static int TotalSupply() => Storage.Get("TotalSupply");
+public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigInteger();
 
 // The number of days to answer a referendum process.
 private const uint timeFrameRef = 259200;   // 30 days
