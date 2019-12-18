@@ -982,14 +982,18 @@ private static void ListOfPPs()
     }
 }
 
-// To display the address of each member to be later used on other functions.
-private static void ListOfMembers()
+// To return the address of each member to be later used on other functions.
+private static byte[][] ListOfMembers()
 {
-    for (int num = 1; num < NumOfMemb()+1; num++)
+    byte[][] addresses = new byte[ (int)NumOfMemb() ][];
+    
+    for (int num = 0; num < NumOfMemb(); num++)
     {
-        string memberAddress = Storage.Get( String.Concat( "M", Int2Str(num) )).AsString();
-        Runtime.Notify( memberAddress );
+        var index = String.Concat( "M", Int2Str(num+1) );
+        var memberAddress = Member.ID.Get(index);
+        addresses[num] = memberAddress;
     }
+    return addresses;
 }
 
 
