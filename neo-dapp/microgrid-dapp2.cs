@@ -1143,19 +1143,23 @@ private static void DelMemb( byte[] address, string opt = "" )
 // --> create
 private static byte[] PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
 {
+    // Creates the unique identifier.
     byte[] id = ID("P", capacity, cost, utility);
-    if ( GetPP(id, "Capacity").AsString().Length != 0 )
+
+    // Checks if the PP register already exists.
+    if ( GetPP(id, "capacity").AsString().Length != 0 )
     {
         Process(id, "This power plant already exists. Use the method UpPP to change its registering data.");
         return;
     }
     
+    // Stores the values.
     PPData.Capacity.Put(id, capacity);
     PPData.Cost.Put(id, cost);
     PPData.Utility.Put(id, utility);
     PPData.TimeToMarket.Put(id, timeToMarket);
-    PPData.NumOfFundMemb.Put(id, 0); // Expensive to create with null value. Just state it out!
-    PPData.HasStarted.Put(id, 0); // Expensive to create with null value. Just state it out!
+    // PPData.NumOfFundMemb.Put(id, 0); // Expensive to create with null value. Just state it out!
+    // PPData.HasStarted.Put(id, 0); // Expensive to create with null value. Just state it out!
 
     // Increases the total number of power plant units.
     BigInteger temp = NumOfPP() + 1;
@@ -1169,81 +1173,107 @@ private static byte[] PP( string capacity, BigInteger cost, string utility, uint
 }
 
 // --> read
-private static byte[] GetPP( string id, string opt )
+private static object GetPP( byte[] id, string opt )
 {
-    return Storage.Get( String.Concat( id, opt ) );
+    if (opt == "capacity") return PPData.Capacity.Get(id);
+    if (opt == "cost") return PPData.Cost.Get(id);
+    if (opt == "utility") return PPData.Utility.Get(id);
+    if (opt == "timetomarket") return PPData.TimeToMarket.Get(id);
+    if (opt == "numoffundmemb") return PPData.NumOfFundMemb.Get(id);
+    if (opt == "hasstarted") return PPData.HasStarted.Get(id);
+            
+    return false; // Must never happen.
 }
 
 // --> update
 // The 'Utility', the 'HasStarted', and the 'Time To Market' are the only options that can be changed.
 // However, the 'Utility' can be changed anytime, the 'HasStarted' can be changed only once, while the 'Time to Market' is restricted by its deadline of start operation date.
 // To update the other options, delete the current PP and create a new one.
-private static void UpPP( string id, string opt, object val )
+private static void UpPP( byte[] id, string opt, object val )
 {
-    if (opt == "Utility")
+    if (opt == "utility")
     {
         // Don't invoke Put if value is unchanged.
-        string orig = GetPP(id, "Utility").AsString();
-        if (orig == val) return;
+        string orig = GetPP(id, "utility").AsString();
+        if (orig == (string)val) return;
         
         // Do nothing if the new value is empty.
-        if (val.Length == 0) return;
+        if ((string)val.Length == 0) return;
         
         // else
-        Storage.Put( String.Concat( id, "Utility" ), val );
+        PPData.Utility.Put(id, val);
         // And must 'update' each member 'utility' field as well.
         // 'Utility' should be a pointer and similar to 'Member' dataset.
-        // This was not implemented!
+        // This was not implemented! --PENDING--
     }
     
-    if (opt == "Has Started")
+    if (opt == "hasstarted")
     {
         // Don't invoke Put if value is unchanged.
-        string orig = GetPP(id, "Has Started").AsBigInteger();
-        if (orig == val) return;
+        BigInteger orig = GetPP(id, "hasstarted").AsBigInteger();
+        if (orig == (BigInteger)val) return;
         
         // Do nothing if the new value is empty.
-        if (val.Length == 0) return;
+        if ((BigInteger)val == null) return; // acho q isso não existe!! --PENDING--
         
         // else
-        Storage.Put( String.Concat( id, "Has Started" ), val );
+        PPData.HasStarted.Put(id, val);
     }
     
-    if (opt == "Time to Market")
+    if (opt == "timetomarket")
     {
-        if ( InvokeTime() > ( GetCrowd(PPid, "End Time") + GetPP(PPid, "Time to Market") ) )
+        if ( InvokeTime() > ( GetCrowd(PPid, "End Time") + GetPP(PPid, "timetomarket") ) ) // --PENDING--
             throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
         
         // Don't invoke Put if value is unchanged.
-        string orig = GetPP(id, "Time to Market").BigInteger();
-        if (orig == val) return;
+        BigInteger orig = GetPP(id, "timetomarket").BigInteger();
+        if (orig == (BigInteger)val) return;
         
         // Do nothing if the new value is empty.
-        if (val == 0) return;
+        if ((BigInteger)val == null) return; // acho q isso não existe!! --PENDING--
         
         // else
-        Storage.Put( String.Concat( id, "Time to Market" ), val );
+        PPData.TimeToMarket.Put(id, val);
     }
 }
 
 // --> delete
-private static void DelPP( string id )
+private static void DelPP( byte[] id )
 {
-    Storage.Delete( String.Concat( id, "Capacity" ) );
-    Storage.Delete( String.Concat( id, "Cost" ) );
-    Storage.Delete( String.Concat( id, "Utility" ) );
-    if ( GetPP(id, "Num of Fund Memb") != 0 ) Storage.Delete( String.Concat( id, "Num of Fund Memb" ) );
+    PPData.Capacity.Delete(id);
+    PPData.Cost.Delete(id);
+    PPData.Utility.Delete(id);
+    PPData.TimeToMarket.Delete(id);
+    if ( GetPP(id, "hasstarted") != 0 ) PPData.HasStarted.Delete(id);
+    if ( GetPP(id, "numoffundmemb") != 0 ) PPData.NumOfFundMemb.Delete(id);
 
-    // Decreases the total number of power plant units.
-    BigInteger temp = NumOfPP() - 1;
-    Storage.Put("NumOfPP", temp);
+    // Looks for the PP 'key' (that may vary during the life cycle of the group).
+    for (int num = 1; num < NumOfPP()+1; num++)
+    {
+        var index = String.Concat( "P", Int2Str(num) );
+        if ( targetId == PP.ID.Get(index) )
+        {
+            // Wipes off the ID of the PP.
+            PP.ID.Delete(index);
+            
+            // Updates the following indexes.
+            while (num <= NumOfMemb())
+            {
+                num++;
+                var newIndexSameId = PP.ID.Get( String.Concat("P", Int2Str(num)) );
+                PP.ID.Put( String.Concat("P", Int2Str(num-1)), newIndexSameId );
+            }
+            break;
+        }
+    }
 
     // Decreases the total power supply of power plants.
     BigInteger temp = TotalSupply() - GetPP(id, "Capacity").AsBigInteger();
     Storage.Put("TotalSupply", temp);
-    
-    // Wipe off the id of the PP.
-    Storage.Delete( String.Concat( "P", ? ), id ); // -- PENDING --
+
+    // Decreases the total number of power plant units.
+    BigInteger temp = NumOfPP() - 1;
+    Storage.Put("NumOfPP", temp);
 }
 
 //---------------------------------------------------------------------------------------------
