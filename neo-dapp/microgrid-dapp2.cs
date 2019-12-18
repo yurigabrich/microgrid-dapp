@@ -6,7 +6,7 @@ public static event Action<byte[], byte[], BigInteger, BigInteger> Transfer;
 [DisplayName("membership")]
 public static event Action<byte[], string> Membership;
 [DisplayName("process")]
-public static event Action<string, string> Process;
+public static event Action<byte[], string> Process;
 [DisplayName("ballot")]
 public static event Action<string, byte[], bool> Ballot;
 [DisplayName("offer")]
@@ -53,6 +53,18 @@ private struct MemberData
     public static StorageMap Utility => Storage.CurrentContext.CreateMap(nameof(Utility));
     public static StorageMap Quota => Storage.CurrentContext.CreateMap(nameof(Quota));
     public static StorageMap Tokens => Storage.CurrentContext.CreateMap(nameof(Tokens));
+}
+
+// Power Plant's dataset.
+private struct PPData
+{
+    public static StorageMap ID => Storage.CurrentContext.CreateMap(nameof(ID));
+    public static StorageMap Capacity => Storage.CurrentContext.CreateMap(nameof(Capacity));
+    public static StorageMap Cost => Storage.CurrentContext.CreateMap(nameof(Cost));
+    public static StorageMap Utility => Storage.CurrentContext.CreateMap(nameof(Utility));
+    public static StorageMap TimeToMarket => Storage.CurrentContext.CreateMap(nameof(TimeToMarket));
+    public static StorageMap NumOfFundMemb => Storage.CurrentContext.CreateMap(nameof(NumOfFundMemb));
+    public static StorageMap HasStarted => Storage.CurrentContext.CreateMap(nameof(HasStarted));
 }
 
 // New Power Plant crowdfunding settings.
@@ -1129,28 +1141,28 @@ private static void DelMemb( byte[] address, string opt = "" )
 //---------------------------------------------------------------------------------------------
 // METHODS FOR POWER PLANTS
 // --> create
-private static string PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
+private static byte[] PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
 {
     byte[] id = ID("P", capacity, cost, utility);
-    if ( GetPP(id, "Capacity").Length != 0 )
+    if ( GetPP(id, "Capacity").AsString().Length != 0 )
     {
         Process(id, "This power plant already exists. Use the method UpPP to change its registering data.");
         return;
     }
     
-    Storage.Put( String.Concat( id, "Capacity" ), capacity );
-    Storage.Put( String.Concat( id, "Cost" ), cost );
-    Storage.Put( String.Concat( id, "Utility" ), utility );
-    Storage.Put( String.Concat( id, "Time to Market" ), timeToMarket );
-    // Storage.Put( String.Concat( id, "Num of Fund Memb" ), 0 ); // Expensive to create with null value. Just state it out!
-    // Storage.Put( String.Concat( id, "Has Started" ), 0 ); // Expensive to create with null value. Just state it out!
+    PPData.Capacity.Put(id, capacity);
+    PPData.Cost.Put(id, cost);
+    PPData.Utility.Put(id, utility);
+    PPData.TimeToMarket.Put(id, timeToMarket);
+    PPData.NumOfFundMemb.Put(id, 0); // Expensive to create with null value. Just state it out!
+    PPData.HasStarted.Put(id, 0); // Expensive to create with null value. Just state it out!
 
     // Increases the total number of power plant units.
     BigInteger temp = NumOfPP() + 1;
     Storage.Put("NumOfPP", temp);
     
     // Stores the ID of each PP.
-    Storage.Put( String.Concat( "P", Int2Str(temp) ), id );
+    PPData.ID.Put( String.Concat( "P", Int2Str(temp) ), id );
 
     Process(id, "New PP created.")
     return id;
