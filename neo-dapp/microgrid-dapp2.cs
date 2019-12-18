@@ -1097,20 +1097,29 @@ private static void DelMemb( byte[] address, string opt = "" )
         MemberData.Quota.Delete(address);
         MemberData.Tokens.Delete(address);
         
-        // Decreases the total number of members.
-        BigInteger temp = NumOfMemb() - 1;
-        Storage.Put("NumOfMemb", temp);
-        
-        // Wipe off the address of the member.
+        // Looks for the member 'key' (that may vary during the life cycle of the group).
         for (int num = 1; num < NumOfMemb()+1; num++)
         {
             var index = String.Concat( "M", Int2Str(num) );
             if ( address == MemberData.ID.Get(index) )
             {
+                // Wipes off the address of the member.
                 MemberData.ID.Delete(index);
+                
+                // Updates the following indexes.
+                while (num <= NumOfMemb())
+                {
+                    num++;
+                    var newIndexSameAddress = MemberData.ID.Get( String.Concat("M", Int2Str(num)) );
+                    MemberData.ID.Put( String.Concat("M", Int2Str(num-1)), newIndexSameAddress );
+                }
                 break;
             }
         }
+
+        // Decreases the total number of members.
+        BigInteger temp = NumOfMemb() - 1;
+        Storage.Put("NumOfMemb", temp);
     }
 }
 
