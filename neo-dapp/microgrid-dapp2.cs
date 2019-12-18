@@ -563,7 +563,7 @@ private static void Distribute( string toAddress, BigInteger quota, BigInteger t
 }
 
 // To create a custom ID of a process based on its particular specifications.
-private static string ID( params object[] args )
+private static byte[] ID( params object[] args )
 {
     string str = null;
     
@@ -587,7 +587,7 @@ private static string ID( params object[] args )
         }
     }
 
-    return str;
+    return Hash256(str);
 }
 
 // To properly store a boolean variable.
@@ -692,7 +692,7 @@ private static void GetContributeValue( string lookForID, string[] listOfIDs )
             }
         }
     }
-    else // lookForID[0] == "A"
+    else // lookForID[0] == "M"
     {
         // Gets PPs by a member investments.
         foreach (string PPid in listOfIDs)
@@ -1016,7 +1016,7 @@ private static void Member( byte[] address, string fullName, string utility, Big
     Storage.Put("NumOfMemb", temp);
     
     // Stores the address of each member.
-    Member.ID.Put( String.Concat( "M", Int2Str(temp) ), address );
+    MemberData.ID.Put( String.Concat( "M", Int2Str(temp) ), address );
 }
 
 // --> read
@@ -1131,7 +1131,7 @@ private static void DelMemb( byte[] address, string opt = "" )
 // --> create
 private static string PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
 {
-    string id = ID("P", capacity, cost, utility);
+    byte[] id = ID("P", capacity, cost, utility);
     if ( GetPP(id, "Capacity").Length != 0 )
     {
         Process(id, "This power plant already exists. Use the method UpPP to change its registering data.");
@@ -1239,7 +1239,7 @@ private static void DelPP( string id )
 // --> create
 private static string Ref( string proposal, string notes, int cost = 0 )
 {
-    string id = ID("R", proposal, notes, cost);
+    byte[] id = ID("R", proposal, notes, cost);
     if ( GetRef(id, "Proposal").Length != 0 )
     {
         Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.");
