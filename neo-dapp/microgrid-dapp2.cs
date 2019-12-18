@@ -315,19 +315,21 @@ public static string Admission( byte[] address, string fullName, string utility,
 public static object Summary( string key, string opt = "" )     //--PENDING-- review dataset of each 'key' after the modifications made on the storage configuration.
 {
     // If 'key' is an 'address' ==  member.
-    if (key[0] == "A")
+    if (key[0] == "M")
     {
+        byte[] address = Member.ID.Get(key);
+
         if ((opt == "") || (opt == "detailed"))
         {
-            string[] brief = new string[] { GetMemb(key,"FullName"), GetMemb(key,"Utility"), GetMemb(key,"Quota"), GetMemb(key,"Tokens") };
+            string[] brief = new string[] { GetMemb(address,"FullName"), GetMemb(address,"Utility"), GetMemb(address,"Quota"), GetMemb(address,"Tokens") };
 
             if (opt == "detailed")
             {
-                GetContributeValue( key, list ); // list of PPs
+                GetContributeValue( key, list ); // list of PPs --PENDING--
             }
             return brief;
         }
-        return GetMemb(key,opt);
+        return GetMemb(address,opt);
     }
 
     // If 'key' is an 'id' with prefix 'P' == power plant.
@@ -447,14 +449,16 @@ public static bool Bid( string ICOid, byte[] member, BigInteger bid )
 public object Change( string key, params object[] opts )
 {
     // If 'key' is an 'address' ==  member.
-    if (key[0] == "A")
+    if (key[0] == "M")
     {
+        byte[] address = Member.ID.Get(key);
+
         // Only the member can change its own personal data.
         // To UPDATE, the params must be ['profile option', 'value'].
         if ( opts[1] is string )
         {
-            UpMemb(key, opts[0], opts[1]);
-            Update("Profile data.", key);
+            UpMemb(address, opts[0], opts[1]);
+            Update("Profile data.", address);
             return true;
         }
         
@@ -462,14 +466,14 @@ public object Change( string key, params object[] opts )
         // To UPDATE, the params must be ['register option', 'value'].
         if ( opts[1] is BigInteger )
         {
-            string id = Ref( "Change register_", String.Concat( key, opts[0] ) );
+            string id = Ref( "Change register_", String.Concat( key, opts[0] ) ); // --PENDING--
             Process( id, "Request the change of registration data of a member." );
             return id;
         }
         
         // Any member can request to delete another member.
         // The 'opts.Length' is empty.
-        string id = Ref("Delete member_", key);
+        string id = Ref("Delete member_", address);
         Process(id, "Request to dismiss a member.");
         return id;
     }
@@ -1012,8 +1016,7 @@ private static void Member( byte[] address, string fullName, string utility, Big
     Storage.Put("NumOfMemb", temp);
     
     // Stores the address of each member.
-    // MemberData.ID.Put( String.Concat( "M", Int2Str(temp) ), address ); // Get rid off the challenge to map a variable type "Mx".
-    MemberData.ID.Put(address, address); // --PENDING-- test this on other functions (for instance, to get the list of members)
+    Member.ID.Put( String.Concat( "M", Int2Str(temp) ), address );
 }
 
 // --> read
