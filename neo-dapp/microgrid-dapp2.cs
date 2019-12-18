@@ -1102,7 +1102,15 @@ private static void DelMemb( byte[] address, string opt = "" )
         Storage.Put("NumOfMemb", temp);
         
         // Wipe off the address of the member.
-        MemberData.ID.Delete(address);
+        for (int num = 1; num < NumOfMemb()+1; num++)
+        {
+            var index = String.Concat( "M", Int2Str(num) );
+            if ( address == MemberData.ID.Get(index) )
+            {
+                MemberData.ID.Delete(index);
+                break;
+            }
+        }
     }
 }
 
