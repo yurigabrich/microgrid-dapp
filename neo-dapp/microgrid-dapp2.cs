@@ -1150,25 +1150,27 @@ private static byte[] PP( string capacity, BigInteger cost, string utility, uint
     if ( GetPP(id, "capacity").AsString().Length != 0 )
     {
         Process(id, "This power plant already exists. Use the method UpPP to change its registering data.");
-        return;
+    }
+    else
+    {
+        // Stores the values.
+        PPData.Capacity.Put(id, capacity);
+        PPData.Cost.Put(id, cost);
+        PPData.Utility.Put(id, utility);
+        PPData.TimeToMarket.Put(id, timeToMarket);
+        // PPData.NumOfFundMemb.Put(id, 0); // Expensive to create with null value. Just state it out!
+        // PPData.HasStarted.Put(id, 0); // Expensive to create with null value. Just state it out!
+
+        // Increases the total number of power plant units.
+        BigInteger temp = NumOfPP() + 1;
+        Storage.Put("NumOfPP", temp);
+        
+        // Stores the ID of each PP.
+        PPData.ID.Put( String.Concat( "P", Int2Str(temp) ), id );
+
+        Process(id, "New PP created.")
     }
     
-    // Stores the values.
-    PPData.Capacity.Put(id, capacity);
-    PPData.Cost.Put(id, cost);
-    PPData.Utility.Put(id, utility);
-    PPData.TimeToMarket.Put(id, timeToMarket);
-    // PPData.NumOfFundMemb.Put(id, 0); // Expensive to create with null value. Just state it out!
-    // PPData.HasStarted.Put(id, 0); // Expensive to create with null value. Just state it out!
-
-    // Increases the total number of power plant units.
-    BigInteger temp = NumOfPP() + 1;
-    Storage.Put("NumOfPP", temp);
-    
-    // Stores the ID of each PP.
-    PPData.ID.Put( String.Concat( "P", Int2Str(temp) ), id );
-
-    Process(id, "New PP created.")
     return id;
 }
 
