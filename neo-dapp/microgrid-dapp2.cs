@@ -21,6 +21,9 @@ public static event Action<string, string> Update;
 // Power limits of the distributed generation category defined by Brazilian law (from 0MW to 5MW).
 public static int[] PowGenLimits() => new int[] {0, 5000000};
 
+// The total number of referendum processes.
+public static BigInteger NumOfRef() => Storage.Get("NumOfRef").AsBigInteger();
+
 // The total number of power plant units.
 public static BigInteger NumOfPP() => Storage.Get("NumOfPP").AsBigInteger();
 
@@ -65,6 +68,22 @@ private struct PPData
     public static StorageMap TimeToMarket => Storage.CurrentContext.CreateMap(nameof(TimeToMarket));
     public static StorageMap NumOfFundMemb => Storage.CurrentContext.CreateMap(nameof(NumOfFundMemb));
     public static StorageMap HasStarted => Storage.CurrentContext.CreateMap(nameof(HasStarted));
+}
+
+// Referendum's dataset.
+private struct RefData
+{
+    public static StorageMap ID => Storage.CurrentContext.CreateMap(nameof(ID));
+    public static StorageMap Proposal => Storage.CurrentContext.CreateMap(nameof(Proposal));
+    public static StorageMap Notes => Storage.CurrentContext.CreateMap(nameof(Notes));
+    public static StorageMap Cost => Storage.CurrentContext.CreateMap(nameof(Cost));
+    public static StorageMap MoneyRaised => Storage.CurrentContext.CreateMap(nameof(MoneyRaised));
+    public static StorageMap NumOfVotes => Storage.CurrentContext.CreateMap(nameof(NumOfVotes));
+    public static StorageMap CountTrue => Storage.CurrentContext.CreateMap(nameof(CountTrue));
+    public static StorageMap Outcome => Storage.CurrentContext.CreateMap(nameof(Outcome));
+    public static StorageMap HasResult => Storage.CurrentContext.CreateMap(nameof(HasResult));
+    public static StorageMap StartTime => Storage.CurrentContext.CreateMap(nameof(StartTime));
+    public static StorageMap EndTime => Storage.CurrentContext.CreateMap(nameof(EndTime));
 }
 
 // New Power Plant crowdfunding settings.
@@ -1170,7 +1189,7 @@ private static byte[] PP( string capacity, BigInteger cost, string utility, uint
 
         Process(id, "New PP created.")
     }
-    
+
     return id;
 }
 
@@ -1281,64 +1300,103 @@ private static void DelPP( byte[] id )
 //---------------------------------------------------------------------------------------------
 // METHODS FOR REFERENDUMS
 // --> create
-private static string Ref( string proposal, string notes, int cost = 0 )
+private static byte[] Ref( string proposal, string notes, int cost = 0 )
 {
     byte[] id = ID("R", proposal, notes, cost);
-    if ( GetRef(id, "Proposal").Length != 0 )
+
+    if ( GetRef(id, "proposal").Length != 0 )
     {
         Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.");
-        return "-";
     }
-    
-    Storage.Put( String.Concat( id, "Proposal" ), proposal );
-    Storage.Put( String.Concat( id, "Notes" ), notes );
-    Storage.Put( String.Concat( id, "Cost" ), cost );
-    // Storage.Put( String.Concat( id, "Money Raised" ), 0 ); // Expensive to create with null value. Just state it out!
-    // Storage.Put( String.Concat( id, "Num of Votes"), 0 );   // Expensive to create with null value. Just state it out!
-    // Storage.Put( String.Concat( id, "Count True"), 0 );    // Expensive to create with null value. Just state it out!
-    Storage.Put( String.Concat( id, "Outcome" ), Bool2Str(false) );
-    // Storage.Put( String.Concat( id, "Has Result"), 0 );    // Expensive to create with null value. Just state it out!
-    Storage.Put( String.Concat( id, "Start Time" ), InvokeTime() );
-    Storage.Put( String.Concat( id, "End Time" ), InvokeTime() + timeFrameRef );
+    else
+    {
+        // Stores the values.
+        RefData.Proposal.Put(id, proposal);
+        RefData.Notes.Put(id, notes);
+        RefData.Cost.Put(id, cost);
+        // RefData.MoneyRaised.Put(id, 0); // Expensive to create with null value. Just state it out!
+        // RefData.NumOfVotes.Put(id, 0); // Expensive to create with null value. Just state it out!
+        // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
+        RefData.Outcome.Put(id, Bool2Str(false));
+        // RefData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
+        RefData.StartTime.Put(id, InvokeTime());
+        RefData.EndTime.Put(id, InvokeTime() + timeFrameRef);
+        
+        // Increases the total number of referendum processes.
+        BigInteger temp = NumOfRef() + 1;
+        Storage.Put("NumOfRef", temp);
+        
+        // Stores the ID of each Ref.
+        RefData.ID.Put( String.Concat( "R", Int2Str(temp) ), id );
 
-    Process(id, "The referendum process has started.");
+        Process(id, "The referendum process has started.");
+    }
+
     return id;
 }
 
 // The function to vote on a referendum is declared above because it is public.
 
 // --> read
-private static byte[] GetRef( string id, string opt )       // retorna byte[] OU object? --PENDING--
+private static object GetRef( string id, string opt )
 {
-    return Storage.Get( String.Concat( id, opt ) );
+    if (opt == "proposal") return RefData.Proposal.Get(id);
+    if (opt == "notes") return RefData.Notes.Get(id);
+    if (opt == "cost") return RefData.Cost.Get(id);
+    if (opt == "moneyraised") return RefData.MoneyRaised.Get(id);
+    if (opt == "numofvotes") return RefData.NumOfVotes.Get(id);
+    if (opt == "counttrue") return RefData.CountTrue.Get(id);
+    if (opt == "outcome") return RefData.Outcome.Get(id);
+    if (opt == "hasresult") return RefData.HasResult.Get(id);
+    if (opt == "starttime") return RefData.starttime.Get(id);
+    if (opt == "endtime") return RefData.endtime.Get(id);
+            
+    return false; // Must never happen.
 }
 
 // --> update
 // It is only possible to internally change the 'MoneyRaised', the 'NumOfVotes', the 'CountTrue', the 'HasResult' and the 'Outcome'.
-private static void UpRef( string id, string opt, BigInteger val )
+private static void UpRef( byte[] id, string opt, BigInteger val )
 {
-    if ((opt == "Num of Votes") || (opt == "Money Raised") || (opt == "Count True") || (opt == "Has Result") )
+    if ((opt == "numofvotes") || (opt == "moneyraised") || (opt == "counttrue") || (opt == "hasresult") )
     {
-        // Don't invoke Put if value is unchanged.
         BigInteger orig = GetRef(id, opt).AsBigInteger();
-        if (orig == val) return;
-         
-        // Delete the storage if the new value is zero.
-        if (val == 0) return Storage.Delete( String.Concat(id, opt) );
         
-        // else
-        Storage.Put( String.Concat( id, opt ), val );
+        if (orig == val)
+        {
+            // Don't invoke Put if value is unchanged.
+        }
+        else if (val == 0)
+        {
+            // Delete the storage if the new value is zero.
+            if (opt == "numofvotes") RefData.NumOfVotes.Delete(id);
+            else if (opt == "moneyraised") RefData.MoneyRaised.Delete(id);
+            else if (opt == "counttrue") RefData.CountTrue.Delete(id);
+            else RefData.HasResult.Delete(id); // (opt == "hasresult")
+        }
+        else
+        {
+            // Update the storage with the new value.
+            if (opt == "numofvotes") RefData.NumOfVotes.Put(id, val);
+            else if (opt == "moneyraised") RefData.MoneyRaised.Put(id, val);
+            else if (opt == "counttrue") RefData.CountTrue.Put(id, val);
+            else RefData.HasResult.Put(id, val); // (opt == "hasresult")
+        }
     }
 }
 
-private static void UpRef( string id, bool val )
+private static void UpRef( byte[] id, bool val )
 {
-    // Don't invoke Put if value is unchanged.
-    string orig = Str2Bool( GetRef(id, "Outcome") );
-    if ( orig == Bool2Str(val) ) return;
-        
-    // else
-    Storage.Put( String.Concat( id, "Outcome" ), Bool2Str(val) );
+    bool orig = Str2Bool( GetRef(id, "outcome").AsString() );
+
+    if ( orig == val )
+    {
+        // Don't invoke Put if value is unchanged.
+    }
+    else   
+    {
+        RefData.Outcome.Put(id, Bool2Str(val));
+    }
 }
 
 // --> delete
