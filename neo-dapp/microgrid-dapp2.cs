@@ -10,7 +10,7 @@ public static event Action<byte[], string> Process;
 [DisplayName("ballot")]
 public static event Action<string, byte[], bool> Ballot;
 [DisplayName("offer")]
-public static event Action<string, byte[], BigInteger> Offer;
+public static event Action<byte[], byte[], BigInteger> Offer;
 [DisplayName("change")]
 public static event Action<string, string> Update;
 
@@ -58,18 +58,6 @@ private struct MemberData
     public static StorageMap Tokens => Storage.CurrentContext.CreateMap(nameof(Tokens));
 }
 
-// Power Plant's dataset.
-private struct PPData
-{
-    public static StorageMap ID => Storage.CurrentContext.CreateMap(nameof(ID));
-    public static StorageMap Capacity => Storage.CurrentContext.CreateMap(nameof(Capacity));
-    public static StorageMap Cost => Storage.CurrentContext.CreateMap(nameof(Cost));
-    public static StorageMap Utility => Storage.CurrentContext.CreateMap(nameof(Utility));
-    public static StorageMap TimeToMarket => Storage.CurrentContext.CreateMap(nameof(TimeToMarket));
-    public static StorageMap NumOfFundMemb => Storage.CurrentContext.CreateMap(nameof(NumOfFundMemb));
-    public static StorageMap HasStarted => Storage.CurrentContext.CreateMap(nameof(HasStarted));
-}
-
 // Referendum's dataset.
 private struct RefData
 {
@@ -84,6 +72,31 @@ private struct RefData
     public static StorageMap HasResult => Storage.CurrentContext.CreateMap(nameof(HasResult));
     public static StorageMap StartTime => Storage.CurrentContext.CreateMap(nameof(StartTime));
     public static StorageMap EndTime => Storage.CurrentContext.CreateMap(nameof(EndTime));
+}
+
+// Power Plant's dataset.
+private struct PPData
+{
+    public static StorageMap ID => Storage.CurrentContext.CreateMap(nameof(ID));
+    public static StorageMap Capacity => Storage.CurrentContext.CreateMap(nameof(Capacity));
+    public static StorageMap Cost => Storage.CurrentContext.CreateMap(nameof(Cost));
+    public static StorageMap Utility => Storage.CurrentContext.CreateMap(nameof(Utility));
+    public static StorageMap TimeToMarket => Storage.CurrentContext.CreateMap(nameof(TimeToMarket));
+    public static StorageMap NumOfFundMemb => Storage.CurrentContext.CreateMap(nameof(NumOfFundMemb));
+    public static StorageMap HasStarted => Storage.CurrentContext.CreateMap(nameof(HasStarted));
+}
+
+// ICO's dataset (for crowdfunding).
+private struct ICOData
+{
+    public static StorageMap StartTime => Storage.CurrentContext.CreateMap(nameof(StartTime));
+    public static StorageMap EndTime => Storage.CurrentContext.CreateMap(nameof(EndTime));
+    public static StorageMap TotalAmount => Storage.CurrentContext.CreateMap(nameof(TotalAmount));
+    public static StorageMap Contributions => Storage.CurrentContext.CreateMap(nameof(Contributions));
+    public static StorageMap Success => Storage.CurrentContext.CreateMap(nameof(Success));
+    public static StorageMap HasResult => Storage.CurrentContext.CreateMap(nameof(HasResult));
+
+    public static StorageMap Bid => Storage.CurrentContext.CreateMap(nameof(Bid));
 }
 
 // New Power Plant crowdfunding settings.
@@ -446,10 +459,10 @@ public static bool Vote( string id, byte[] member, bool answer )
 }
 
 // To make a bid in a new PP crowdfunding process.
-public static bool Bid( string ICOid, byte[] member, BigInteger bid )
+public static bool Bid( byte[] id, byte[] member, BigInteger bid )
 {
-    BigInteger target = GetPP(ICOid, "Cost").AsBigInteger();
-    BigInteger funds = GetCrowd(ICOid, "Total Amount").AsBigInteger();
+    BigInteger target = GetPP(id, "cost").AsBigInteger();
+    BigInteger funds = GetCrowd(id, "totalamount").AsBigInteger();
     
     if ( bid > (target - funds) )
         throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str(target - funds) ), ",00). Bid again!" ));
@@ -458,16 +471,15 @@ public static bool Bid( string ICOid, byte[] member, BigInteger bid )
     // All these steps are part of a crowdfunding process, not of a PP registration.
     
     // Increases the value gathered so far.
-    UpCrowd(ICOid, "Total Amount", funds + bid);
+    UpCrowd(id, "totalamount", funds + bid);
     
     // Increases the number of contributions.
-    BigInteger temp = GetCrowd(ICOid, "Contributions").AsBigInteger();
-    UpCrowd(ICOid, "Contributions", temp++);
+    BigInteger temp = GetCrowd(id, "contributions").AsBigInteger();
+    UpCrowd(id, "contributions", temp++);
     
-    // Tracks bid by member for each ICOid.
-    BigInteger previous = Storage.Get( String.Concat(ICOid, member) ).AsBigInteger();   //--PENDING-- replace for a 'map'
-    Storage.Put( String.Concat(ICOid, member), previous + bid );   //--PENDING-- replace for a 'map'
-    Offer(ICOid, member, bid);
+    // Tracks bid by member for each ICO process.
+    UpBid(id, member, bid);
+    Offer(id, member, bid);
     
     return true;
     
@@ -1338,7 +1350,7 @@ private static byte[] Ref( string proposal, string notes, int cost = 0 )
 // The function to vote on a referendum is declared above because it is public.
 
 // --> read
-private static object GetRef( string id, string opt )
+private static object GetRef( byte[] id, string opt )
 {
     if (opt == "proposal") return RefData.Proposal.Get(id);
     if (opt == "notes") return RefData.Notes.Get(id);
@@ -1348,8 +1360,8 @@ private static object GetRef( string id, string opt )
     if (opt == "counttrue") return RefData.CountTrue.Get(id);
     if (opt == "outcome") return RefData.Outcome.Get(id);
     if (opt == "hasresult") return RefData.HasResult.Get(id);
-    if (opt == "starttime") return RefData.starttime.Get(id);
-    if (opt == "endtime") return RefData.endtime.Get(id);
+    if (opt == "starttime") return RefData.StartTime.Get(id);
+    if (opt == "endtime") return RefData.EndTime.Get(id);
             
     return false; // Must never happen.
 }
@@ -1368,7 +1380,7 @@ private static void UpRef( byte[] id, string opt, BigInteger val )
         }
         else if (val == 0)
         {
-            // Delete the storage if the new value is zero.
+            // Deletes the storage if the new value is zero.
             if (opt == "numofvotes") RefData.NumOfVotes.Delete(id);
             else if (opt == "moneyraised") RefData.MoneyRaised.Delete(id);
             else if (opt == "counttrue") RefData.CountTrue.Delete(id);
@@ -1406,104 +1418,129 @@ private static void UpRef( byte[] id, bool val )
 //---------------------------------------------------------------------------------------------
 // METHODS TO FINANCE A NEW POWER PLANT
 // --> create
-private static void CrowdFunding( string ICOid )
+private static void CrowdFunding( byte[] id ) // This ID must come from a success Referendum process or it is a PP ID? --PENDING-- DEFINITION!
 {
-    Storage.Put( String.Concat( ICOid, "Start Time" ), InvokeTime() );
-    Storage.Put( String.Concat( ICOid, "End Time" ), InvokeTime() + timeFrameCrowd );
-    // Storage.Put( String.Concat( ICOid, "Total Amount" ), 0 );   // Expensive to create with null value. Just state it out!
-    // Storage.Put( String.Concat( ICOid, "Contributions" ), 0 ); // Expensive to create with null value. Just state it out!
-    Storage.Put( String.Concat( ICOid, "Success" ), Bool2Str(false) );
-    // Storage.Put( String.Concat( ICOid, "Has Result" ), 0 );  // Expensive to create with null value. Just state it out!
+    
+    ICOData.StartTime.Put(id, InvokeTime());
+    ICOData.EndTime.Put(id, InvokeTime() + timeFrameCrowd);
+    // ICOData.TotalAmount.Put(id, 0); // Expensive to create with null value. Just state it out!
+    // ICOData.Contributions.Put(id, 0); // Expensive to create with null value. Just state it out!
+    ICOData.Success.Put(id, Bool2Str(false));
+    // ICOData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
 }
 
 // The function to bid on a crowdfunding is declared above because it is public.
 
 // --> read
-private static BigInteger GetBid( string ICOid, string member )
+private static BigInteger GetBid( byte[] id, byte[] member )
 {
-    return Storage.Get( String.Concat( ICOid, member ) );
+    byte[] bidID = Hash256( id.Concat(member) );
+    return ICOData.Bid.Get(bidID).AsBigInteger();
 }
 
-private static object GetCrowd( string ICOid, string opt )              // retorna byte[] OU object? --PENDING--
+private static object GetCrowd( byte[] id, string opt )
 {
-    return Storage.Get( String.Concat( ICOid, opt ) );
+    if (opt == "starttime") return ICOData.StartTime.Get(id);
+    if (opt == "endtime") return ICOData.EndTime.Get(id);
+    if (opt == "totalamount") return ICOData.TotalAmount.Get(id);
+    if (opt == "contributions") return ICOData.Contributions.Get(id);
+    if (opt == "success") return ICOData.Success.Get(id);
+    if (opt == "hasresult") return ICOData.HasResult.Get(id);
+            
+    return false; // Must never happen.
 }
 
 // --> update
-private static bool UpBid( string ICOid, string member, BigInteger bid ) // --PENDING-- return... Preciso retornar alguma coisa?
+private static void UpBid( byte[] id, byte[] member, BigInteger bid )
 {
-    // Don't invoke Put if value is unchanged.
-    BigInteger orig = GetBid(ICOid, member).AsBigInteger();
-    if (orig == bid) return;
-     
-    // Delete the storage if the new value is zero.
-    if (bid == 0) return Refund(ICOid, member);
-    Storage.Delete( String.Concat(id, opt) );
+    BigInteger orig = GetBid(id, member);
     
-    // else
-    Storage.Put( String.Concat( ICOid, member ), bid );
-    
-    
-    // Update other crowd values! --PENDING--
-    
-    return true;
-}
-
-// Only the 'Total Amount', 'Contributions', 'HasResult' and 'Success' can be updated.
-private static void UpCrowd( string ICOid, string opt, BigInteger val )
-{
-    if ( (opt == "Total Amount") || (opt == "Contributions") || (opt == "Has Result") )
+    if ((orig == bid) || (bid == 0))
     {
         // Don't invoke Put if value is unchanged.
-        BigInteger orig = GetCrowd(ICOid, opt).AsBigInteger();
-        if (orig == val) return;
-         
-        // Delete the storage if the new value is zero.
-        if (val == 0) return DelCrowd(ICOid, opt);
-        
-        // else
-        Storage.Put( String.Concat( ICOid, opt ), val );
+        // AND
+        // Keeps the storage with the original value.
+    }
+    else
+    {
+        byte[] bidID = Hash256( id.Concat(member) );
+        ICOData.Bid.Put( bidID, orig + bid );
     }
 }
 
-private static void UpCrowd( string ICOid, bool val )
+// Only the 'Total Amount', 'Contributions', 'HasResult' and 'Success' can be updated.
+private static void UpCrowd( byte[] id, string opt, BigInteger val )
 {
-    // Don't invoke Put if value is unchanged.
-    string orig = Str2Bool( GetCrowd(ICOid, "Success") );
-    if ( orig == Bool2Str(val) ) return;
+    if ( (opt == "Total Amount") || (opt == "Contributions") || (opt == "Has Result") )
+    {
+        BigInteger orig = GetCrowd(ICOid, opt).AsBigInteger();
         
-    // else
-    Storage.Put( String.Concat( ICOid, "Success" ), Bool2Str(val) );
+        if (orig == val)
+        {
+            // Don't invoke Put if value is unchanged.
+        }
+        else if (val == 0)
+        {
+            // Deletes the storage if the new value is zero.
+            if (opt == "totalamount") ICOData.TotalAmount.Delete(id);
+            else if (opt == "contributions") ICOData.Contributions.Delete(id);
+            else ICOData.HasResult.Delete(id); // (opt == "hasresult")
+        }
+        else
+        {
+            // Update the storage with the new value.
+            if (opt == "totalamount") ICOData.TotalAmount.Put(id, val);
+            else if (opt == "contributions") ICOData.Contributions.Put(id, val);
+            else ICOData.HasResult.Put(id, val); // (opt == "hasresult")
+        }
+    }
+}
+
+private static void UpCrowd( byte[] id, bool val )
+{
+    string orig = GetCrowd(id, "success").AsString();
+    
+    if ( orig == Bool2Str(val) )
+    {
+        // Don't invoke Put if value is unchanged.
+    }
+    else
+    {
+        ICOData.Success.Put(id, Bool2Str(val));
+    }
 }
 
 // --> delete
-private static void Refund( string ICOid, string member )
+private static void Refund( byte[] id, byte[] member )
 {
-    // Deletes the member's offer.
-    BigInteger grant = GetBid(ICOid, member);
-    Storage.Delete( String.Concat( ICOid, member ) );
+    BigInteger grant = GetBid(id, member);
     
     // Decreases the total amount of funds.
-    BigInteger funds = GetCrowd(ICOid, "Total Amount");
-    UpCrowd(PPi, "Total Amount", funds - grant);
+    BigInteger funds = GetCrowd(id, "totalamount");
+    UpCrowd(id, "totalamount", funds - grant);
 
     // Decreases the total number of contributions.
-    BigInteger contributions = GetCrowd(ICOid, "Contributions");
-    UpCrowd(ICOid, "Contributions", contributions--);
+    BigInteger contributions = GetCrowd(id, "contributions");
+    UpCrowd(id, "contributions", contributions--);
     
+    // Deletes the member's offer.
+    byte[] bidID = Hash256( id.Concat(member) );
+    ICOData.Bid.Delete(bidID);
+
     // Notifies about the cancel of the bid.
-    Transfer(ICOid, member, 0, (-1 * grant));
+    Transfer(id, member, 0, (-1 * grant));
 }
 
 // Only the 'Total Amount' and 'Contributions' can be "deleted"
 // because the failure of a crowdfunding must be preserved.
 // Actually it is only used to "store" null values cheaply, and
 // it must solely happen if the refund (due to a bid cancel) reaches zero.
-private static void DelCrowd( string ICOid, string opt )
+private static void DelCrowd( byte[] id, string opt )
 {
-    if ( (opt == "Total Amount") || (opt == "Contributions") )
+    if ( (opt == "totalamount") || (opt == "contributions") )
     {
-        Storage.Delete( String.Concat( ICOid, opt ) );
+        if (opt == "totalamount") ICOData.TotalAmount.Delete(id);
+        else ICOData.Contributions.Delete(id); // (opt == "contributions")
     }
 }
 
