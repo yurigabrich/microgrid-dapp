@@ -61,3 +61,51 @@ Ballot( id, caller, answer ); // a ordem de publicação pode facilitar a busca 
 // Updating methods
 // TESTAR ISSO!
 // fonte: https://docs.neo.org/en-us/sc/reference/fw/dotnet/neo/Storage.html
+
+
+//---------------------------------------------------------------------------------------------
+https://github.com/neo-project/examples/blob/master/csharp/NEP5/NEP5.cs
+
+
+// TO TEST
+//---------------------------------------------------------------------------------------------
+
+Neo.Header.GetTimestamp         // Get the timestamp of the block
+Neo.Storage.GetContext          // [New] Get the current store context
+Neo.Contract.GetStorageContext  // [New] Get the storage context of the contract
+
+// get sender script hash
+Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
+TransactionOutput[] reference = tx.GetReferences();
+reference[0].ScriptHash;
+
+// to update ID and comparation of IDs operations
+    string temp1 = String.Concat( "Hello world", "outra coisa" );
+    string temp2 = String.Concat( "P", temp1);
+
+    byte[] result2 = temp2.AsByteArray();
+
+    Runtime.Notify( result2.AsString()[0] == 'P' ); // comparação entre string's, mas "P" não funciona... 
+    
+    
+// TO DO
+//---------------------------------------------------------------------------------------------
+// It must be an offline operation! From an offline monitoring, any Neo user could continue the process invoking the function again. However, it will only work if the user has a membership ID.
+
+// CRIAR UMA OPERAÇÃO DA WALLET QUE POSSA FAZER ISSO! Exemplos de wallet?
+
+// ---------------
+
+// To unlock some operations to keep going.
+// It automatically invokes this smart contract to continue a function from where it has been locked.
+private static void Unlock(func equivalencia?) // como passar o comando para uma função específica?
+{
+    // Blockchain... Execute ( Owner(), function );
+    Blockchain.GetAccount( Owner() ); // Get an account based on the scripthash of the contract
+    Blockchain.GetAccount( Owner() ); // Get contract content based on contract hash
+    Transaction.GetHash; //	Get Hash for the current transaction
+    Transaction.GetAttributes; //	Query all properties of the current transaction
+    Account.GetScriptHash; //	Get the script hash of the contract account
+    Contract.GetScript; //	Get the scripthash of the contract
+    
+}
