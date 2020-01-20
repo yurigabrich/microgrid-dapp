@@ -132,221 +132,216 @@ private static char[] Alpha() => new char[] {'A', 'B', 'C', 'D', 'E', 'F', 'G', 
 
 public static object Main ( string operation, params object[] args )
 {
-    // if ( Runtime.Trigger == TriggerType.Application )
+    // General operation.
+    if (operation == "admission")
     {
-        // General operation.
-        if (operation == "admission")
-        {
-            if ( args.Length != 3 )
-                throw new InvalidOperationException("Please provide the 3 arguments: your account address, full name, and power utility name.");
+        if ( args.Length != 3 )
+            throw new InvalidOperationException("Please provide the 3 arguments: your account address, full name, and power utility name.");
 
-            if ( !Runtime.CheckWitness((byte[])args[0]) )
-                throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
+        if ( !Runtime.CheckWitness((byte[])args[0]) )
+            throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
 
-            if ( GetMemb((byte[])args[0], "FullName").Length != 0 )
-                throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
-            
-            if ( Storage.Get("firstCall").AsBigInteger() == 0 )
-            {
-                // No admission process is required.
-
-                // Locks this 'if' statement.
-                OnlyOnce();
-                
-                // Defines the 'invoker/caller' as the first member.
-                Membership( (byte[])args[0], "Welcome on board!" );
-                return Member( (byte[])args[0], (string)args[1], (string)args[2], 0, 0 );
-            }
-
-            return Admission( (byte[])args[0],   // invoker/caller address
-                              (string)args[1],   // fullName
-                              (string)args[2] ); // utility
-        }
+        if ( GetMemb((byte[])args[0], "FullName").Length != 0 )
+            throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
         
-        // Partially restricted operation.
-        if (operation == "summary")
+        if ( Storage.Get("firstCall").AsBigInteger() == 0 )
         {
-            if ( args.Length != 1 )
-                throw new InvalidOperationException("Provide at least a member address or a PP ID.");
+            // No admission process is required.
 
-            if ( (GetMemb(caller, "FullName").Length == null) | (args[0][0] == "A") ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
-                throw Warning();
-
-            return Summary( (string)args[0],     // Address/ID
-                            (string)args[1] );   // option
+            // Locks this 'if' statement.
+            OnlyOnce();
+            
+            // Defines the 'invoker/caller' as the first member.
+            Membership( (byte[])args[0], "Welcome on board!" );
+            return Member( (byte[])args[0], (string)args[1], (string)args[2], 0, 0 );
         }
 
-        // Restricted operations.
-        if ( GetMemb(caller, "FullName").Length != null )
-        {
-            // Group operations.
-            if (operation == "vote")
-            {
-                if ( args.Length != 3 )
-                    throw new InvalidOperationException("Please provide the 3 arguments: the referendum id, your account address, and your vote.");
+        return Admission( (byte[])args[0],   // invoker/caller address
+                          (string)args[1],   // fullName
+                          (string)args[2] ); // utility
+    }
+    
+    // Partially restricted operation.
+    if (operation == "summary")
+    {
+        if ( args.Length != 1 )
+            throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
-                if ( !Runtime.CheckWitness((byte[])args[1]) )
-                    throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
+        if ( (GetMemb(caller, "FullName").Length == null) | (args[0][0] == "A") ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+            throw Warning();
 
-                if ( isLock( (string)args[0]) )
-                    throw new InvalidOperationException("The ballot has ended.");
-                
-                return Vote( (string)args[0],    // referendum id
-                             (byte[])args[1],    // member address
-                             (bool)args[2] );    // answer
-            }
-
-            if (operation == "bid")
-            {
-                if ( args.Length != 3 )
-                    throw new InvalidOperationException("Please provide the 3 arguments: the PP id, your account address, and your bid.");
-
-                if ( !Runtime.CheckWitness((byte[])args[1]) )
-                    throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
-
-                if ( (args[0][0] != "P") || (args[0].Length == null) )
-                    throw new InvalidOperationException("Provide a valid PP ID.");
-
-                if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
-                    throw new InvalidOperationException("This member cannot profit from this power utility." );
-
-                if ( args[2] <= minOffer )
-                    throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
-                
-                if ( isLock( args[0] ) )
-                    throw new InvalidOperationException("The campaign has ended.");
-
-                return Bid( (string)args[0],        // PP id
-                            (byte[])args[1],        // member address
-                            (BigInteger)args[2] );  // bid value
-            }
-
-            if (operation == "trade")
-            {
-                if ( args.Length != 4 )
-                    throw new InvalidOperationException("Please provide the 4 arguments: your account address, the address of who you are transaction to, the quota value, and the amount of tokens.");
-
-                if ( !Runtime.CheckWitness((byte[])args[0]) )
-                    throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
-
-                if ( (args[1][0] != "A") || (args[1].Length == null) )
-                    throw new InvalidOperationException("Provide a valid destiny address.");
-                    
-                if ( GetMemb(args[1], "FullName").Length != null )
-                    throw new InvalidOperationException("The address you are transaction to must be a member too.");
-
-                if ( (GetMemb(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
-                    throw new InvalidOperationException( "Both members must belong to the same power utility cover area." );
-
-                if ( (args[2] <= 0) & (args[3] <= 0) )
-                    throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 4th argument empty. Otherwise, to donate tokens let ONLY the 3rd argument empty.");
-                
-                return Trade( (byte[])args[0],       // from address
-                              (byte[])args[1],       // to address
-                              (BigInteger)args[2],   // quota exchange
-                              (BigInteger)args[3] ); // token price
-            }
-
-            if (operation == "power up")
-            {
-                if (args.Length != 4)
-                    throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
-
-                if ( (args[3] == 0) || (args[3] < minTimeToMarket) )
-                    throw new InvalidOperationException("The time to market must be a factual period.");
-
-                return PowerUp( (int)args[0],       // capacity [MW]
-                                (int)args[1],       // cost [R$]
-                                (string)args[2],    // power utility name
-                                (uint)args[3] );    // time to market
-            }
-
-            if (operation == "change")
-            {
-                if (args.Length != 2)
-                    throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
-                
-                if ( (args[0][0] != "A") || args[0][0] != "P"  )
-                    throw new InvalidOperationException("Provide a valid member address or PP ID.");
-                    
-                if ( (args[0][0] == "A") || (args[1].Length != 2) || (args[1].Length != 0) )
-                    throw new InvalidOperationException("Provide valid arguments to update an address.");
-                
-                if ( (args[0][0] == "P") || (args[1].Length > 2) )
-                    throw new InvalidOperationException("Provide valid arguments to update a PP subject.");
-                
-                if ( (args[1][0] in profile) & !(Runtime.CheckWitness(args[0])) )
-                    throw new InvalidOperationException("Only the member can change its own personal data.");
-                
-                if ( (args[0][0] == "P") & (args[1].Length == 1) & !(args[1][0] is string) )
-                    throw new InvalidOperationException("Provide a valid power utility name to be replaced by.");
-                
-                if ( (args[0][0] == "P") & (args[1].Length == 2) & !(Runtime.CheckWitness(args[1][0])) )
-                    throw new InvalidOperationException("Only the member can change its bid.");
-                
-                if ( (args[0][0] == "P") & (args[1].Length == 2) & isLock( args[0] ) )
-                    throw new InvalidOperationException("The campaign has ended.");
-                
-                return Change( (string)args[0],     // member address or PP id
-                               (object[])args[1] ); // array with desired values --PENDING-- test length because of the problem of array of arrays...
-            }
-            
-            // Administrative operations.
-            if (operation == "admission result")
-            {
-                if ( args.Length != 1 )
-                    throw new InvalidOperationException("Please provide the admission process ID.");
-                
-                if ( isLock( (string)args[0] ) )
-                    throw new InvalidOperationException("There isn't a result yet.");
-                
-                return AdmissionResult( (string)args[0] ); // Referendum ID
-            }
-            
-            if (operation == "change result")
-            {
-                if ( args.Length != 1 )
-                    throw new InvalidOperationException("Please provide the change process ID.");
-                
-                if ( isLock( (string)args[0] ) )
-                    throw new InvalidOperationException("There isn't a result yet.");
-                
-                ChangeResult( (string)args[0] ); // Referendum ID
-            }
-            
-            if (operation == "power up result")
-            {
-                if ( args.Length == 0 )
-                    throw new InvalidOperationException("Please provide at least the new PP process ID.");
-                    
-                if ( args.Length > 2 )
-                    throw new InvalidOperationException("Please provide at most the new PP process ID, and the PP ID itself if any.");
-                
-                PowerUpResult( (string)args[0],     // Referendum ID
-                               (string)args[1] );   // PP ID
-            }
-
-            if (operation == "list of power plants")
-            {
-                if ( args.Length != 0 )
-                    throw new InvalidOperationException("This function does not need attributes.");
-                
-                ListOfPPs();
-            }
-
-            if (operation == "list of members")
-            {
-                if ( args.Length != 0 )
-                    throw new InvalidOperationException("This function does not need attributes.");
-                
-                ListOfMembers();
-            }
-        }
-
-        throw Warning();
-        // return false;
+        return Summary( (string)args[0],     // Address/ID
+                        (string)args[1] );   // option
     }
 
+    // Restricted operations.
+    if ( GetMemb(caller, "FullName").Length != null )
+    {
+        // Group operations.
+        if (operation == "vote")
+        {
+            if ( args.Length != 3 )
+                throw new InvalidOperationException("Please provide the 3 arguments: the referendum id, your account address, and your vote.");
+
+            if ( !Runtime.CheckWitness((byte[])args[1]) )
+                throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
+
+            if ( isLock( (string)args[0]) )
+                throw new InvalidOperationException("The ballot has ended.");
+            
+            return Vote( (string)args[0],    // referendum id
+                         (byte[])args[1],    // member address
+                         (bool)args[2] );    // answer
+        }
+
+        if (operation == "bid")
+        {
+            if ( args.Length != 3 )
+                throw new InvalidOperationException("Please provide the 3 arguments: the PP id, your account address, and your bid.");
+
+            if ( !Runtime.CheckWitness((byte[])args[1]) )
+                throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
+
+            if ( (args[0][0] != "P") || (args[0].Length == null) )
+                throw new InvalidOperationException("Provide a valid PP ID.");
+
+            if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
+                throw new InvalidOperationException("This member cannot profit from this power utility." );
+
+            if ( args[2] <= minOffer )
+                throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
+            
+            if ( isLock( args[0] ) )
+                throw new InvalidOperationException("The campaign has ended.");
+
+            return Bid( (string)args[0],        // PP id
+                        (byte[])args[1],        // member address
+                        (BigInteger)args[2] );  // bid value
+        }
+
+        if (operation == "trade")
+        {
+            if ( args.Length != 4 )
+                throw new InvalidOperationException("Please provide the 4 arguments: your account address, the address of who you are transaction to, the quota value, and the amount of tokens.");
+
+            if ( !Runtime.CheckWitness((byte[])args[0]) )
+                throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
+
+            if ( (args[1][0] != "A") || (args[1].Length == null) )
+                throw new InvalidOperationException("Provide a valid destiny address.");
+                
+            if ( GetMemb(args[1], "FullName").Length != null )
+                throw new InvalidOperationException("The address you are transaction to must be a member too.");
+
+            if ( (GetMemb(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
+                throw new InvalidOperationException( "Both members must belong to the same power utility cover area." );
+
+            if ( (args[2] <= 0) & (args[3] <= 0) )
+                throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 4th argument empty. Otherwise, to donate tokens let ONLY the 3rd argument empty.");
+            
+            return Trade( (byte[])args[0],       // from address
+                          (byte[])args[1],       // to address
+                          (BigInteger)args[2],   // quota exchange
+                          (BigInteger)args[3] ); // token price
+        }
+
+        if (operation == "power up")
+        {
+            if (args.Length != 4)
+                throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
+
+            if ( (args[3] == 0) || (args[3] < minTimeToMarket) )
+                throw new InvalidOperationException("The time to market must be a factual period.");
+
+            return PowerUp( (int)args[0],       // capacity [MW]
+                            (int)args[1],       // cost [R$]
+                            (string)args[2],    // power utility name
+                            (uint)args[3] );    // time to market
+        }
+
+        if (operation == "change")
+        {
+            if (args.Length != 2)
+                throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
+            
+            if ( (args[0][0] != "A") || args[0][0] != "P"  )
+                throw new InvalidOperationException("Provide a valid member address or PP ID.");
+                
+            if ( (args[0][0] == "A") || (args[1].Length != 2) || (args[1].Length != 0) )
+                throw new InvalidOperationException("Provide valid arguments to update an address.");
+            
+            if ( (args[0][0] == "P") || (args[1].Length > 2) )
+                throw new InvalidOperationException("Provide valid arguments to update a PP subject.");
+            
+            if ( (args[1][0] in profile) & !(Runtime.CheckWitness(args[0])) )
+                throw new InvalidOperationException("Only the member can change its own personal data.");
+            
+            if ( (args[0][0] == "P") & (args[1].Length == 1) & !(args[1][0] is string) )
+                throw new InvalidOperationException("Provide a valid power utility name to be replaced by.");
+            
+            if ( (args[0][0] == "P") & (args[1].Length == 2) & !(Runtime.CheckWitness(args[1][0])) )
+                throw new InvalidOperationException("Only the member can change its bid.");
+            
+            if ( (args[0][0] == "P") & (args[1].Length == 2) & isLock( args[0] ) )
+                throw new InvalidOperationException("The campaign has ended.");
+            
+            return Change( (string)args[0],     // member address or PP id
+                           (object[])args[1] ); // array with desired values --PENDING-- test length because of the problem of array of arrays...
+        }
+        
+        // Administrative operations.
+        if (operation == "admission result")
+        {
+            if ( args.Length != 1 )
+                throw new InvalidOperationException("Please provide the admission process ID.");
+            
+            if ( isLock( (string)args[0] ) )
+                throw new InvalidOperationException("There isn't a result yet.");
+            
+            return AdmissionResult( (string)args[0] ); // Referendum ID
+        }
+        
+        if (operation == "change result")
+        {
+            if ( args.Length != 1 )
+                throw new InvalidOperationException("Please provide the change process ID.");
+            
+            if ( isLock( (string)args[0] ) )
+                throw new InvalidOperationException("There isn't a result yet.");
+            
+            ChangeResult( (string)args[0] ); // Referendum ID
+        }
+        
+        if (operation == "power up result")
+        {
+            if ( args.Length == 0 )
+                throw new InvalidOperationException("Please provide at least the new PP process ID.");
+                
+            if ( args.Length > 2 )
+                throw new InvalidOperationException("Please provide at most the new PP process ID, and the PP ID itself if any.");
+            
+            PowerUpResult( (string)args[0],     // Referendum ID
+                           (string)args[1] );   // PP ID
+        }
+
+        if (operation == "list of power plants")
+        {
+            if ( args.Length != 0 )
+                throw new InvalidOperationException("This function does not need attributes.");
+            
+            ListOfPPs();
+        }
+
+        if (operation == "list of members")
+        {
+            if ( args.Length != 0 )
+                throw new InvalidOperationException("This function does not need attributes.");
+            
+            ListOfMembers();
+        }
+    }
+
+    throw Warning();
     return false;
 }
 
