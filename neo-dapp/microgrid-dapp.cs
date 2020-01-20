@@ -157,7 +157,8 @@ namespace Neo.SmartContract
                     
                     // Defines the 'invoker/caller' as the first member.
                     Membership( (byte[])args[0], "Welcome on board!" );
-                    return Member( (byte[])args[0], (string)args[1], (string)args[2], 0, 0 );
+                    Member( (byte[])args[0], (string)args[1], (string)args[2], 0, 0 );
+                    return true;
                 }
 
                 return Admission( (byte[])args[0],   // invoker/caller address
