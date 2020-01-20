@@ -123,7 +123,7 @@ namespace Neo.SmartContract
         private static void OnlyOnce() => Storage.Put("firstCall", 1);
 
         // Caller identification.
-        public static byte[] Caller() => 0; // --PENDING!-- isso está errado e 'ExecutionEngine.CallingScriptHash' não funciona direito
+        public static byte[] Caller() => "0".ToScriptHash(); // --PENDING!-- isso está errado e 'ExecutionEngine.CallingScriptHash' não funciona direito
 
         // Trick to support the conversion from 'int' to 'string'.
         private static string[] Digits() => new string[10] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
