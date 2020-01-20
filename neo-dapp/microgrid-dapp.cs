@@ -1,15 +1,3 @@
-// TO UNDERSTAND!
-// https://docs.neo.org/en-us/sc/deploy-invoke.html
-// RELER!!!
-// https://docs.neo.org/en-us/sc/write/basics.html
-
-// 00x0 vem daqui?
-// https://docs.neo.org/en-us/sc/Parameter.html
-// ou daqui?
-// https://docs.neo.org/en-us/sc/reference/fw/dotnet/neo/TransactionAttribute/Usage.html
-// E o q q isso tem a ver?
-// https://docs.neo.org/en-us/sc/reference/fw/dotnet/neo/TriggerType.html
-
 using Neo.SmartContract.Framework;
 using Neo.SmartContract.Framework.Services.Neo;
 using Neo.SmartContract.Framework.Services.System;
@@ -17,411 +5,1605 @@ using System;
 using System.ComponentModel;
 using System.Numerics;
 
-namespace Neo.SmartContract                                 // N1
+//---------------------------------------------------------------------------------------------
+// EVENTS
+
+[DisplayName("transaction")]
+public static event Action<byte[], byte[], BigInteger, BigInteger> Transfer;
+[DisplayName("membership")]
+public static event Action<byte[], string> Membership;
+[DisplayName("process")]
+public static event Action<byte[], string> Process;
+[DisplayName("ballot")]
+public static event Action<string, byte[], bool> Ballot;
+[DisplayName("offer")]
+public static event Action<byte[], byte[], BigInteger> Offer;
+[DisplayName("change")]
+public static event Action<string, string> Update;
+
+
+//---------------------------------------------------------------------------------------------
+// GLOBAL VARIABLES
+
+// Power limits of the distributed generation category defined by Brazilian law (from 0MW to 5MW).
+public static int[] PowGenLimits() => new int[] {0, 5000000};
+
+// The total number of referendum processes.
+public static BigInteger NumOfRef() => Storage.Get("NumOfRef").AsBigInteger();
+
+// The total number of power plant units.
+public static BigInteger NumOfPP() => Storage.Get("NumOfPP").AsBigInteger();
+
+// The total number of members.
+public static BigInteger NumOfMemb() => Storage.Get("NumOfMemb").AsBigInteger();
+
+// The total power supply at the group, i.e., sum of PP's capacity.
+public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigInteger();
+
+// The number of days to answer a referendum process.
+private const uint timeFrameRef = 259200;   // 30 days
+
+// The time a given function is invoked.
+private static uint InvokeTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
+
+// Token settings.
+public static string Name() => "Sharing Electricity in Brazil";
+public static string Symbol() => "SEB";
+public static byte Decimals() => 3;                                                         // {0, 5000}
+public static byte[] Owner() => ExecutionEngine.ExecutingScriptHash;                        // aka GetReceiver() -- this smart contract == this smart contract ScriptHash
+public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", "NEP-10" };
+
+// Member's dataset.
+private static string[] profile => new string[] {"FullName", "Utility"};
+private static string[] register => new string[] {"Quota", "Tokens"};
+private struct MemberData
 {
-    /**************
-     * Main Class *                                         // N1.C1
-     *************/
-    public class GGM : Framework.SmartContract
+    public static StorageMap ID => Storage.CurrentContext.CreateMap(nameof(ID));
+    public static StorageMap FullName => Storage.CurrentContext.CreateMap(nameof(FullName));
+    public static StorageMap Utility => Storage.CurrentContext.CreateMap(nameof(Utility));
+    public static StorageMap Quota => Storage.CurrentContext.CreateMap(nameof(Quota));
+    public static StorageMap Tokens => Storage.CurrentContext.CreateMap(nameof(Tokens));
+}
+
+// Referendum's dataset.
+private struct RefData
+{
+    public static StorageMap ID => Storage.CurrentContext.CreateMap(nameof(ID));
+    public static StorageMap Proposal => Storage.CurrentContext.CreateMap(nameof(Proposal));
+    public static StorageMap Notes => Storage.CurrentContext.CreateMap(nameof(Notes));
+    public static StorageMap Cost => Storage.CurrentContext.CreateMap(nameof(Cost));
+    public static StorageMap MoneyRaised => Storage.CurrentContext.CreateMap(nameof(MoneyRaised));
+    public static StorageMap NumOfVotes => Storage.CurrentContext.CreateMap(nameof(NumOfVotes));
+    public static StorageMap CountTrue => Storage.CurrentContext.CreateMap(nameof(CountTrue));
+    public static StorageMap Outcome => Storage.CurrentContext.CreateMap(nameof(Outcome));
+    public static StorageMap HasResult => Storage.CurrentContext.CreateMap(nameof(HasResult));
+    public static StorageMap StartTime => Storage.CurrentContext.CreateMap(nameof(StartTime));
+    public static StorageMap EndTime => Storage.CurrentContext.CreateMap(nameof(EndTime));
+}
+
+// Power Plant's dataset.
+private struct PPData
+{
+    public static StorageMap ID => Storage.CurrentContext.CreateMap(nameof(ID));
+    public static StorageMap Capacity => Storage.CurrentContext.CreateMap(nameof(Capacity));
+    public static StorageMap Cost => Storage.CurrentContext.CreateMap(nameof(Cost));
+    public static StorageMap Utility => Storage.CurrentContext.CreateMap(nameof(Utility));
+    public static StorageMap TimeToMarket => Storage.CurrentContext.CreateMap(nameof(TimeToMarket));
+    public static StorageMap NumOfFundMemb => Storage.CurrentContext.CreateMap(nameof(NumOfFundMemb));
+    public static StorageMap HasStarted => Storage.CurrentContext.CreateMap(nameof(HasStarted));
+}
+
+// ICO's dataset (for crowdfunding).
+private struct ICOData
+{
+    public static StorageMap StartTime => Storage.CurrentContext.CreateMap(nameof(StartTime));
+    public static StorageMap EndTime => Storage.CurrentContext.CreateMap(nameof(EndTime));
+    public static StorageMap TotalAmount => Storage.CurrentContext.CreateMap(nameof(TotalAmount));
+    public static StorageMap Contributions => Storage.CurrentContext.CreateMap(nameof(Contributions));
+    public static StorageMap Success => Storage.CurrentContext.CreateMap(nameof(Success));
+    public static StorageMap HasResult => Storage.CurrentContext.CreateMap(nameof(HasResult));
+
+    public static StorageMap Bid => Storage.CurrentContext.CreateMap(nameof(Bid));
+}
+
+// New Power Plant crowdfunding settings.
+private const uint factor = 1000;               // 1kW == 1SEB
+private const byte minOffer = 100;              // Brazilian Reais (R$)
+private const uint timeFrameCrowd = 518400;     // 60 days
+private const uint minTimeToMarket = 259200;    // 30 days
+
+// The restrictive message to show up.
+private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
+
+// To lock the registering process without voting.
+private static void OnlyOnce() => Storage.Put("firstCall", 1);
+
+// Caller identification.
+public static byte[] Caller() => 0; // --PENDING!-- isso está errado e 'ExecutionEngine.CallingScriptHash' não funciona direito
+
+// Trick to support the conversion from 'int' to 'string'.
+private static string[] Digits() => new string[10] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+
+// Trick to get the type of a 'string' (and of a 'integer').
+private static char[] Alpha() => new char[] {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+
+//---------------------------------------------------------------------------------------------
+// THE MAIN INTERFACE
+
+public static object Main ( string operation, params object[] args )
+{
+    // if ( Runtime.Trigger == TriggerType.Application )
     {
-        /****************
-         * Basic Events *
-         ****************/
-        // Qual a diferença mesmo para o Runtime.Notify()? Aparentemente o custo e como a notificação aparece... Ainda não sei qual é melhor para se seguir em uma API.
-        [DisplayName("transaction")]
-        public static event Action<byte[], byte[], BigInteger> Transfer; // --> OK!
-        [DisplayName("membership")]
-        public static event Action<string, string> Membership; // --> OK!
-        [DisplayName("process")]
-        public static event Action<byte[], string> Process; // --> OK!
-        [DisplayName("ballot")]
-        public static event Action<byte[], byte[], bool> Ballot; // --> OK!
-        [DisplayName("change")]
-        public static event Action<string, byte[]> Update; // --> OK!
-        
-        /*******************************
-         * Global Variables Definition * // --> OK!
-         ******************************/
-        // public byte[] caller = será passado como parâmetro! pubKey (or address?) of the user whose interacts with the smart contract.
-        // fonte: https://docs.neo.org/en-us/sc/reference/api/System.html
-        
-        /*****************
-         * Main Function *
-         *****************/
-        public static Object Main ( string operation, params object[] args )
+        // General operation.
+        if (operation == "admission")
         {
-            if ( Runtime.Trigger == TriggerType.Verification ) // only once at deploy? Verification type is not deployed, so how it works? How can I access it?
-            {
-                // Check if someone has already initially the SC... But I can have several "equal" SC... Several deploys of the same SC has the same address? Yes!
-                if ( Member.Get() == null ) // condição para o deploy e não para o verification...
-                {
-                    if (args.Length != 2) return false;
-                    Member( caller, args[0], args[1], 100, 0 );
-                    return "New GGM blockchain initiated.";
-                }
-                return false;
-            }
-            else if ( Runtime.Trigger == TriggerType.Application ) // only works after deploy --> appcall : invoke method!
-            {
-                // general operations
-                if (operation == "summary") return Summary();
-                if (operation == "admission")
-                {
-                    if (args.Length != 2) return false;
-                    return Admission( (string)args[0],   // caller address
-                                      (string)args[1],   // fullName
-                                      (string)args[2] ); // utility
-                                      // esse 'string' é uma declaração ou um condicional?
-                }
-                
-                // private operations
-                if ( Storage.Get( caller ) != null ) // if caller is a Member
-                {
-                    if (operation == "change") return Change( (string)args[0], (params object[])args? );
-                    if (operation == "power")
-                    {
-                        if (args.Length != 3) return false;
-                        return Plant( (string)args[0],       // capacity
-                                      (BigInteger)args[1],   // cost
-                                      (string)args[2]);      // description
-                    }
-                    if (operation == "trade")
-                    {
-                        if (args.Length != 3) return false;
-                        return Trade( (string)args[0],       // Trade Agreement Statement
-                                      (byte[])caller,        // from
-                                      (byte[])args[1],       // to
-                                      (BigInteger)args[2]);  // exchanged
-                    }
-                    if (operation == "vote")
-                    {
-                        if (args.Length != 2) return false;
-                        return Vote( (byte[])args[0],   // referendum_id
-                                     (bool)args[1] );   // answer
-                    }
-                }
-                return false;
-            }
-            return false;
-        }
-        
-        /********************
-        /* Public Functions *
-        /*******************/
-        public void Summary() // --> OK!
-        {
-            // PowGenLimits : [ Int, Int ] // limits of the group power generation
-            // NumPP : Int // total number of power plant units
-            // NumM : Int // total number of members
-            // QuanT : Float // the amount of tokens
-            // shares : Map // the distribution of tokens [pubKey, quota]
+            if ( args.Length != 3 )
+                throw new InvalidOperationException("Please provide the 3 arguments: your account address, full name, and power utility name.");
+
+            if ( !Runtime.CheckWitness((byte[])args[0]) )
+                throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
+
+            if ( GetMemb((byte[])args[0], "FullName").Length != 0 )
+                throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
             
-            // Posso usar isso?
-            // https://docs.microsoft.com/pt-br/dotnet/csharp/programming-guide/inside-a-program/coding-conventions#linq-queries
-        }
-        
-        public void Admission( string address, string fullName, string utility ) // --> OK!
-        {
-            if Referendum( fullName, address.ToBigInteger(), utility )
+            if ( Storage.Get("firstCall").AsBigInteger() == 0 )
             {
-                // Add a new member after approval from group members.
-                Member( address, fullName, utility, 0, 0 );
-                Membership( address, "Welcome on board!" );
+                // No admission process is required.
+
+                // Locks this 'if' statement.
+                OnlyOnce();
+                
+                // Defines the 'invoker/caller' as the first member.
+                Membership( (byte[])args[0], "Welcome on board!" );
+                return Member( (byte[])args[0], (string)args[1], (string)args[2], 0, 0 );
             }
-            Membership( address, "Not approved yet." );
+
+            return Admission( (byte[])args[0],   // invoker/caller address
+                              (string)args[1],   // fullName
+                              (string)args[2] ); // utility
         }
         
-        /*********************
-        /* Private Functions *
-        /********************/
-        private void Change( string id, params object[] opts ) // --> OK!
+        // Partially restricted operation.
+        if (operation == "summary")
         {
-            // ALTERAR TUDO AQUI!
-            if ( id.Length == 20 ) // check pubKey length
+            if ( args.Length != 1 )
+                throw new InvalidOperationException("Provide at least a member address or a PP ID.");
+
+            if ( (GetMemb(caller, "FullName").Length == null) | (args[0][0] == "A") ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+                throw Warning();
+
+            return Summary( (string)args[0],     // Address/ID
+                            (string)args[1] );   // option
+        }
+
+        // Restricted operations.
+        if ( GetMemb(caller, "FullName").Length != null )
+        {
+            // Group operations.
+            if (operation == "vote")
             {
-                // Only the member can change its own personal data.
-                // UPDATE registration data (Name or utility)
-                if ( opts[1] is string ) & ( Runtime.CheckWitness(id) )
-                {
-                    Member.Update( id, opts[1], opts[0]);
-                    Update( "Personal data.", id );
-                }
+                if ( args.Length != 3 )
+                    throw new InvalidOperationException("Please provide the 3 arguments: the referendum id, your account address, and your vote.");
+
+                if ( !Runtime.CheckWitness((byte[])args[1]) )
+                    throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
+
+                if ( isLock( (string)args[0]) )
+                    throw new InvalidOperationException("The ballot has ended.");
                 
-                // Any member can request the modification of "specs" data of other member
-                // UPDATE power data (tokens or shares)
-                if ( opts[1] is BigInteger )
-                {
-                    Switch( id, opts[1], (new string[]){opts[0]} );
-                }
+                return Vote( (string)args[0],    // referendum id
+                             (byte[])args[1],    // member address
+                             (bool)args[2] );    // answer
+            }
+
+            if (operation == "bid")
+            {
+                if ( args.Length != 3 )
+                    throw new InvalidOperationException("Please provide the 3 arguments: the PP id, your account address, and your bid.");
+
+                if ( !Runtime.CheckWitness((byte[])args[1]) )
+                    throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
+
+                if ( (args[0][0] != "P") || (args[0].Length == null) )
+                    throw new InvalidOperationException("Provide a valid PP ID.");
+
+                if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
+                    throw new InvalidOperationException("This member cannot profit from this power utility." );
+
+                if ( args[2] <= minOffer )
+                    throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                 
-                // DELETE A MEMBER
-                if ( opts.Length == 1 ) // condição ruim...
-                {
-                    // Erase values from the 'id' and distribute the amount for the remaining members
-                    Switch( id, -1*opts[0], (new string[]){"shares", "tokens"} );
+                if ( isLock( args[0] ) )
+                    throw new InvalidOperationException("The campaign has ended.");
+
+                return Bid( (string)args[0],        // PP id
+                            (byte[])args[1],        // member address
+                            (BigInteger)args[2] );  // bid value
+            }
+
+            if (operation == "trade")
+            {
+                if ( args.Length != 4 )
+                    throw new InvalidOperationException("Please provide the 4 arguments: your account address, the address of who you are transaction to, the quota value, and the amount of tokens.");
+
+                if ( !Runtime.CheckWitness((byte[])args[0]) )
+                    throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
+
+                if ( (args[1][0] != "A") || (args[1].Length == null) )
+                    throw new InvalidOperationException("Provide a valid destiny address.");
                     
-                    // 2) Definitely delete
-                    Member.Delete( id );
-                    Membership( id, "Goodbye." );
-                }
+                if ( GetMemb(args[1], "FullName").Length != null )
+                    throw new InvalidOperationException("The address you are transaction to must be a member too.");
+
+                if ( (GetMemb(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
+                    throw new InvalidOperationException( "Both members must belong to the same power utility cover area." );
+
+                if ( (args[2] <= 0) & (args[3] <= 0) )
+                    throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 4th argument empty. Otherwise, to donate tokens let ONLY the 3rd argument empty.");
+                
+                return Trade( (byte[])args[0],       // from address
+                              (byte[])args[1],       // to address
+                              (BigInteger)args[2],   // quota exchange
+                              (BigInteger)args[3] ); // token price
             }
-            
-            if ( id.Length == 33 ) // check id length
+
+            if (operation == "power up")
             {
-                // Update power plant data
-                
-                // DELETE A POWER PLANT
-                
+                if (args.Length != 4)
+                    throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
+
+                if ( (args[3] == 0) || (args[3] < minTimeToMarket) )
+                    throw new InvalidOperationException("The time to market must be a factual period.");
+
+                return PowerUp( (int)args[0],       // capacity [MW]
+                                (int)args[1],       // cost [R$]
+                                (string)args[2],    // power utility name
+                                (uint)args[3] );    // time to market
             }
-        }
-        
-        private void Plant( string capacity, BigInteger cost, string description ) // --> OK!
-        {
-            var answer = Referendum( capacity, cost, description );
-            if answer:
-                // Register a new power plant after approval from group members.
-                NPP( answer.ID() ); // acho q vai dar errado!!!
-                Process( answer.ID(), "New power plant on the way." );
-                
-            Process( answer.ID(), "Let's wait a bit more." );
-        }
-        
-        private bool Trade( string statement, byte[] from, byte[] to, BigInteger exchange ) // transactive energy
-        {
-            var walletFrom = Member.BalanceOf( from );
-            var walletTo = Member.BalanceOf( to );
-            
-            if ( walletFrom < exchange ) return false;
-            
-            Member.Update( from, walletFrom - exchange );
-            Member.Update( to, walletTo + exchange );
-            Runtime.Notify( statement ); // Do I really need this?
-            Transfer( from, to, exchange );
-            return true;
-        }
-        
-        private bool Vote( byte[] id, bool answer ) // --> OK!
-        {
-            Ballot( id, caller, answer ); // a ordem de publicação pode facilitar a busca na blockchain? Na blockchain ou no RPC?
-            return true;
-        }
-        
-        private void Switch( byte[] id, BigInteger value, string[] choices )
-        {
-            // Get the address of every member.
-            BigInteger TotMemb = Member.Get();
-            
-            // Update values for 'shares', 'tokens', or both.
-            for opt in choices
+
+            if (operation == "change")
             {
-                // Set basic operations by each option type.
-                if ( opt == "shares" )
-                {
-                    BigInteger portion = Member.SharesOf( id );
-                    if (value < 0) string[] msgs = ["No more group shares.", "shares saved."];
-                    string[] msgs = ["shares distributed.", "shares received."];
-                }
-                else if ( opt == "tokens" )
-                {
-                    BigInteger portion = Member.BalanceOf( id );
-                    if (value < 0) string[] msgs = ["No more group tokens.", "tokens saved."];
-                    string[] msgs = ["tokens distributed.", "tokens distribution."];
-                }
-                else continue // in case a wrong 'opt' may appear
+                if (args.Length != 2)
+                    throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
                 
-                BigInteger give_out = portion/( TotMemb.Length - 1 );
-                
-                if ( Referendum( opt, portion, "All remaining members will receive " + give_out.ToString() ) )
-                { // after approval
-                    BigInteger diff = portion + value;
-                    Member.Update( id, diff, opt );
-                    Update( msgs[0], id );
+                if ( (args[0][0] != "A") || args[0][0] != "P"  )
+                    throw new InvalidOperationException("Provide a valid member address or PP ID.");
                     
-                    for memb in TotMemb
+                if ( (args[0][0] == "A") || (args[1].Length != 2) || (args[1].Length != 0) )
+                    throw new InvalidOperationException("Provide valid arguments to update an address.");
+                
+                if ( (args[0][0] == "P") || (args[1].Length > 2) )
+                    throw new InvalidOperationException("Provide valid arguments to update a PP subject.");
+                
+                if ( (args[1][0] in profile) & !(Runtime.CheckWitness(args[0])) )
+                    throw new InvalidOperationException("Only the member can change its own personal data.");
+                
+                if ( (args[0][0] == "P") & (args[1].Length == 1) & !(args[1][0] is string) )
+                    throw new InvalidOperationException("Provide a valid power utility name to be replaced by.");
+                
+                if ( (args[0][0] == "P") & (args[1].Length == 2) & !(Runtime.CheckWitness(args[1][0])) )
+                    throw new InvalidOperationException("Only the member can change its bid.");
+                
+                if ( (args[0][0] == "P") & (args[1].Length == 2) & isLock( args[0] ) )
+                    throw new InvalidOperationException("The campaign has ended.");
+                
+                return Change( (string)args[0],     // member address or PP id
+                               (object[])args[1] ); // array with desired values --PENDING-- test length because of the problem of array of arrays...
+            }
+            
+            // Administrative operations.
+            if (operation == "admission result")
+            {
+                if ( args.Length != 1 )
+                    throw new InvalidOperationException("Please provide the admission process ID.");
+                
+                if ( isLock( (string)args[0] ) )
+                    throw new InvalidOperationException("There isn't a result yet.");
+                
+                return AdmissionResult( (string)args[0] ); // Referendum ID
+            }
+            
+            if (operation == "change result")
+            {
+                if ( args.Length != 1 )
+                    throw new InvalidOperationException("Please provide the change process ID.");
+                
+                if ( isLock( (string)args[0] ) )
+                    throw new InvalidOperationException("There isn't a result yet.");
+                
+                ChangeResult( (string)args[0] ); // Referendum ID
+            }
+            
+            if (operation == "power up result")
+            {
+                if ( args.Length == 0 )
+                    throw new InvalidOperationException("Please provide at least the new PP process ID.");
+                    
+                if ( args.Length > 2 )
+                    throw new InvalidOperationException("Please provide at most the new PP process ID, and the PP ID itself if any.");
+                
+                PowerUpResult( (string)args[0],     // Referendum ID
+                               (string)args[1] );   // PP ID
+            }
+
+            if (operation == "list of power plants")
+            {
+                if ( args.Length != 0 )
+                    throw new InvalidOperationException("This function does not need attributes.");
+                
+                ListOfPPs();
+            }
+
+            if (operation == "list of members")
+            {
+                if ( args.Length != 0 )
+                    throw new InvalidOperationException("This function does not need attributes.");
+                
+                ListOfMembers();
+            }
+        }
+
+        throw Warning();
+        // return false;
+    }
+
+    return false;
+}
+
+
+//---------------------------------------------------------------------------------------------
+// GROUP FUNCTIONS - The restrictions are made on the 'Main'.
+
+// To request to join the group.
+public static string Admission( byte[] address, string fullName, string utility, params string[] list )
+{
+    string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
+    Membership( address, "Request for admission." );
+    return id;
+}
+
+// To get information about something.
+public static object Summary( string key, string opt = "" )     //--PENDING-- review dataset of each 'key' after the modifications made on the storage configuration.
+{
+    // If 'key' is an 'address' ==  member.
+    if (key[0] == "M")
+    {
+        byte[] address = Member.ID.Get(key);
+
+        if ((opt == "") || (opt == "detailed"))
+        {
+            string[] brief = new string[] { GetMemb(address,"FullName"), GetMemb(address,"Utility"), GetMemb(address,"Quota"), GetMemb(address,"Tokens") };
+
+            if (opt == "detailed")
+            {
+                GetContributeValue( key, list ); // list of PPs --PENDING--
+            }
+            return brief;
+        }
+        return GetMemb(address,opt);
+    }
+
+    // If 'key' is an 'id' with prefix 'P' == power plant.
+    else if (key[0] == "P")
+    {
+        // The PP's crowdfunding had succeed and the PP is operating.
+        if ( GetPP(key,"TotMembers").Length != 0 )
+        {
+            if ( (opt == "") || (opt == "detailed") )
+            {
+                string[] brief = new string[] { GetPP(key,"Capacity"), GetPP(key,"Cost"), GetPP(key,"Utility"), GetPP(key,"TotMembers") };
+    
+                if (opt == "detailed")
+                {
+                    GetContributeValue( key, list ); // list of members                    
+                }
+                return brief;
+            }
+            return GetPP(key,opt);
+        }
+        
+        // The PP's crowdfunding may be succeed or not, and the PP is definitely not operating.
+        else
+        {
+            if ( (opt == "") || (opt == "detailed") )
+            {
+                string[] brief = new string[] { GetCrowd(key,"Start Time"), GetCrowd(key,"End Time"), GetCrowd(key,"Total Amount"), GetCrowd(key,"Contributions"), GetCrowd(key,"Success") };
+
+                if (opt == "detailed")
+                {
+                    foreach (int num in NumOfMemb())
                     {
-                        if ( opt == "shares" )
+                        string memberAddress = Storage.Get( String.Concat( "M", Int2Str(num) )).AsString();
+                        BigInteger bid = GetBid(key, memberAddress).AsBigInteger();
+                        
+                        if ( bid != 0 )
                         {
-                            Member.Update( memb, give_out, opt );
-                            Update( msgs[1], memb );
-                        } else { // "tokens"
-                            Trade( msgs[1], id, memb.ToScriptHash(), give_out );
-                            // It already has an event notification.
+                            Runtime.Notify( [memberAddress, bid] );
                         }
                     }
                 }
+                return brief;
             }
+            return GetCrowd(key,opt); // sempre vai retornar byte[], a conversão final tem q ser feita de acordo com a opção escolhida para se ter o valor correto de número, texto ou boleano.
         }
     }
 
-    /*******************
-     * Private Classes *                                    // N1.Cx
-     ******************/
-    class Referendum // --> OK!
+    // If 'key' is an 'id' with prefix 'R' == referendum process.
+    else if (key[0] == "R")
     {
-        // Constructor
-        public bool Referendum ( string proposal, BigInteger cost, string notes )
+        if (opt == "")
         {
-            byte[] id = ID( proposal, cost, notes );
-            
-            StorageMap referendum = Storage.CurrentContext.CreateMap( id );
-            Process(id, "It has started.")
-            
-            return Consensus( ...7dias..., id );
+            return new string[] { GetRef(key,"Proposal"), GetRef(key,"Notes"), GetRef(key,"Cost"), GetRef(key,"Outcome") };
+        }
+        return GetRef(key,opt);
+    }
+
+    // Wrap-up the group information.
+    else
+    {
+        return new string[] { PowGenLimits()[0], PowGenLimits()[1], NumOfPP(), NumOfMemb(), Name(), Symbol(), TotalSupply() };
+    }
+}
+
+// To vote in a given ID process.
+public static bool Vote( string id, byte[] member, bool answer )
+{
+    // Increases the number of votes.
+    BigInteger temp = GetRef(id,"Num of Votes").AsBigInteger();
+    UpRef(id, "Num of Votes", temp++);
+
+    if (answer)
+    {
+        // Increases the number of "trues".
+        BigInteger temp = GetRef(id,"Count True").AsBigInteger();
+        UpRef(id, "Count True", temp++);
+    }
+
+    // Publishes the vote.
+    Ballot(id, member, answer);
+
+    return answer;
+}
+
+// To make a bid in a new PP crowdfunding process.
+public static bool Bid( byte[] id, byte[] member, BigInteger bid )
+{
+    BigInteger target = GetPP(id, "cost").AsBigInteger();
+    BigInteger funds = GetCrowd(id, "totalamount").AsBigInteger();
+    
+    if ( bid > (target - funds) )
+        throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str(target - funds) ), ",00). Bid again!" ));
+
+    // WARNING!
+    // All these steps are part of a crowdfunding process, not of a PP registration.
+    
+    // Increases the value gathered so far.
+    UpCrowd(id, "totalamount", funds + bid);
+    
+    // Increases the number of contributions.
+    BigInteger temp = GetCrowd(id, "contributions").AsBigInteger();
+    UpCrowd(id, "contributions", temp++);
+    
+    // Tracks bid by member for each ICO process.
+    UpBid(id, member, bid);
+    Offer(id, member, bid);
+    
+    return true;
+    
+    // If the hole fund process succeed, the money bid must be converted to percentage (bid/cost),
+    // so it will be possible to define the quota and the SEB a member has to gain.
+    // It is made on PowerUpResult(...).
+}
+
+// To update something on the ledger.
+public object Change( string key, params object[] opts )
+{
+    // If 'key' is an 'address' ==  member.
+    if (key[0] == "M")
+    {
+        byte[] address = Member.ID.Get(key);
+
+        // Only the member can change its own personal data.
+        // To UPDATE, the params must be ['profile option', 'value'].
+        if ( opts[1] is string )
+        {
+            UpMemb(address, opts[0], opts[1]);
+            Update("Profile data.", address);
+            return true;
         }
         
-        // Function
-        private bool Consensus ( byte[] id, DateTime timeframe ) // alterar no UML
+        // Any member can request the change of registration data of other member.
+        // To UPDATE, the params must be ['register option', 'value'].
+        if ( opts[1] is BigInteger )
         {
-            var ListOfMembers = Storage.GetAll()...
-            uint temp = ListOfMembers.Length; // because the number of members can change during the wait time
-            
-            // uint today = Header.Timestamp ?
-            while (DateTime.Today < timeframe)
+            string id = Ref( "Change register_", String.Concat( key, opts[0] ) ); // --PENDING--
+            Process( id, "Request the change of registration data of a member." );
+            return id;
+        }
+        
+        // Any member can request to delete another member.
+        // The 'opts.Length' is empty.
+        string id = Ref("Delete member_", address);
+        Process(id, "Request to dismiss a member.");
+        return id;
+    }
+    
+    // Otherwise, the 'key' is an 'id' with prefix 'P' == power plant.
+
+    // Only the member can change its own bid.
+    // To UPDATE, the params must be ['address', 'new bid value'].
+    if ( opts.Length == 2 )
+    {
+        UpBid(key, opts[0], opts[1]);
+        Update("Bid.", key);
+        return true;
+    }
+    
+    // Any member can request the change of the 'utility' a PP belongs to.
+    // To UPDATE, the params must be ['new utility name'].
+    if ( opts.Length == 1 )
+    {
+        string id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
+        Process( id, "Request the change of utility name of a PP." );
+        return id;
+    }
+
+    // Any member can request to DELETE a PP.
+    // The 'opts.Length' is empty.
+    string id = Ref("Delete PP_", key);
+    Process(id, "Request to delete a PP.");
+    return id;
+}
+
+// The whole process to integrate a new PP on the group power generation.
+public string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
+{
+    string notes = Rec( Rec( Int2Str(capacity), utility) , Int2Str(timeToMarket) );
+    string id = Ref( "New PP request_", notes, cost );
+    Process( id, "Request to add a new PP." );
+    return id;
+}
+
+// To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
+// The 'fromAddress' will exchange an amount of shares with 'toAddress' by a defined token price,
+// i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
+public bool Trade( byte[] fromAddress, byte[] toAddress, BigInteger exchange, BigInteger price )
+{
+    BigInteger[] toWallet = new BigInteger[];
+    BigInteger[] fromWallet = new BigInteger[];
+    
+    // register = {"Quota", "Tokens"}
+    foreach (string data in register)
+    {
+        fromWallet.append( GetMemb(fromAddress, data).AsBigInteger() );
+        toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
+    }
+    
+    if ( ( fromWallet[0] < exchange ) || ( toWallet[1] < price ) ) return false;
+    
+    UpMemb(fromAddress, register[0], fromWallet[0] - exchange);
+    UpMemb(toAddress, register[0], toWallet[0] + exchange);
+    
+    UpMemb(toAddress, register[1], toWallet[1] - price);
+    UpMemb(fromAddress, register[1], fromWallet[1] + price);
+    
+    Transfer(fromAddress, toAddress, exchange, price);
+    return true;
+}
+
+
+//---------------------------------------------------------------------------------------------
+// SYSTEM FUNCTIONS
+
+// A new PP will only distribute tokens and shares after a crowdfunding process succeed.
+// All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
+private static void Distribute( string toAddress, BigInteger quota, BigInteger tokens )
+{
+    BigInteger[] toWallet = new BigInteger[];
+
+    // register = {"Quota", "Tokens"}
+    foreach (string data in register)
+    {
+        toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
+    }
+    
+    UpMemb(toAddress, register[0], toWallet[0] + quota);
+    UpMemb(toAddress, register[1], toWallet[1] + tokens);
+    Transfer(null, toAddress, quota, tokens);
+}
+
+// To create a custom ID of a process based on its particular specifications.
+private static byte[] ID( params object[] args )
+{
+    string str = null;
+    
+    for (int k = 0; k < args.Length; k++)
+    {
+        int count = 0;
+        for (int n = 0; n < Alpha().Length; n++)
+        {
+            if ( Alpha()[n] == ((string)args[k])[0] ) // args[k] is a 'string'
             {
-                // timestamp --> https://docs.neo.org/developerguide/en/articles/blockchain/block.html
-                // https://docs.microsoft.com/pt-br/dotnet/api/system.datetime.today?view=netframework-4.8
-                
-                // WAITING TIME!
-                // ...do nothing
-                // Smart Contract Example - Lock (Lock Contract)
-                // https://docs.neo.org/en-us/sc/tutorial/Lock.html
-                
-                // Isso não seria igual a:
-                // if (DateTime.Today > timeframe) ... do ... as operações abaixo?
+                str = Rec( str, (string)args[k] );
+                break;
             }
-            
-            // gather votes on-chain! -- procurar por publicações do tipo 'event' com a referida 'id'
-            // Blockchain.GetTransaction( ? )
-            // Blockchain.Transaction.Type( ? )
-            // Um voto é do tipo 'PublishTransaction'?
-            // Tem algum identificador único para esse tipo de função e para essa transação?
-            // https://docs.neo.org/en-us/sc/reference/fw/dotnet/neo/Transaction/Type.html
-            
-            // Checks the number of votes.
-            if (temp == gathered_votes)
+            count++;
+        }
+        
+        if ( count == Alpha().Length ) // args[k] is a 'integer'
+        {
+            // Converts the related argument to string and concatenate.
+            str = Rec( str, Int2Str( (int)args[k] ) );
+        }
+    }
+
+    return Hash256(str);
+}
+
+// To properly store a boolean variable.
+private static string Bool2Str( bool val )
+{
+    if (val) return "1";
+    return "0";
+}
+
+// To properly read a boolean from storage.
+private static bool Str2Bool( byte[] val )
+{
+    if (val.AsString() == "1") return true;
+    return false;
+}
+
+// To affordably convert a integer to a string.
+private static string Int2Str(int num, string s = null)
+{
+    if (num == 0) return s;
+
+    int quotient = num / 10;
+    int remainder = num % 10;
+    
+    string trick = Digits()[ remainder ];
+        
+    return Int2Str(quotient, String.Concat(trick, s) );
+}
+
+// Polimorfism to deal with BigInteger instead of Integer --PENDING-- evaluate if both methods is required.
+private static string Int2Str(BigInteger num, string s = null)
+{
+    if (num == 0) return s;
+
+    BigInteger quotient = num / 10;
+    BigInteger remainder = num % 10;
+    
+    string trick = Digits()[ (int)remainder ];
+        
+    return Int2Str(quotient, String.Concat(trick, s) );
+}
+
+// To affordably concatenate string variables.
+private static string Rec(string start, string end)
+{
+    return String.Concat(start, end);
+}
+
+// To affordably split string variables. Text and number must be intercalated!
+private static object[] Split(string notes, int start, int slice, bool lookForNum)
+{
+    int step = 0;
+    
+    while (step < slice)
+    {
+        string temp = notes.Substring(start + step, 1);
+        
+        int num = 0;
+        while ( num < Digits().Length )
+        {
+            if ( temp == Digits()[num] )
             {
-                // todos votaram
-            } else {
-                // complementa com votos nulos e publica esse fato
+                break;
             }
-            
-            // Sums the votes.
-            int sum_votes = 0;
-            for v in gathered_votes
+            num++;
+        }
+        
+        if (lookForNum)
+        {
+            if (num == 10)
             {
-                if (v)
+                break;
+            }
+        }
+        else
+        {
+            if (num != 10)
+            {
+                break;
+            }
+        }
+        step++;
+    }
+    return new object[] {notes.Substring(start, step), start + step};
+}
+
+// To filter the relationship of members and PPs.
+// Displays how much a member has contributed to a PP crowdfunding.
+private static void GetContributeValue( string lookForID, string[] listOfIDs )
+{
+    // Gets values by each ID registered on the contract storage space.
+    if ( lookForID[0] == "P" )
+    {
+        // Gets members' bid by a PP funding process.
+        foreach (string memberAddress in listOfIDs)
+        {
+            BigInteger bid = GetBid(lookForID, memberAddress).AsBigInteger();
+            
+            if ( bid != 0 )
+            {
+                Runtime.Notify( [memberAddress, bid] );
+            }
+        }
+    }
+    else // lookForID[0] == "M"
+    {
+        // Gets PPs by a member investments.
+        foreach (string PPid in listOfIDs)
+        {
+            BigInteger bid = GetBid(PPid, lookForID).AsBigInteger();
+            
+            if ( bid != 0 )
+            {
+                Runtime.Notify( [memberAddress, bid] );
+            }
+        }
+    }
+}
+
+// To calculate the referendum result only once.
+private static void CalcResult( string id )
+{
+    if ( GetRef(id, "Has Result").Length == 0 )
+    {
+        UpRef(id, "Has Result", 1);
+    
+        BigInteger totalOfVotes = GetRef(id, "Num of Votes").AsBigInteger();
+        BigInteger totalOfTrues = GetRef(id, "Count True").AsBigInteger();
+            
+        if ( totalOfTrues > (totalOfVotes / 2) )
+        {
+            // Referendum has succeeded.
+            UpRef(id, true);
+        }
+        
+        // Otherwise, the "Outcome" remains as 'false'.
+    }
+}
+
+// Actualy, it restricts a given operation to happen based on a timestamp.
+// Before a given time frame, no one is allowed to continue the process.
+// The monitoring of the time happens off-chain.
+// Once the time stated is reached, any member can then resume the process.
+private static bool isLock( string id )
+{
+    if (id[0] == "R")
+    {
+        uint endTime = GetRef(id, "End Time"); // --PENDING-- provavelmente vai dar erro de conversão!
+    }
+    uint endTime = GetCrowd(id, "End Time"); // --PENDING-- provavelmente vai dar erro de conversão!
+    
+    if (InvokeTime() <= endTime) return true;
+    return false;
+}
+
+
+//---------------------------------------------------------------------------------------------
+// ADMINISTRATIVE FUNCTIONS
+
+// After a period of 'timeFrameRef' days a member should invoke this function to state the referendum process.
+// An off-chain operation should handle this.
+
+public static void AdmissionResult( string id )
+{
+    // Calculates the result
+    CalcResult(id);
+    
+    if ( Str2Bool( GetRef(id, "Outcome") ) )
+    {
+        // Add a new member after approval from group members.
+        Member( address, fullName, utility, 0, 0 );
+        Membership( address, "Welcome on board!" );
+    }
+
+    Membership( address, "Not approved yet." );
+}
+
+public static void ChangeResult( string id, params string[] listOfMembers)
+{
+    string proposal = GetRef(id, "Proposal").AsString();
+    
+    if (proposal == "Change register_")
+    {
+        CalcResult(id);
+        
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        {
+            Process(id, "Approved.");
+            UpMemb(key, opts[0], opts[1]); // missing dependency --PENDING--
+            Update("Registration data.", key);
+        }
+        
+        Process(id, "Denied.");
+    }
+                
+    if (proposal == "Delete member_")
+    {
+        CalcResult(id);
+        
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        {
+            Process(id, "Approved.");
+            BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
+            BigInteger give_out = portion/(NumOfMemb() - 1);
+            
+            foreach (string member in listOfMembers)
+            {
+                // In an infinitesimal period of time the group will be disbalanced
+                // until the related member be completely deleted.
+                // There is no side effect and it is better than iterate through each member.
+                
+                Distribute(member, give_out, 0);
+            }
+    
+            DelMemb(key);
+            Membership(key, "Goodbye.");
+        }
+    
+        Process(id, "Denied.");
+    }
+    
+    if (proposal == "Change utility_")
+    {
+        CalcResult(id);
+        
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        {
+            Process(id, "Approved.");
+            UpPP(key, opts[0]);  // missing dependency --PENDING--
+            Update("Belonging of.", key);
+        }
+
+        Process(id, "Denied.");
+    }
+        
+    if (proposal == "Delete PP_")
+    {
+        CalcResult(id);
+        
+        if ( Str2Bool( GetRef(id, "Outcome") ) )
+        {
+            Process(id, "Approved.");
+            DelPP(key);
+            Update("Deletion of.", key);
+        }
+
+        Process(id, "Denied.");
+    }
+}
+
+public static object PowerUpResult( string id, string PPid = null, params string[] listOfFunders )
+{
+    // STEP 1 - After a 'timeFrameRef' waiting period.
+    if (PPid == null)
+    {
+        if ( isLock(id) )
+            throw new InvalidOperationException("There isn't a result about the new PP request yet.");
+        
+        // Evaluates the referendum result only once.
+        if ( GetRef(id, "Has Result").Length == 0 )
+        {
+            CalcResult(id);
+            
+            if ( Str2Bool( GetRef(id, "Outcome") ) )
+            {
+                // Referendum has succeeded. It's time to add a new PP.
+
+                string notes = GetRef(id, "Notes");
+                
+                // separa os termos em Notes!           // --PENDING--
+                notes.Substring
+                
+// ------------------------------------------------------------------AQUI-------------------------------------
+                
+                capSlice = PowGenLimits()[1].Length; // max capacity
+                
+                while (capSlice != 0)
                 {
-                    sum_votes++;
+                    cap = notes.Substring(0, capSlice);
+                    if ( cap[-1] in Digits() )
+                    {
+                        int capacity = (int)cap;
+                        break
+                    }
+
+                    capSlice--;
                 }
+                
+                //            PP(capacity, cost, utility, time to market)
+                string PPid = PP(notes[0], GetRef(id, "Cost"), notes[1], notes[2]);
+                
+                // Starts to raise money for it.
+                CrowdFunding(PPid);
+                Process(PPid, "Shut up and give me money!");
+                return PPid;
             }
             
-            // Evaluates the votes.
-            string msg = "denied";
-            if (sum_votes > temp/2)
-            {
-                msg = "approved";
-            }
-            
-            // Saves and publishes the vote process.
-            Storage.Put( id, msg );
-            Process(id, msg);
+            // Otherwise...
+            Process(id, "This PP was not approved yet. Let's wait a bit more.");
+            return false;
         }
         
-        // Method
-        public byte[] ID( string A, BigInteger B, string C )
-        {
-            return (string.Format("{0} | {1} | {2}", A, B, C)).toScriptHash();
-        }
+        return "This process are completed.";
     }
     
-    private void Member( string address, string fullName, string utility, BigInteger quota, BigInteger tokens ) // --> OK!
+    // STEP 2 - After a 'timeFrameCrowd' waiting period.
+    if ( isLock(PPid) )
+        throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
+    
+    // Evaluates the crowdfunding result only once.
+    if ( GetCrowd(PPid, "Has Result").Length == 0 )
     {
-        StorageMap member = Storage.CurrentContext.CreateMap( address );
-        member.Put( "fullName", fullName );
-        member.Put( "utility", utility );
-        member.Put( "quota", quota );
-        member.Put( "tokens", tokens );
+        UpCrowd(PPid, "Has Result", 1);
+        
+        BigInteger target = GetPP(PPid, "Cost").AsBigInteger();
+        BigInteger funding = GetCrowd(PPid, "Total Amount").AsBigInteger();
+            
+        // Starts or not the building of the new PP.
+        if (funding == target)
+        {
+            // Crowdfunding has succeeded.
+            UpCrowd(PPid, true);
+            
+            // Updates the number of investors.
+            UpPP(PPid, "numOfFundMemb", listOfFunders.Length);
+            
+            Process(id, "New power plant on the way.");
+            return true;
+        }
+        
+        // Otherwise, the "Success" remains as 'false'.
+        foreach (string funder in litsOfFunders)
+        {
+            Refund(PPid, funder);
+        }
+        
+        Process(id, "Fundraising has failed.");
+        return false;
     }
     
-    class Member // Depends on 'Referendum' answer but not inherit its functions. // --> OK!
-    // com classe a nomenclatura fica confusa... Repensar esta funcionalidade!
+    // STEP 3 - After waiting for the time to market.
+    
+    // Calculates the date the new PP is planned to start to operate, that can always be updated until the deadline.
+    // operationDate = ICO_endTime + PP_timeToMarket
+    uint operationDate = GetCrowd(PPid, "End Time") + GetPP(PPid, "Time to Market");
+    
+    if ( InvokeTime() <= operationDate )
+        throw new InvalidOperationException("The new PP is not ready to operate yet.");
+    
+    // Evaluates the construction only once.
+    if ( GetPP(PPid, "Has Started").Length == 0 )
     {
+        // When the PP is ready to operate, it's time to distribute tokens and shares.
         
-        // Printing methods
-        public string Get( string who = "all" )
-        {
-            if (who == "all")
-            {
-                 ... Map.Keys() ou .Values() ? ;
-            }
+        
             
-            return Storage.Get(Storage.CurrentContext, who.Values()).AsString();
+        // Increases the total power supply of the group.
+        BigInteger capOfPP = GetPP(PPid, "Capacity");               // [MW]
+        BigInteger capOfGroup = TotalSupply() + capOfPP;            // [MW]
+        Storage.Put("TotalSupply", capOfGroup);
+    
+        // Identifies how much the new Power Plant takes part on the group total power supply.
+        BigInteger sharesOfPP = capOfPP/capOfGroup;                 // [pu]
+        
+        foreach (string funder in litsOfFunders)
+        {
+            // Gets the member contribution.
+            BigInteger grant = GetBid(PPid, funder);                // [R$]
+
+            // Identifies the member participaction rate.
+            BigInteger rate = grant/(GetRef(PPid, "Cost"));         // [pu]
             
-            // Runtime.Notify( member[pubKey] ); // colocar junto a chamada
-            // qual é mais barato? notify ou return?
+            // Defines how much of crypto-currency a member acquires from the new PP's capacity.
+            BigInteger tokens = (rate * capOfPP)/factor;            // [MW/1000 = kW == SEB]
+            
+            // Defines how much of energy a member is entitled over the total power supply.
+            BigInteger quota = rate * sharesOfPP * capOfGroup;      // [MW]
+    
+            Distribute(funder, quota, tokens);
         }
-        
-        public string BalanceOf( string who )
-        {
-            return Storage.Get(Storage.CurrentContext, who+"\x00"+"tokens").AsBigInteger();
-        }
-        
-        public string SharesOf( string who )
-        {
-            return Storage.Get(Storage.CurrentContext, who+"\x00"+"quota").AsBigInteger();
-        }
-        
-        // Updating methods
-        // TESTAR ISSO!
-        // fonte: https://docs.neo.org/en-us/sc/reference/fw/dotnet/neo/Storage.html
-        public void Update( string who, string with, string key)
-        {
-            // 'key' must be either 'fullName' or 'utility'
-            Storage.Put( Storage.CurrentContext, who+"\x00"+key, with );
-        }
-        
-        public void Update( string who, BigInteger with, string key = "tokens" )
-        {
-            // 'key' must be either 'quota' or 'tokens' (by default)
-            Storage.Put( Storage.CurrentContext, who+"\x00"+key, with );
-        }
-        
-        // Removing method
-        public void Delete( string who )
-        {
-            Storage.Delete( Storage.CurrentContext, who );
-        }
+    
+        Process(PPid, "A new power plant is now operating.");
+        return true;
     }
     
-    class NPP // Depends on 'Referendum' answer but not inherit its functions. // --> OK!
+    return "There is nothing more to be done.";
+}
+
+// To display the IDs of each PP to be later used on other functions.
+private static void ListOfPPs()
+{
+    for (int num = 1; num < NumOfPP()+1; num++)
     {
-        // Constructor
-        public NPP( byte[] id )
-        {
-            StorageMap power_plant = Storage.CurrentContext.CreateMap( id );
-        }
-        
-        public void Status() // Isso está completamente errado!
-        {
-            var answers = Answers();
-            var result = false;
-            var count = 0;
+        string PPid = Storage.Get( String.Concat( "P", Int2Str(num) )).AsString();
+        Runtime.Notify( PPid );
+    }
+}
+
+// To return the address of each member to be later used on other functions.
+private static byte[][] ListOfMembers()
+{
+    byte[][] addresses = new byte[ (int)NumOfMemb() ][];
+    
+    for (int num = 0; num < NumOfMemb(); num++)
+    {
+        var index = String.Concat( "M", Int2Str(num+1) );
+        var memberAddress = Member.ID.Get(index);
+        addresses[num] = memberAddress;
+    }
+    return addresses;
+}
+
+
+//---------------------------------------------------------------------------------------------
+// METHODS FOR MEMBERS
+// --> create
+private static void Member( byte[] address, string fullName, string utility, BigInteger quota, BigInteger tokens )
+{
+    MemberData.FullName.Put(address, fullName);
+    MemberData.Utility.Put(address, utility);
+    MemberData.Quota.Put(address, quota);
+    MemberData.Tokens.Put(address, tokens);
+
+    // Increases the total number of members.
+    BigInteger temp = NumOfMemb() + 1;
+    Storage.Put("NumOfMemb", temp);
+    
+    // Stores the address of each member.
+    MemberData.ID.Put( String.Concat( "M", Int2Str(temp) ), address );
+}
+
+// --> read
+private static object GetMemb( byte[] address, string opt )
+{
+    if (opt == "fullname") return MemberData.FullName.Get(address);
+    if (opt == "utility") return MemberData.Utility.Get(address);
+    if (opt == "quota") return MemberData.Quota.Get(address);
+    if (opt == "tokens") return MemberData.Tokens.Get(address);
             
-            for a in answers
+    return false; // Must never happen.
+}
+
+// --> update
+// Detailed restrictions to update 'profile' or 'register' data are set
+// on the function 'Change'. Here this feature is handled by polymorphism.
+private static Object UpMemb( byte[] address, string opt, string val )
+{
+    // Don't invoke Put if value is unchanged.
+    string orig = GetMemb(address, opt).AsString();
+    if (orig == val) return;
+     
+    // Use Delete rather than Put if the new value is empty.
+    if (val.Length == 0)
+    {
+        DelMemb(address, opt);
+    }
+    else
+    {
+        if (opt == "fullname") MemberData.FullName.Put(address, val);
+        if (opt == "utility") MemberData.Utility.Put(address, val);
+    }
+
+    return true;
+}
+
+private static Object UpMemb( byte[] address, string opt, BigInteger val )
+{
+    // Don't invoke Put if value is unchanged.
+    BigInteger orig = GetMemb(address, opt).AsBigInteger();
+    if (orig == val) return;
+     
+    // Use Delete rather than Put if the new value is zero.
+    if (val == 0)
+    {
+        DelMemb(address, opt);
+    }
+    else
+    {
+        if (opt == "quota") MemberData.Quota.Put(address, val);
+        if (opt == "tokens") MemberData.Tokens.Put(address, val);
+    }
+
+    return true;
+}
+
+// --> delete
+private static void DelMemb( byte[] address, string opt = "" )
+{
+    // To support an economic action for the update method.
+    if (opt == "fullname")
+    {
+        MemberData.FullName.Delete(address);
+    }
+    else if (opt == "utility")
+    {
+        MemberData.Utility.Delete(address);
+    }
+    else if (opt == "quota")
+    {
+        MemberData.Quota.Delete(address);
+    }
+    else if (opt == "tokens")
+    {
+        MemberData.Tokens.Delete(address);
+    }
+    else // If a member exits the group (opt == "").
+    {
+        MemberData.FullName.Delete(address);
+        MemberData.Utility.Delete(address);
+        MemberData.Quota.Delete(address);
+        MemberData.Tokens.Delete(address);
+        
+        // Looks for the member 'key' (that may vary during the life cycle of the group).
+        for (int num = 1; num < NumOfMemb()+1; num++)
+        {
+            var index = String.Concat( "M", Int2Str(num) );
+            if ( address == MemberData.ID.Get(index) )
             {
-                if a : count++;
+                // Wipes off the address of the member.
+                MemberData.ID.Delete(index);
+                
+                // Updates the following indexes.
+                while (num <= NumOfMemb())
+                {
+                    num++;
+                    var newIndexSameAddress = MemberData.ID.Get( String.Concat("M", Int2Str(num)) );
+                    MemberData.ID.Put( String.Concat("M", Int2Str(num-1)), newIndexSameAddress );
+                }
+                break;
             }
-            // answers.Sum() // Posso fazer isso?
-            
-            if ( count > answers.Length/2 ) : result = true;
-            
-            Runtime.Notify( result );
         }
+
+        // Decreases the total number of members.
+        BigInteger temp = NumOfMemb() - 1;
+        Storage.Put("NumOfMemb", temp);
+    }
+}
+
+//---------------------------------------------------------------------------------------------
+// METHODS FOR POWER PLANTS
+// --> create
+private static byte[] PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
+{
+    // Creates the unique identifier.
+    byte[] id = ID("P", capacity, cost, utility);
+
+    // Checks if the PP register already exists.
+    if ( GetPP(id, "capacity").AsString().Length != 0 )
+    {
+        Process(id, "This power plant already exists. Use the method UpPP to change its registering data.");
+    }
+    else
+    {
+        // Stores the values.
+        PPData.Capacity.Put(id, capacity);
+        PPData.Cost.Put(id, cost);
+        PPData.Utility.Put(id, utility);
+        PPData.TimeToMarket.Put(id, timeToMarket);
+        // PPData.NumOfFundMemb.Put(id, 0); // Expensive to create with null value. Just state it out!
+        // PPData.HasStarted.Put(id, 0); // Expensive to create with null value. Just state it out!
+
+        // Increases the total number of power plant units.
+        BigInteger temp = NumOfPP() + 1;
+        Storage.Put("NumOfPP", temp);
         
-        // Removing methods
-        public void Delete( byte[] id)
+        // Stores the ID of each PP.
+        PPData.ID.Put( String.Concat( "P", Int2Str(temp) ), id );
+
+        Process(id, "New PP created.")
+    }
+
+    return id;
+}
+
+// --> read
+private static object GetPP( byte[] id, string opt )
+{
+    if (opt == "capacity") return PPData.Capacity.Get(id);
+    if (opt == "cost") return PPData.Cost.Get(id);
+    if (opt == "utility") return PPData.Utility.Get(id);
+    if (opt == "timetomarket") return PPData.TimeToMarket.Get(id);
+    if (opt == "numoffundmemb") return PPData.NumOfFundMemb.Get(id);
+    if (opt == "hasstarted") return PPData.HasStarted.Get(id);
+            
+    return false; // Must never happen.
+}
+
+// --> update
+// The 'Utility', the 'HasStarted', and the 'Time To Market' are the only options that can be changed.
+// However, the 'Utility' can be changed anytime, the 'HasStarted' can be changed only once, while the 'Time to Market' is restricted by its deadline of start operation date.
+// To update the other options, delete the current PP and create a new one.
+private static void UpPP( byte[] id, string opt, object val )
+{
+    if (opt == "utility")
+    {
+        // Don't invoke Put if value is unchanged.
+        string orig = GetPP(id, "utility").AsString();
+        if (orig == (string)val) return;
+        
+        // Do nothing if the new value is empty.
+        if ((string)val.Length == 0) return;
+        
+        // else
+        PPData.Utility.Put(id, val);
+        // And must 'update' each member 'utility' field as well.
+        // 'Utility' should be a pointer and similar to 'Member' dataset.
+        // This was not implemented! --PENDING--
+    }
+    
+    if (opt == "hasstarted")
+    {
+        // Don't invoke Put if value is unchanged.
+        BigInteger orig = GetPP(id, "hasstarted").AsBigInteger();
+        if (orig == (BigInteger)val) return;
+        
+        // Do nothing if the new value is empty.
+        if ((BigInteger)val == null) return; // acho q isso não existe!! --PENDING--
+        
+        // else
+        PPData.HasStarted.Put(id, val);
+    }
+    
+    if (opt == "timetomarket")
+    {
+        if ( InvokeTime() > ( GetCrowd(PPid, "End Time") + GetPP(PPid, "timetomarket") ) ) // --PENDING--
+            throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
+        
+        // Don't invoke Put if value is unchanged.
+        BigInteger orig = GetPP(id, "timetomarket").BigInteger();
+        if (orig == (BigInteger)val) return;
+        
+        // Do nothing if the new value is empty.
+        if ((BigInteger)val == null) return; // acho q isso não existe!! --PENDING--
+        
+        // else
+        PPData.TimeToMarket.Put(id, val);
+    }
+}
+
+// --> delete
+private static void DelPP( byte[] id )
+{
+    PPData.Capacity.Delete(id);
+    PPData.Cost.Delete(id);
+    PPData.Utility.Delete(id);
+    PPData.TimeToMarket.Delete(id);
+    if ( GetPP(id, "hasstarted") != 0 ) PPData.HasStarted.Delete(id);
+    if ( GetPP(id, "numoffundmemb") != 0 ) PPData.NumOfFundMemb.Delete(id);
+
+    // Looks for the PP 'key' (that may vary during the life cycle of the group).
+    for (int num = 1; num < NumOfPP()+1; num++)
+    {
+        var index = String.Concat( "P", Int2Str(num) );
+        if ( targetId == PP.ID.Get(index) )
         {
-            Storage.Delete( id ); // ?? não vai dar merda?
+            // Wipes off the ID of the PP.
+            PP.ID.Delete(index);
+            
+            // Updates the following indexes.
+            while (num <= NumOfMemb())
+            {
+                num++;
+                var newIndexSameId = PP.ID.Get( String.Concat("P", Int2Str(num)) );
+                PP.ID.Put( String.Concat("P", Int2Str(num-1)), newIndexSameId );
+            }
+            break;
         }
     }
+
+    // Decreases the total power supply of power plants.
+    BigInteger temp = TotalSupply() - GetPP(id, "Capacity").AsBigInteger();
+    Storage.Put("TotalSupply", temp);
+
+    // Decreases the total number of power plant units.
+    BigInteger temp = NumOfPP() - 1;
+    Storage.Put("NumOfPP", temp);
+}
+
+//---------------------------------------------------------------------------------------------
+// METHODS FOR REFERENDUMS
+// --> create
+private static byte[] Ref( string proposal, string notes, int cost = 0 )
+{
+    byte[] id = ID("R", proposal, notes, cost);
+
+    if ( GetRef(id, "proposal").Length != 0 )
+    {
+        Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.");
+    }
+    else
+    {
+        // Stores the values.
+        RefData.Proposal.Put(id, proposal);
+        RefData.Notes.Put(id, notes);
+        RefData.Cost.Put(id, cost);
+        // RefData.MoneyRaised.Put(id, 0); // Expensive to create with null value. Just state it out!
+        // RefData.NumOfVotes.Put(id, 0); // Expensive to create with null value. Just state it out!
+        // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
+        RefData.Outcome.Put(id, Bool2Str(false));
+        // RefData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
+        RefData.StartTime.Put(id, InvokeTime());
+        RefData.EndTime.Put(id, InvokeTime() + timeFrameRef);
+        
+        // Increases the total number of referendum processes.
+        BigInteger temp = NumOfRef() + 1;
+        Storage.Put("NumOfRef", temp);
+        
+        // Stores the ID of each Ref.
+        RefData.ID.Put( String.Concat( "R", Int2Str(temp) ), id );
+
+        Process(id, "The referendum process has started.");
+    }
+
+    return id;
+}
+
+// The function to vote on a referendum is declared above because it is public.
+
+// --> read
+private static object GetRef( byte[] id, string opt )
+{
+    if (opt == "proposal") return RefData.Proposal.Get(id);
+    if (opt == "notes") return RefData.Notes.Get(id);
+    if (opt == "cost") return RefData.Cost.Get(id);
+    if (opt == "moneyraised") return RefData.MoneyRaised.Get(id);
+    if (opt == "numofvotes") return RefData.NumOfVotes.Get(id);
+    if (opt == "counttrue") return RefData.CountTrue.Get(id);
+    if (opt == "outcome") return RefData.Outcome.Get(id);
+    if (opt == "hasresult") return RefData.HasResult.Get(id);
+    if (opt == "starttime") return RefData.StartTime.Get(id);
+    if (opt == "endtime") return RefData.EndTime.Get(id);
+            
+    return false; // Must never happen.
+}
+
+// --> update
+// It is only possible to internally change the 'MoneyRaised', the 'NumOfVotes', the 'CountTrue', the 'HasResult' and the 'Outcome'.
+private static void UpRef( byte[] id, string opt, BigInteger val )
+{
+    if ((opt == "numofvotes") || (opt == "moneyraised") || (opt == "counttrue") || (opt == "hasresult") )
+    {
+        BigInteger orig = GetRef(id, opt).AsBigInteger();
+        
+        if (orig == val)
+        {
+            // Don't invoke Put if value is unchanged.
+        }
+        else if (val == 0)
+        {
+            // Deletes the storage if the new value is zero.
+            if (opt == "numofvotes") RefData.NumOfVotes.Delete(id);
+            else if (opt == "moneyraised") RefData.MoneyRaised.Delete(id);
+            else if (opt == "counttrue") RefData.CountTrue.Delete(id);
+            else RefData.HasResult.Delete(id); // (opt == "hasresult")
+        }
+        else
+        {
+            // Update the storage with the new value.
+            if (opt == "numofvotes") RefData.NumOfVotes.Put(id, val);
+            else if (opt == "moneyraised") RefData.MoneyRaised.Put(id, val);
+            else if (opt == "counttrue") RefData.CountTrue.Put(id, val);
+            else RefData.HasResult.Put(id, val); // (opt == "hasresult")
+        }
+    }
+}
+
+private static void UpRef( byte[] id, bool val )
+{
+    bool orig = Str2Bool( GetRef(id, "outcome").AsString() );
+
+    if ( orig == val )
+    {
+        // Don't invoke Put if value is unchanged.
+    }
+    else   
+    {
+        RefData.Outcome.Put(id, Bool2Str(val));
+    }
+}
+
+// --> delete
+// A referendum process remains forever... and ever.
+
+
+//---------------------------------------------------------------------------------------------
+// METHODS TO FINANCE A NEW POWER PLANT
+// --> create
+private static void CrowdFunding( byte[] id ) // This ID must come from a success Referendum process or it is a PP ID? --PENDING-- DEFINITION!
+{
+    
+    ICOData.StartTime.Put(id, InvokeTime());
+    ICOData.EndTime.Put(id, InvokeTime() + timeFrameCrowd);
+    // ICOData.TotalAmount.Put(id, 0); // Expensive to create with null value. Just state it out!
+    // ICOData.Contributions.Put(id, 0); // Expensive to create with null value. Just state it out!
+    ICOData.Success.Put(id, Bool2Str(false));
+    // ICOData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
+}
+
+// The function to bid on a crowdfunding is declared above because it is public.
+
+// --> read
+private static BigInteger GetBid( byte[] id, byte[] member )
+{
+    byte[] bidID = Hash256( id.Concat(member) );
+    return ICOData.Bid.Get(bidID).AsBigInteger();
+}
+
+private static object GetCrowd( byte[] id, string opt )
+{
+    if (opt == "starttime") return ICOData.StartTime.Get(id);
+    if (opt == "endtime") return ICOData.EndTime.Get(id);
+    if (opt == "totalamount") return ICOData.TotalAmount.Get(id);
+    if (opt == "contributions") return ICOData.Contributions.Get(id);
+    if (opt == "success") return ICOData.Success.Get(id);
+    if (opt == "hasresult") return ICOData.HasResult.Get(id);
+            
+    return false; // Must never happen.
+}
+
+// --> update
+private static void UpBid( byte[] id, byte[] member, BigInteger bid )
+{
+    BigInteger orig = GetBid(id, member);
+    
+    if ((orig == bid) || (bid == 0))
+    {
+        // Don't invoke Put if value is unchanged.
+        // AND
+        // Keeps the storage with the original value.
+    }
+    else
+    {
+        byte[] bidID = Hash256( id.Concat(member) );
+        ICOData.Bid.Put( bidID, orig + bid );
+    }
+}
+
+// Only the 'Total Amount', 'Contributions', 'HasResult' and 'Success' can be updated.
+private static void UpCrowd( byte[] id, string opt, BigInteger val )
+{
+    if ( (opt == "Total Amount") || (opt == "Contributions") || (opt == "Has Result") )
+    {
+        BigInteger orig = GetCrowd(ICOid, opt).AsBigInteger();
+        
+        if (orig == val)
+        {
+            // Don't invoke Put if value is unchanged.
+        }
+        else if (val == 0)
+        {
+            // Deletes the storage if the new value is zero.
+            if (opt == "totalamount") ICOData.TotalAmount.Delete(id);
+            else if (opt == "contributions") ICOData.Contributions.Delete(id);
+            else ICOData.HasResult.Delete(id); // (opt == "hasresult")
+        }
+        else
+        {
+            // Update the storage with the new value.
+            if (opt == "totalamount") ICOData.TotalAmount.Put(id, val);
+            else if (opt == "contributions") ICOData.Contributions.Put(id, val);
+            else ICOData.HasResult.Put(id, val); // (opt == "hasresult")
+        }
+    }
+}
+
+private static void UpCrowd( byte[] id, bool val )
+{
+    string orig = GetCrowd(id, "success").AsString();
+    
+    if ( orig == Bool2Str(val) )
+    {
+        // Don't invoke Put if value is unchanged.
+    }
+    else
+    {
+        ICOData.Success.Put(id, Bool2Str(val));
+    }
+}
+
+// --> delete
+private static void Refund( byte[] id, byte[] member )
+{
+    BigInteger grant = GetBid(id, member);
+    
+    // Decreases the total amount of funds.
+    BigInteger funds = GetCrowd(id, "totalamount");
+    UpCrowd(id, "totalamount", funds - grant);
+
+    // Decreases the total number of contributions.
+    BigInteger contributions = GetCrowd(id, "contributions");
+    UpCrowd(id, "contributions", contributions--);
+    
+    // Deletes the member's offer.
+    byte[] bidID = Hash256( id.Concat(member) );
+    ICOData.Bid.Delete(bidID);
+
+    // Notifies about the cancel of the bid.
+    Transfer(id, member, 0, (-1 * grant));
+}
+
+// Only the 'Total Amount' and 'Contributions' can be "deleted"
+// because the failure of a crowdfunding must be preserved.
+// Actually it is only used to "store" null values cheaply, and
+// it must solely happen if the refund (due to a bid cancel) reaches zero.
+private static void DelCrowd( byte[] id, string opt )
+{
+    if ( (opt == "totalamount") || (opt == "contributions") )
+    {
+        if (opt == "totalamount") ICOData.TotalAmount.Delete(id);
+        else ICOData.Contributions.Delete(id); // (opt == "contributions")
+    }
+}
+
+
+//---------------------------------------------------------------------------------------------
+https://github.com/neo-project/examples/blob/master/csharp/NEP5/NEP5.cs
+
+
+
+
+// TO TEST
+//---------------------------------------------------------------------------------------------
+
+Neo.Header.GetTimestamp         // Get the timestamp of the block
+Neo.Storage.GetContext          // [New] Get the current store context
+Neo.Contract.GetStorageContext  // [New] Get the storage context of the contract
+
+// get sender script hash
+Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
+TransactionOutput[] reference = tx.GetReferences();
+reference[0].ScriptHash;
+
+// to update ID and comparation of IDs operations
+    string temp1 = String.Concat( "Hello world", "outra coisa" );
+    string temp2 = String.Concat( "P", temp1);
+
+    byte[] result2 = temp2.AsByteArray();
+
+    Runtime.Notify( result2.AsString()[0] == 'P' ); // comparação entre string's, mas "P" não funciona...
+    
+    
+    
+    
+    
+    
+    
+    
+    
+// TO DO
+//---------------------------------------------------------------------------------------------
+// It must be an offline operation! From an offline monitoring, any Neo user could continue the process invoking the function again. However, it will only work if the user has a membership ID.
+
+// CRIAR UMA OPERAÇÃO DA WALLET QUE POSSA FAZER ISSO! Exemplos de wallet?
+
+// ---------------
+
+// To unlock some operations to keep going.
+// It automatically invokes this smart contract to continue a function from where it has been locked.
+private static void Unlock(func equivalencia?) // como passar o comando para uma função específica?
+{
+    // Blockchain... Execute ( Owner(), function );
+    Blockchain.GetAccount( Owner() ); // Get an account based on the scripthash of the contract
+    Blockchain.GetAccount( Owner() ); // Get contract content based on contract hash
+    Transaction.GetHash; //	Get Hash for the current transaction
+    Transaction.GetAttributes; //	Query all properties of the current transaction
+    Account.GetScriptHash; //	Get the script hash of the contract account
+    Contract.GetScript; //	Get the scripthash of the contract
+    
 }
