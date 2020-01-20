@@ -145,7 +145,7 @@ namespace Neo.SmartContract
                 if ( !Runtime.CheckWitness((byte[])args[0]) )
                     throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
 
-                if ( GetMemb((byte[])args[0], "FullName").Length != 0 )
+                if ( ((string)GetMemb((byte[])args[0], "FullName")).Length != 0 )
                     throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
                 
                 if ( Storage.Get("firstCall").AsBigInteger() == 0 )
