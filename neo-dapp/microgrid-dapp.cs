@@ -269,25 +269,25 @@ namespace Neo.SmartContract
                     if (args.Length != 2)
                         throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
                     
-                    if ( (args[0][0] != "A") || args[0][0] != "P"  )
+                    if ( (((string)args[0])[0] != 'A') || ((string)args[0])[0] != 'P'  )
                         throw new InvalidOperationException("Provide a valid member address or PP ID.");
                         
-                    if ( (args[0][0] == "A") || (args[1].Length != 2) || (args[1].Length != 0) )
+                    if ( (((string)args[0])[0] == 'A') || (((string)args[1]).Length != 2) || (((string)args[1]).Length != 0) )
                         throw new InvalidOperationException("Provide valid arguments to update an address.");
                     
-                    if ( (args[0][0] == "P") || (args[1].Length > 2) )
+                    if ( (((string)args[0])[0] == 'P') || (((string)args[1]).Length > 2) )
                         throw new InvalidOperationException("Provide valid arguments to update a PP subject.");
                     
-                    if ( (args[1][0] in profile) & !(Runtime.CheckWitness(args[0])) )
+                    if ( (Array.Exists(profile, element => element == ((object[])args[1])[0])) & !(Runtime.CheckWitness((byte[])args[0])) )
                         throw new InvalidOperationException("Only the member can change its own personal data.");
                     
-                    if ( (args[0][0] == "P") & (args[1].Length == 1) & !(args[1][0] is string) )
+                    if ( (((string)args[0])[0] == 'P') & (((string)args[1]).Length == 1) & !(((object[])args[1])[0] is string) )
                         throw new InvalidOperationException("Provide a valid power utility name to be replaced by.");
                     
-                    if ( (args[0][0] == "P") & (args[1].Length == 2) & !(Runtime.CheckWitness(args[1][0])) )
+                    if ( (((string)args[0])[0] == 'P') & (((string)args[1]).Length == 2) & !(Runtime.CheckWitness((byte[])((object[])args[1])[0])) )
                         throw new InvalidOperationException("Only the member can change its bid.");
                     
-                    if ( (args[0][0] == "P") & (args[1].Length == 2) & isLock( args[0] ) )
+                    if ( (((string)args[0])[0] == 'P') & (((string)args[1]).Length == 2) & isLock( (string)args[0] ) )
                         throw new InvalidOperationException("The campaign has ended.");
                     
                     return Change( (string)args[0],     // member address or PP id
