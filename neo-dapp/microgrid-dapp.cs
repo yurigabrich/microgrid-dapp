@@ -213,7 +213,7 @@ namespace Neo.SmartContract
                     if ( (GetPP((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
                         throw new InvalidOperationException("This member cannot profit from this power utility." );
 
-                    if ( args[2] <= minOffer )
+                    if ( (byte)args[2] <= minOffer )
                         throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                     
                     if ( isLock( args[0] ) )
