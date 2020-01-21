@@ -365,7 +365,7 @@ namespace Neo.SmartContract
         public static object Summary( string key, string opt = "" )     //--PENDING-- review dataset of each 'key' after the modifications made on the storage configuration.
         {
             // If 'key' is an 'address' ==  member.
-            if (key[0] == "M")
+            if (key[0] == 'M')
             {
                 byte[] address = Member.ID.Get(key);
 
@@ -383,7 +383,7 @@ namespace Neo.SmartContract
             }
 
             // If 'key' is an 'id' with prefix 'P' == power plant.
-            else if (key[0] == "P")
+            else if (key[0] == 'P')
             {
                 // The PP's crowdfunding had succeed and the PP is operating.
                 if ( GetPP(key,"TotMembers").Length != 0 )
@@ -428,7 +428,7 @@ namespace Neo.SmartContract
             }
 
             // If 'key' is an 'id' with prefix 'R' == referendum process.
-            else if (key[0] == "R")
+            else if (key[0] == 'R')
             {
                 if (opt == "")
                 {
