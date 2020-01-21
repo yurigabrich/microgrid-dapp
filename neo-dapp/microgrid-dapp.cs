@@ -216,7 +216,7 @@ namespace Neo.SmartContract
                     if ( (byte)args[2] <= minOffer )
                         throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                     
-                    if ( isLock( args[0] ) )
+                    if ( isLock( (string)args[0] ) )
                         throw new InvalidOperationException("The campaign has ended.");
 
                     return Bid( (string)args[0],        // PP id
