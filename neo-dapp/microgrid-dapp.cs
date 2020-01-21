@@ -371,7 +371,7 @@ namespace Neo.SmartContract
 
                 if ((opt == "") || (opt == "detailed"))
                 {
-                    string[] brief = new string[] { GetMemb(address,"FullName"), GetMemb(address,"Utility"), GetMemb(address,"Quota"), GetMemb(address,"Tokens") };
+                    string[] brief = new string[] { (string)GetMemb(address,"FullName"), (string)GetMemb(address,"Utility"), (string)GetMemb(address,"Quota"), (string)GetMemb(address,"Tokens") };
 
                     if (opt == "detailed")
                     {
