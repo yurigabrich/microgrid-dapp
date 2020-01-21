@@ -207,7 +207,7 @@ namespace Neo.SmartContract
                     if ( !Runtime.CheckWitness((byte[])args[1]) )
                         throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
 
-                    if ( (args[0][0] != "P") || (args[0].Length == null) )
+                    if ( (((string)args[0])[0] != 'P') || (((string)args[0]).Length == null) )
                         throw new InvalidOperationException("Provide a valid PP ID.");
 
                     if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
