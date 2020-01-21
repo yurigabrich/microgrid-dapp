@@ -354,9 +354,9 @@ namespace Neo.SmartContract
         // GROUP FUNCTIONS - The restrictions are made on the 'Main'.
 
         // To request to join the group.
-        public static string Admission( byte[] address, string fullName, string utility, params string[] list )
+        public static byte[] Admission( byte[] address, string fullName, string utility, params string[] list )
         {
-            string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
+            byte[] id = Ref( "Membership request_", String.Concat( fullName, utility ) );
             Membership( address, "Request for admission." );
             return id;
         }
