@@ -180,7 +180,7 @@ namespace Neo.SmartContract
             }
 
             // Restricted operations.
-            if ( GetMemb(caller, "FullName").Length != null )
+            if ( ((string)GetMemb(Caller(), "FullName")).Length != null )
             {
                 // Group operations.
                 if (operation == "vote")
