@@ -255,7 +255,7 @@ namespace Neo.SmartContract
                     if (args.Length != 4)
                         throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
 
-                    if ( (args[3] == 0) || (args[3] < minTimeToMarket) )
+                    if ( ((int)args[3] == 0) || ((int)args[3] < minTimeToMarket) )
                         throw new InvalidOperationException("The time to market must be a factual period.");
 
                     return PowerUp( (int)args[0],       // capacity [MW]
