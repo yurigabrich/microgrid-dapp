@@ -232,7 +232,7 @@ namespace Neo.SmartContract
                     if ( !Runtime.CheckWitness((byte[])args[0]) )
                         throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
 
-                    if ( (args[1][0] != "A") || (args[1].Length == null) )
+                    if ( (((string)args[1])[0] != 'A') || (((string)args[1]).Length == null) )
                         throw new InvalidOperationException("Provide a valid destiny address.");
                         
                     if ( GetMemb(args[1], "FullName").Length != null )
