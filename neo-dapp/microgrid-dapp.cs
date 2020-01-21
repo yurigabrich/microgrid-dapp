@@ -796,11 +796,10 @@ namespace Neo.SmartContract
 
         //---------------------------------------------------------------------------------------------
         // ADMINISTRATIVE FUNCTIONS
-
         // After a period of 'timeFrameRef' days, a member should invoke those functions to state the referendum process.
         // An off-chain operation should handle this waiting time.
 
-        public static void AdmissionResult( string id )
+        public static bool AdmissionResult( string id )
         {
             // Calculates the result
             CalcResult(id);
@@ -810,9 +809,11 @@ namespace Neo.SmartContract
                 // Add a new member after approval from group members.
                 Member( address, fullName, utility, 0, 0 );
                 Membership( address, "Welcome on board!" );
+                return true;
             }
 
             Membership( address, "Not approved yet." );
+            return false;
         }
 
         public static void ChangeResult( string id, params string[] listOfMembers)
