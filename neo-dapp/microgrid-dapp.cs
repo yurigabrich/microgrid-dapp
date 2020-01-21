@@ -797,8 +797,8 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // ADMINISTRATIVE FUNCTIONS
 
-        // After a period of 'timeFrameRef' days a member should invoke this function to state the referendum process.
-        // An off-chain operation should handle this.
+        // After a period of 'timeFrameRef' days, a member should invoke those functions to state the referendum process.
+        // An off-chain operation should handle this waiting time.
 
         public static void AdmissionResult( string id )
         {
