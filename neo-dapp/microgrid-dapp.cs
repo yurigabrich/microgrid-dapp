@@ -172,7 +172,7 @@ namespace Neo.SmartContract
                 if ( args.Length != 1 )
                     throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
-                if ( (GetMemb(caller, "FullName").Length == null) | (args[0][0] == "A") ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+                if ( (((string)GetMemb(Caller(), "FullName")).Length == null) | (((string)args[0])[0] == 'A') ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
                     throw Warning();
 
                 return Summary( (string)args[0],     // Address/ID
