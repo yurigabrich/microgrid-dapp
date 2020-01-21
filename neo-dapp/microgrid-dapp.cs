@@ -219,7 +219,7 @@ namespace Neo.SmartContract
                     if ( isLock( (string)args[0] ) )
                         throw new InvalidOperationException("The campaign has ended.");
 
-                    return Bid( (string)args[0],        // PP id
+                    return Bid( (byte[])args[0],        // PP id
                                 (byte[])args[1],        // member address
                                 (BigInteger)args[2] );  // bid value
                 }
