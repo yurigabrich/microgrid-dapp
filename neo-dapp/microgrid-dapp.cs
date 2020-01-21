@@ -346,8 +346,7 @@ namespace Neo.SmartContract
                 }
             }
 
-            throw Warning();
-            return false;
+            throw new InvalidOperationException("No operation found. Have you wrote it right?");
         }
 
 
