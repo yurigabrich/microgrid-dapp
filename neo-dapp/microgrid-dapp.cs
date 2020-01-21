@@ -235,13 +235,13 @@ namespace Neo.SmartContract
                     if ( (((string)args[1])[0] != 'A') || (((string)args[1]).Length == null) )
                         throw new InvalidOperationException("Provide a valid destiny address.");
                         
-                    if ( GetMemb(args[1], "FullName").Length != null )
+                    if ( ((string)GetMemb((byte[])args[1], "FullName")).Length != null )
                         throw new InvalidOperationException("The address you are transaction to must be a member too.");
 
-                    if ( (GetMemb(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
+                    if ( (GetMemb((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
                         throw new InvalidOperationException( "Both members must belong to the same power utility cover area." );
 
-                    if ( (args[2] <= 0) & (args[3] <= 0) )
+                    if ( ((int)args[2] <= 0) & ((int)args[3] <= 0) )
                         throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 4th argument empty. Otherwise, to donate tokens let ONLY the 3rd argument empty.");
                     
                     return Trade( (byte[])args[0],       // from address
