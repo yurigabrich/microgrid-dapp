@@ -496,7 +496,7 @@ namespace Neo.SmartContract
         }
 
         // To update something on the ledger.
-        public object Change( string key, params object[] opts )
+        public static object Change( string key, params object[] opts )
         {
             // If 'key' is an 'address' ==  member.
             if (key[0] == "M")
@@ -556,7 +556,7 @@ namespace Neo.SmartContract
         }
 
         // The whole process to integrate a new PP on the group power generation.
-        public string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
+        public static string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
         {
             string notes = Rec( Rec( Int2Str(capacity), utility) , Int2Str(timeToMarket) );
             string id = Ref( "New PP request_", notes, cost );
@@ -567,7 +567,7 @@ namespace Neo.SmartContract
         // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
         // The 'fromAddress' will exchange an amount of shares with 'toAddress' by a defined token price,
         // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
-        public bool Trade( byte[] fromAddress, byte[] toAddress, BigInteger exchange, BigInteger price )
+        public static bool Trade( byte[] fromAddress, byte[] toAddress, BigInteger exchange, BigInteger price )
         {
             BigInteger[] toWallet = new BigInteger[];
             BigInteger[] fromWallet = new BigInteger[];
