@@ -737,7 +737,7 @@ namespace Neo.SmartContract
                     
                     if ( bid != 0 )
                     {
-                        Runtime.Notify( [memberAddress, bid] );
+                        Runtime.Notify( new object[] { memberAddress, bid } );
                     }
                 }
             }
@@ -750,7 +750,7 @@ namespace Neo.SmartContract
                     
                     if ( bid != 0 )
                     {
-                        Runtime.Notify( [memberAddress, bid] );
+                        Runtime.Notify( new object[] { memberAddress, bid } );
                     }
                 }
             }
