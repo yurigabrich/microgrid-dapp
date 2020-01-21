@@ -210,7 +210,7 @@ namespace Neo.SmartContract
                     if ( (((string)args[0])[0] != 'P') || (((string)args[0]).Length == null) )
                         throw new InvalidOperationException("Provide a valid PP ID.");
 
-                    if ( (GetPP(args[0], "Utility")) != (GetMemb(args[1], "Utility")) )
+                    if ( (GetPP((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
                         throw new InvalidOperationException("This member cannot profit from this power utility." );
 
                     if ( args[2] <= minOffer )
