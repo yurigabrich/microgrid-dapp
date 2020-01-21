@@ -172,7 +172,7 @@ namespace Neo.SmartContract
                 if ( args.Length != 1 )
                     throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
-                if ( (((string)GetMemb(Caller(), "FullName")).Length == null) | (((string)args[0])[0] == 'A') ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+                if ( (((string)GetMemb(Caller(), "FullName")).Length == 0) | (((string)args[0])[0] == 'A') ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
                     throw Warning();
 
                 return Summary( (string)args[0],     // Address/ID
@@ -180,7 +180,7 @@ namespace Neo.SmartContract
             }
 
             // Restricted operations.
-            if ( ((string)GetMemb(Caller(), "FullName")).Length != null )
+            if ( ((string)GetMemb(Caller(), "FullName")).Length != 0 )
             {
                 // Group operations.
                 if (operation == "vote")
@@ -207,7 +207,7 @@ namespace Neo.SmartContract
                     if ( !Runtime.CheckWitness((byte[])args[1]) )
                         throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
 
-                    if ( (((string)args[0])[0] != 'P') || (((string)args[0]).Length == null) )
+                    if ( (((string)args[0])[0] != 'P') || (((string)args[0]).Length == 0) )
                         throw new InvalidOperationException("Provide a valid PP ID.");
 
                     if ( (GetPP((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
@@ -232,10 +232,10 @@ namespace Neo.SmartContract
                     if ( !Runtime.CheckWitness((byte[])args[0]) )
                         throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
 
-                    if ( (((string)args[1])[0] != 'A') || (((string)args[1]).Length == null) )
+                    if ( (((string)args[1])[0] != 'A') || (((string)args[1]).Length == 0) )
                         throw new InvalidOperationException("Provide a valid destiny address.");
                         
-                    if ( ((string)GetMemb((byte[])args[1], "FullName")).Length != null )
+                    if ( ((string)GetMemb((byte[])args[1], "FullName")).Length != 0 )
                         throw new InvalidOperationException("The address you are transaction to must be a member too.");
 
                     if ( (GetMemb((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
