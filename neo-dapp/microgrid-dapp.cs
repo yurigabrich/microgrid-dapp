@@ -172,10 +172,10 @@ namespace Neo.SmartContract
                 if ( args.Length != 1 )
                     throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
-                if ( (((string)GetMemb(Caller(), "FullName")).Length == 0) | (((string)args[0])[0] == 'A') ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+                if ( (((string)GetMemb(Caller(), "FullName")).Length == 0) | (((byte[])args[0])[0] == 'A') ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
                     throw Warning();
 
-                return Summary( (string)args[0],     // Address/ID
+                return Summary( (byte[])args[0],     // Address/ID
                                 (string)args[1] );   // option
             }
 
@@ -191,10 +191,10 @@ namespace Neo.SmartContract
                     if ( !Runtime.CheckWitness((byte[])args[1]) )
                         throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
 
-                    if ( isLock( (string)args[0]) )
+                    if ( isLock( (byte[])args[0]) )
                         throw new InvalidOperationException("The ballot has ended.");
                     
-                    return Vote( (string)args[0],    // referendum id
+                    return Vote( (byte[])args[0],    // referendum id
                                  (byte[])args[1],    // member address
                                  (bool)args[2] );    // answer
                 }
@@ -207,7 +207,7 @@ namespace Neo.SmartContract
                     if ( !Runtime.CheckWitness((byte[])args[1]) )
                         throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
 
-                    if ( (((string)args[0])[0] != 'P') || (((string)args[0]).Length == 0) )
+                    if ( (((byte[])args[0])[0] != 'P') || (((byte[])args[0]).Length == 0) )
                         throw new InvalidOperationException("Provide a valid PP ID.");
 
                     if ( (GetPP((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
@@ -216,7 +216,7 @@ namespace Neo.SmartContract
                     if ( (byte)args[2] <= minOffer )
                         throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                     
-                    if ( isLock( (string)args[0] ) )
+                    if ( isLock( (byte[])args[0] ) )
                         throw new InvalidOperationException("The campaign has ended.");
 
                     return Bid( (byte[])args[0],        // PP id
@@ -269,28 +269,28 @@ namespace Neo.SmartContract
                     if (args.Length != 2)
                         throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
                     
-                    if ( (((string)args[0])[0] != 'A') || ((string)args[0])[0] != 'P'  )
+                    if ( (((byte[])args[0])[0] != 'A') || ((byte[])args[0])[0] != 'P'  )
                         throw new InvalidOperationException("Provide a valid member address or PP ID.");
                         
-                    if ( (((string)args[0])[0] == 'A') || (((string)args[1]).Length != 2) || (((string)args[1]).Length != 0) )
+                    if ( (((byte[])args[0])[0] == 'A') || (((string)args[1]).Length != 2) || (((string)args[1]).Length != 0) )
                         throw new InvalidOperationException("Provide valid arguments to update an address.");
                     
-                    if ( (((string)args[0])[0] == 'P') || (((string)args[1]).Length > 2) )
+                    if ( (((byte[])args[0])[0] == 'P') || (((string)args[1]).Length > 2) )
                         throw new InvalidOperationException("Provide valid arguments to update a PP subject.");
                     
                     if ( (Array.Exists(profile, element => element == ((object[])args[1])[0])) & !(Runtime.CheckWitness((byte[])args[0])) )
                         throw new InvalidOperationException("Only the member can change its own personal data.");
                     
-                    if ( (((string)args[0])[0] == 'P') & (((string)args[1]).Length == 1) & !(((object[])args[1])[0] is string) )
+                    if ( (((byte[])args[0])[0] == 'P') & (((string)args[1]).Length == 1) & !(((object[])args[1])[0] is string) )
                         throw new InvalidOperationException("Provide a valid power utility name to be replaced by.");
                     
-                    if ( (((string)args[0])[0] == 'P') & (((string)args[1]).Length == 2) & !(Runtime.CheckWitness((byte[])((object[])args[1])[0])) )
+                    if ( (((byte[])args[0])[0] == 'P') & (((string)args[1]).Length == 2) & !(Runtime.CheckWitness((byte[])((object[])args[1])[0])) )
                         throw new InvalidOperationException("Only the member can change its bid.");
                     
-                    if ( (((string)args[0])[0] == 'P') & (((string)args[1]).Length == 2) & isLock( (string)args[0] ) )
+                    if ( (((byte[])args[0])[0] == 'P') & (((string)args[1]).Length == 2) & isLock( (byte[])args[0] ) )
                         throw new InvalidOperationException("The campaign has ended.");
                     
-                    return Change( (string)args[0],     // member address or PP id
+                    return Change( (byte[])args[0],     // member address or PP id
                                    (object[])args[1] ); // array with desired values --PENDING-- test length because of the problem of array of arrays...
                 }
                 
@@ -300,10 +300,10 @@ namespace Neo.SmartContract
                     if ( args.Length != 1 )
                         throw new InvalidOperationException("Please provide the admission process ID.");
                     
-                    if ( isLock( (string)args[0] ) )
+                    if ( isLock( (byte[])args[0] ) )
                         throw new InvalidOperationException("There isn't a result yet.");
                     
-                    return AdmissionResult( (string)args[0] ); // Referendum ID
+                    return AdmissionResult( (byte[])args[0] ); // Referendum ID
                 }
                 
                 if (operation == "change result")
@@ -311,10 +311,10 @@ namespace Neo.SmartContract
                     if ( args.Length != 1 )
                         throw new InvalidOperationException("Please provide the change process ID.");
                     
-                    if ( isLock( (string)args[0] ) )
+                    if ( isLock( (byte[])args[0] ) )
                         throw new InvalidOperationException("There isn't a result yet.");
                     
-                    ChangeResult( (string)args[0] ); // Referendum ID
+                    ChangeResult( (byte[])args[0] ); // Referendum ID
                 }
                 
                 if (operation == "power up result")
@@ -325,8 +325,8 @@ namespace Neo.SmartContract
                     if ( args.Length > 2 )
                         throw new InvalidOperationException("Please provide at most the new PP process ID, and the PP ID itself if any.");
                     
-                    PowerUpResult( (string)args[0],     // Referendum ID
-                                   (string)args[1] );   // PP ID
+                    PowerUpResult( (byte[])args[0],     // Referendum ID
+                                   (byte[])args[1] );   // PP ID
                 }
 
                 if (operation == "list of power plants")
@@ -362,7 +362,7 @@ namespace Neo.SmartContract
         }
 
         // To get information about something.
-        public static object Summary( string key, string opt = "" )     //--PENDING-- review dataset of each 'key' after the modifications made on the storage configuration.
+        public static object Summary( byte[] key, string opt = "" )
         {
             // If 'key' is an 'address' ==  member.
             if (key[0] == 'M')
@@ -445,7 +445,7 @@ namespace Neo.SmartContract
         }
 
         // To vote in a given ID process.
-        public static bool Vote( string id, byte[] member, bool answer )
+        public static bool Vote( byte[] id, byte[] member, bool answer )
         {
             // Increases the number of votes.
             BigInteger temp = GetRef(id,"Num of Votes").AsBigInteger();
@@ -495,7 +495,7 @@ namespace Neo.SmartContract
         }
 
         // To update something on the ledger.
-        public static object Change( string key, params object[] opts )
+        public static object Change( byte[] key, params object[] opts )
         {
             // If 'key' is an 'address' ==  member.
             if (key[0] == "M")
@@ -780,7 +780,7 @@ namespace Neo.SmartContract
         // Before a given time frame, no one is allowed to continue the process.
         // The monitoring of the time happens off-chain.
         // Once the time stated is reached, any member can then resume the process.
-        private static bool isLock( string id )
+        private static bool isLock( byte[] id )
         {
             if (id[0] == "R")
             {
@@ -798,7 +798,7 @@ namespace Neo.SmartContract
         // After a period of 'timeFrameRef' days, a member should invoke those functions to state the referendum process.
         // An off-chain operation should handle this waiting time.
 
-        public static bool AdmissionResult( string id )
+        public static bool AdmissionResult( byte[] id )
         {
             // Calculates the result
             CalcResult(id);
@@ -815,7 +815,7 @@ namespace Neo.SmartContract
             return false;
         }
 
-        public static void ChangeResult( string id, params string[] listOfMembers)
+        public static void ChangeResult( byte[] id, params string[] listOfMembers)
         {
             string proposal = GetRef(id, "Proposal").AsString();
             
@@ -888,7 +888,7 @@ namespace Neo.SmartContract
             }
         }
 
-        public static object PowerUpResult( string id, string PPid = null, params string[] listOfFunders )
+        public static object PowerUpResult( byte[] id, byte[] PPid = null, params string[] listOfFunders )
         {
             // STEP 1 - After a 'timeFrameRef' waiting period.
             if (PPid == null)
