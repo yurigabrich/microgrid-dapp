@@ -392,7 +392,7 @@ namespace Neo.SmartContract
             else if (key[0] == 'P')
             {
                 // The PP's crowdfunding had succeed and the PP is operating.
-                if ( GetPP(key,"TotMembers").Length != 0 )
+                if ( PPData.HasStarted.Get(key).AsBigInteger() == 1 )
                 {
                     if ( (opt == "") || (opt == "detailed") )
                     {
