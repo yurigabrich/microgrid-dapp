@@ -1453,16 +1453,14 @@ namespace Neo.SmartContract
             return ICOData.Bid.Get(bidID).AsBigInteger();
         }
 
-        private static object GetCrowd( byte[] id, string opt )
+        private static byte[] GetCrowd( byte[] id, string opt = "hasresult" )
         {
             if (opt == "starttime") return ICOData.StartTime.Get(id);
-            if (opt == "endtime") return ICOData.EndTime.Get(id);
-            if (opt == "totalamount") return ICOData.TotalAmount.Get(id);
-            if (opt == "contributions") return ICOData.Contributions.Get(id);
-            if (opt == "success") return ICOData.Success.Get(id);
-            if (opt == "hasresult") return ICOData.HasResult.Get(id);
-                    
-            return false; // Must never happen.
+            else if (opt == "endtime") return ICOData.EndTime.Get(id);
+            else if (opt == "totalamount") return ICOData.TotalAmount.Get(id);
+            else if (opt == "contributions") return ICOData.Contributions.Get(id);
+            else if (opt == "success") return ICOData.Success.Get(id);
+            else return ICOData.HasResult.Get(id);
         }
 
         // --> update
