@@ -367,7 +367,7 @@ namespace Neo.SmartContract
             // If 'key' is an 'address' ==  member.
             if (key[0] == 'M')
             {
-                byte[] address = Member.ID.Get(key);
+                byte[] address = MemberData.ID.Get(key);
 
                 if ((opt == "") || (opt == "detailed"))
                 {
