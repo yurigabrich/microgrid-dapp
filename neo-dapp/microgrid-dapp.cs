@@ -371,7 +371,7 @@ namespace Neo.SmartContract
         public static object Summary( byte[] key, string opt = "" )
         {
             // If 'key' is an 'address' ==  member.
-            if (key[0] == 'M')
+            if (key.AsString()[0] == 'M')
             {
                 byte[] address = MemberData.ID.Get(key);
 
@@ -389,7 +389,7 @@ namespace Neo.SmartContract
             }
 
             // If 'key' is an 'id' with prefix 'P' == power plant.
-            else if (key[0] == 'P')
+            else if (key.AsString()[0] == 'P')
             {
                 // The PP's crowdfunding had succeed and the PP is operating.
                 if ( GetPP(key).AsBigInteger() == 1 )
@@ -434,7 +434,7 @@ namespace Neo.SmartContract
             }
 
             // If 'key' is an 'id' with prefix 'R' == referendum process.
-            else if (key[0] == 'R')
+            else if (key.AsString()[0] == 'R')
             {
                 if (opt == "")
                 {
@@ -504,7 +504,7 @@ namespace Neo.SmartContract
         public static object Change( byte[] key, params object[] opts )
         {
             // If 'key' is an 'address' ==  member.
-            if (key[0] == "M")
+            if (key.AsString()[0] == 'M')
             {
                 byte[] address = Member.ID.Get(key);
 
