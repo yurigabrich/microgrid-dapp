@@ -392,11 +392,11 @@ namespace Neo.SmartContract
             else if (key[0] == 'P')
             {
                 // The PP's crowdfunding had succeed and the PP is operating.
-                if ( PPData.HasStarted.Get(key).AsBigInteger() == 1 )
+                if ( GetPP(key).AsBigInteger() == 1 )
                 {
                     if ( (opt == "") || (opt == "detailed") )
                     {
-                        string[] brief = new string[] { GetPP(key,"Capacity"), GetPP(key,"Cost"), GetPP(key,"Utility"), GetPP(key,"TotMembers") };
+                        string[] brief = new string[] { GetPP(key,"Capacity").AsString(), GetPP(key,"Cost").AsString(), GetPP(key,"Utility").AsString(), GetPP(key,"TotMembers").AsString() };
             
                         if (opt == "detailed")
                         {
