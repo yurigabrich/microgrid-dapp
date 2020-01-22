@@ -1365,20 +1365,18 @@ namespace Neo.SmartContract
         // The function to vote on a referendum is declared above because it is public.
 
         // --> read
-        private static object GetRef( byte[] id, string opt )
+        private static byte[] GetRef( byte[] id, string opt = "hasresult" )
         {
             if (opt == "proposal") return RefData.Proposal.Get(id);
-            if (opt == "notes") return RefData.Notes.Get(id);
-            if (opt == "cost") return RefData.Cost.Get(id);
-            if (opt == "moneyraised") return RefData.MoneyRaised.Get(id);
-            if (opt == "numofvotes") return RefData.NumOfVotes.Get(id);
-            if (opt == "counttrue") return RefData.CountTrue.Get(id);
-            if (opt == "outcome") return RefData.Outcome.Get(id);
-            if (opt == "hasresult") return RefData.HasResult.Get(id);
-            if (opt == "starttime") return RefData.StartTime.Get(id);
-            if (opt == "endtime") return RefData.EndTime.Get(id);
-                    
-            return false; // Must never happen.
+            else if (opt == "notes") return RefData.Notes.Get(id);
+            else if (opt == "cost") return RefData.Cost.Get(id);
+            else if (opt == "moneyraised") return RefData.MoneyRaised.Get(id);
+            else if (opt == "numofvotes") return RefData.NumOfVotes.Get(id);
+            else if (opt == "counttrue") return RefData.CountTrue.Get(id);
+            else if (opt == "outcome") return RefData.Outcome.Get(id);
+            else if (opt == "starttime") return RefData.StartTime.Get(id);
+            else if (opt == "endtime") return RefData.EndTime.Get(id);
+            else return RefData.HasResult.Get(id);
         }
 
         // --> update
