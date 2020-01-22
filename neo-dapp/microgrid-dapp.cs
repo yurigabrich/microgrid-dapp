@@ -1223,16 +1223,14 @@ namespace Neo.SmartContract
         }
 
         // --> read
-        private static object GetPP( byte[] id, string opt )
+        private static byte[] GetPP( byte[] id, string opt = "hasstarted" )
         {
             if (opt == "capacity") return PPData.Capacity.Get(id);
-            if (opt == "cost") return PPData.Cost.Get(id);
-            if (opt == "utility") return PPData.Utility.Get(id);
-            if (opt == "timetomarket") return PPData.TimeToMarket.Get(id);
-            if (opt == "numoffundmemb") return PPData.NumOfFundMemb.Get(id);
-            if (opt == "hasstarted") return PPData.HasStarted.Get(id);
-                    
-            return false; // Must never happen.
+            else if (opt == "cost") return PPData.Cost.Get(id);
+            else if (opt == "utility") return PPData.Utility.Get(id);
+            else if (opt == "timetomarket") return PPData.TimeToMarket.Get(id);
+            else if (opt == "numoffundmemb") return PPData.NumOfFundMemb.Get(id);
+            else return PPData.HasStarted.Get(id);
         }
 
         // --> update
