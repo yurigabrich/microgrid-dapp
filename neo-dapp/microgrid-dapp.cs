@@ -334,7 +334,10 @@ namespace Neo.SmartContract
                     if ( args.Length != 0 )
                         throw new InvalidOperationException("This function does not need attributes.");
                     
-                    ListOfPPs();
+                    foreach (byte[] PPid in ListOfPPs())
+                    {
+                        Runtime.Notify( PPid );
+                    }
                 }
 
                 if (operation == "list of members")
@@ -342,7 +345,10 @@ namespace Neo.SmartContract
                     if ( args.Length != 0 )
                         throw new InvalidOperationException("This function does not need attributes.");
                     
-                    ListOfMembers();
+                    foreach (byte[] address in ListOfMembers())
+                    {
+                        Runtime.Notify( address );
+                    }
                 }
             }
 
@@ -1026,14 +1032,18 @@ namespace Neo.SmartContract
             return "There is nothing more to be done.";
         }
 
-        // To display the IDs of each PP to be later used on other functions.
-        private static void ListOfPPs()
+        // To return the IDs of each PP to be later used on other functions.
+        private static byte[][] ListOfPPs()
         {
-            for (int num = 1; num < NumOfPP()+1; num++)
+            byte[][] PPids = new byte[ (int)NumOfPP() ][];
+            
+            for (int num = 0; num < NumOfPP(); num++)
             {
-                string PPid = Storage.Get( String.Concat( "P", Int2Str(num) )).AsString();
-                Runtime.Notify( PPid );
+                var index = String.Concat( "P", Int2Str(num+1) );
+                var PPid = PPData.ID.Get(index);
+                PPids[num] = PPid;
             }
+            return PPids;
         }
 
         // To return the address of each member to be later used on other functions.
@@ -1044,7 +1054,7 @@ namespace Neo.SmartContract
             for (int num = 0; num < NumOfMemb(); num++)
             {
                 var index = String.Concat( "M", Int2Str(num+1) );
-                var memberAddress = Member.ID.Get(index);
+                var memberAddress = MemberData.ID.Get(index);
                 addresses[num] = memberAddress;
             }
             return addresses;
