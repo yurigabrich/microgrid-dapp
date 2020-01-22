@@ -396,7 +396,7 @@ namespace Neo.SmartContract
                 {
                     if ( (opt == "") || (opt == "detailed") )
                     {
-                        string[] brief = new string[] { GetPP(key,"Capacity").AsString(), GetPP(key,"Cost").AsString(), GetPP(key,"Utility").AsString(), GetPP(key,"TotMembers").AsString() };
+                        object[] brief = new object[] { GetPP(key,"Capacity"), GetPP(key,"Cost"), GetPP(key,"Utility"), GetPP(key,"TotMembers") };
             
                         if (opt == "detailed")
                         {
@@ -412,7 +412,7 @@ namespace Neo.SmartContract
                 {
                     if ( (opt == "") || (opt == "detailed") )
                     {
-                        string[] brief = new string[] { GetCrowd(key,"Start Time"), GetCrowd(key,"End Time"), GetCrowd(key,"Total Amount"), GetCrowd(key,"Contributions"), GetCrowd(key,"Success") };
+                        object[] brief = new object[] { GetCrowd(key,"Start Time"), GetCrowd(key,"End Time"), GetCrowd(key,"Total Amount"), GetCrowd(key,"Contributions"), GetCrowd(key,"Success") };
 
                         if (opt == "detailed")
                         {
