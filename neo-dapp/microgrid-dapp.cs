@@ -23,7 +23,7 @@ namespace Neo.SmartContract
         [DisplayName("offer")]
         public static event Action<byte[], byte[], BigInteger> Offer;
         [DisplayName("change")]
-        public static event Action<string, string> Update;
+        public static event Action<string, byte[]> Update;
 
 
         //---------------------------------------------------------------------------------------------
@@ -512,7 +512,7 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['profile option', 'value'].
                 if ( opts[1] is string )
                 {
-                    UpMemb(address, opts[0], opts[1]);
+                    UpMemb(address, (string)opts[0], (string)opts[1]);
                     Update("Profile data.", address);
                     return true;
                 }
