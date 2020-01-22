@@ -416,7 +416,7 @@ namespace Neo.SmartContract
 
                         if (opt == "detailed")
                         {
-                            foreach (int num in NumOfMemb())
+                            for (int num = 0; num < NumOfMemb(); num++)
                             {
                                 string memberAddress = Storage.Get( String.Concat( "M", Int2Str(num) )).AsString();
                                 BigInteger bid = GetBid(key, memberAddress).AsBigInteger();
