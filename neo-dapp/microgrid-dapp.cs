@@ -381,7 +381,7 @@ namespace Neo.SmartContract
 
                     if (opt == "detailed")
                     {
-                        GetContributeValue( key, list ); // list of PPs --PENDING--
+                        GetContributeValue( key, ListOfPPs() );
                     }
                     return brief;
                 }
@@ -400,7 +400,7 @@ namespace Neo.SmartContract
             
                         if (opt == "detailed")
                         {
-                            GetContributeValue( key, list ); // list of members                    
+                            GetContributeValue( key, ListOfMembers() );
                         }
                         return brief;
                     }
