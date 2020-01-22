@@ -19,7 +19,7 @@ namespace Neo.SmartContract
         [DisplayName("process")]
         public static event Action<byte[], string> Process;
         [DisplayName("ballot")]
-        public static event Action<string, byte[], bool> Ballot;
+        public static event Action<byte[], byte[], bool> Ballot;
         [DisplayName("offer")]
         public static event Action<byte[], byte[], BigInteger> Offer;
         [DisplayName("change")]
