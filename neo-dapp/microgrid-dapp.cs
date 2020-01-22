@@ -419,7 +419,7 @@ namespace Neo.SmartContract
                             for (int num = 0; num < NumOfMemb(); num++)
                             {
                                 string memberAddress = Storage.Get( String.Concat( "M", Int2Str(num) )).AsString();
-                                BigInteger bid = GetBid(key, memberAddress).AsBigInteger();
+                                BigInteger bid = GetBid(key, memberAddress);
                                 
                                 if ( bid != 0 )
                                 {
@@ -438,7 +438,7 @@ namespace Neo.SmartContract
             {
                 if (opt == "")
                 {
-                    return new string[] { GetRef(key,"Proposal"), GetRef(key,"Notes"), GetRef(key,"Cost"), GetRef(key,"Outcome") };
+                    return new object[] { GetRef(key,"Proposal"), GetRef(key,"Notes"), GetRef(key,"Cost"), GetRef(key,"Outcome") };
                 }
                 return GetRef(key,opt);
             }
@@ -446,7 +446,7 @@ namespace Neo.SmartContract
             // Wrap-up the group information.
             else
             {
-                return new string[] { PowGenLimits()[0], PowGenLimits()[1], NumOfPP(), NumOfMemb(), Name(), Symbol(), TotalSupply() };
+                return new object[] { PowGenLimits()[0], PowGenLimits()[1], NumOfPP(), NumOfMemb(), Name(), Symbol(), TotalSupply() };
             }
         }
 
