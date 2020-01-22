@@ -506,7 +506,7 @@ namespace Neo.SmartContract
             // If 'key' is an 'address' ==  member.
             if (key.AsString()[0] == 'M')
             {
-                byte[] address = Member.ID.Get(key);
+                byte[] address = MemberData.ID.Get(key);
 
                 // Only the member can change its own personal data.
                 // To UPDATE, the params must be ['profile option', 'value'].
