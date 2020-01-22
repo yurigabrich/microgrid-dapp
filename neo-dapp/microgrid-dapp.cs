@@ -460,7 +460,7 @@ namespace Neo.SmartContract
             if (answer)
             {
                 // Increases the number of "trues".
-                BigInteger temp = GetRef(id,"Count True").AsBigInteger();
+                temp = GetRef(id,"Count True").AsBigInteger();
                 UpRef(id, "Count True", temp++);
             }
 
