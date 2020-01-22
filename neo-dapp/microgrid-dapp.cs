@@ -731,7 +731,7 @@ namespace Neo.SmartContract
 
         // To filter the relationship of members and PPs.
         // Displays how much a member has contributed to a PP crowdfunding.
-        private static void GetContributeValue( string lookForID, string[] listOfIDs )
+        private static void GetContributeValue( byte[] lookForID, byte[][] listOfIDs )
         {
             // Gets values by each ID registered on the contract storage space.
             if ( lookForID[0] == "P" )
