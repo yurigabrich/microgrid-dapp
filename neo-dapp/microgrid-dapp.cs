@@ -737,12 +737,12 @@ namespace Neo.SmartContract
         private static void GetContributeValue( byte[] lookForID, byte[][] listOfIDs )
         {
             // Gets values by each ID registered on the contract storage space.
-            if ( lookForID[0] == "P" )
+            if ( lookForID.AsString()[0] == 'P' )
             {
                 // Gets members' bid by a PP funding process.
-                foreach (string memberAddress in listOfIDs)
+                foreach (byte[] memberAddress in listOfIDs)
                 {
-                    BigInteger bid = GetBid(lookForID, memberAddress).AsBigInteger();
+                    BigInteger bid = GetBid(lookForID, memberAddress);
                     
                     if ( bid != 0 )
                     {
@@ -750,16 +750,16 @@ namespace Neo.SmartContract
                     }
                 }
             }
-            else // lookForID[0] == "M"
+            else // lookForID.AsString()[0] == 'A'
             {
                 // Gets PPs by a member investments.
-                foreach (string PPid in listOfIDs)
+                foreach (byte[] PPid in listOfIDs)
                 {
-                    BigInteger bid = GetBid(PPid, lookForID).AsBigInteger();
+                    BigInteger bid = GetBid(PPid, lookForID);
                     
                     if ( bid != 0 )
                     {
-                        Runtime.Notify( new object[] { memberAddress, bid } );
+                        Runtime.Notify( new object[] { PPid, bid } );
                     }
                 }
             }
