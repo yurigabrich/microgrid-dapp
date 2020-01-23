@@ -1101,11 +1101,11 @@ namespace Neo.SmartContract
         // --> update
         // Detailed restrictions to update 'profile' or 'register' data are set
         // on the function 'Change'. Here this feature is handled by polymorphism.
-        private static Object UpMemb( byte[] address, string opt, string val )
+        private static bool UpMemb( byte[] address, string opt, string val )
         {
             // Don't invoke Put if value is unchanged.
             string orig = GetMemb(address, opt).AsString();
-            if (orig == val) return;
+            if (orig == val) return true;
              
             // Use Delete rather than Put if the new value is empty.
             if (val.Length == 0)
@@ -1121,11 +1121,11 @@ namespace Neo.SmartContract
             return true;
         }
 
-        private static Object UpMemb( byte[] address, string opt, BigInteger val )
+        private static bool UpMemb( byte[] address, string opt, BigInteger val )
         {
             // Don't invoke Put if value is unchanged.
             BigInteger orig = GetMemb(address, opt).AsBigInteger();
-            if (orig == val) return;
+            if (orig == val) return true;
              
             // Use Delete rather than Put if the new value is zero.
             if (val == 0)
