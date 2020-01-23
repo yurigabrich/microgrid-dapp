@@ -503,6 +503,8 @@ namespace Neo.SmartContract
         // To update something on the ledger.
         public static object Change( byte[] key, params object[] opts )
         {
+            byte[] id;
+
             // If 'key' is an 'address' ==  member.
             if (key.AsString()[0] == 'M')
             {
@@ -521,14 +523,14 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['register option', 'value'].
                 if ( opts[1] is BigInteger )
                 {
-                    byte[] id = Ref( "Change register_", String.Concat( key.AsString(), (string)opts[0] ) ); // --PENDING-- vai retornar a mesma 'hash' para o mesmo tipo de mudança. talvez colocar timestamp para gerar números diferentes.
+                    id = Ref( "Change register_", String.Concat( key.AsString(), (string)opts[0] ) ); // --PENDING-- vai retornar a mesma 'hash' para o mesmo tipo de mudança. talvez colocar timestamp para gerar números diferentes.
                     Process( id, "Request the change of registration data of a member." );
                     return id;
                 }
                 
                 // Any member can request to delete another member.
                 // The 'opts.Length' is empty.
-                byte[] id = Ref("Delete member_", address.AsString());
+                id = Ref("Delete member_", address.AsString());
                 Process(id, "Request to dismiss a member.");
                 return id;
             }
@@ -548,14 +550,14 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['new utility name'].
             if ( opts.Length == 1 )
             {
-                byte[] id = Ref( "Change utility_", String.Concat( key.AsString(), (string)opts[0] ) );
+                id = Ref( "Change utility_", String.Concat( key.AsString(), (string)opts[0] ) );
                 Process( id, "Request the change of utility name of a PP." );
                 return id;
             }
 
             // Any member can request to DELETE a PP.
             // The 'opts.Length' is empty.
-            byte[] id = Ref("Delete PP_", key.AsString());
+            id = Ref("Delete PP_", key.AsString());
             Process(id, "Request to delete a PP.");
             return id;
         }
