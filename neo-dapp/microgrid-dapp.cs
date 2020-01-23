@@ -623,6 +623,9 @@ namespace Neo.SmartContract
         // To create a custom ID of a process based on its particular specifications.
         private static byte[] ID( params object[] args )
         {
+            // REFAZER para ficar de acordo com o 'work around':
+            // https://gist.github.com/yurigabrich/1d912961f462b2bbed6227872974acaf#gistcomment-3148093
+
             string str = null;
             
             for (int k = 0; k < args.Length; k++)
