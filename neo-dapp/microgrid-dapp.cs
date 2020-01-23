@@ -830,6 +830,9 @@ namespace Neo.SmartContract
 
         public static void ChangeResult( byte[] id, params string[] listOfMembers)
         {
+            // MUITA COISA ESTRANHA...
+            // REFAZER!
+
             string proposal = GetRef(id, "Proposal").AsString();
             
             if (proposal == "Change register_")
