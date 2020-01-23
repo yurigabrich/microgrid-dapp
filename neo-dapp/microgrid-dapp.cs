@@ -659,9 +659,9 @@ namespace Neo.SmartContract
         }
 
         // To properly read a boolean from storage.
-        private static bool Str2Bool( byte[] val )
+        private static bool Str2Bool( string val )
         {
-            if (val.AsString() == "1") return true;
+            if (val == "1") return true;
             return false;
         }
 
