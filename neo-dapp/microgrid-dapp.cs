@@ -506,7 +506,7 @@ namespace Neo.SmartContract
             // If 'key' is an 'address' ==  member.
             if (key.AsString()[0] == 'M')
             {
-                byte[] address = MemberData.ID.Get(key);
+                byte[] address = MemberData.ID.Get(key);    //--PENDING-- isso não faz sentido!
 
                 // Only the member can change its own personal data.
                 // To UPDATE, the params must be ['profile option', 'value'].
@@ -521,14 +521,14 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['register option', 'value'].
                 if ( opts[1] is BigInteger )
                 {
-                    byte[] id = Ref( "Change register_", String.Concat( key, opts[0] ) ); // --PENDING--
+                    byte[] id = Ref( "Change register_", String.Concat( key.AsString(), (string)opts[0] ) ); // --PENDING-- vai retornar a mesma 'hash' para o mesmo tipo de mudança. talvez colocar timestamp para gerar números diferentes.
                     Process( id, "Request the change of registration data of a member." );
                     return id;
                 }
                 
                 // Any member can request to delete another member.
                 // The 'opts.Length' is empty.
-                byte[] id = Ref("Delete member_", address);
+                byte[] id = Ref("Delete member_", address.AsString());
                 Process(id, "Request to dismiss a member.");
                 return id;
             }
@@ -539,7 +539,7 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['address', 'new bid value'].
             if ( opts.Length == 2 )
             {
-                UpBid(key, opts[0], opts[1]);
+                UpBid(key, (byte[])opts[0], (BigInteger)opts[1]);
                 Update("Bid.", key);
                 return true;
             }
@@ -548,14 +548,14 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['new utility name'].
             if ( opts.Length == 1 )
             {
-                byte[] id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
+                byte[] id = Ref( "Change utility_", String.Concat( key.AsString(), (string)opts[0] ) );
                 Process( id, "Request the change of utility name of a PP." );
                 return id;
             }
 
             // Any member can request to DELETE a PP.
             // The 'opts.Length' is empty.
-            byte[] id = Ref("Delete PP_", key);
+            byte[] id = Ref("Delete PP_", key.AsString());
             Process(id, "Request to delete a PP.");
             return id;
         }
