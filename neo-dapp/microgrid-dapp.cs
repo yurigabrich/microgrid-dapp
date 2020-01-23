@@ -521,14 +521,14 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['register option', 'value'].
                 if ( opts[1] is BigInteger )
                 {
-                    string id = Ref( "Change register_", String.Concat( key, opts[0] ) ); // --PENDING--
+                    byte[] id = Ref( "Change register_", String.Concat( key, opts[0] ) ); // --PENDING--
                     Process( id, "Request the change of registration data of a member." );
                     return id;
                 }
                 
                 // Any member can request to delete another member.
                 // The 'opts.Length' is empty.
-                string id = Ref("Delete member_", address);
+                byte[] id = Ref("Delete member_", address);
                 Process(id, "Request to dismiss a member.");
                 return id;
             }
@@ -548,14 +548,14 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['new utility name'].
             if ( opts.Length == 1 )
             {
-                string id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
+                byte[] id = Ref( "Change utility_", String.Concat( key, opts[0] ) );
                 Process( id, "Request the change of utility name of a PP." );
                 return id;
             }
 
             // Any member can request to DELETE a PP.
             // The 'opts.Length' is empty.
-            string id = Ref("Delete PP_", key);
+            byte[] id = Ref("Delete PP_", key);
             Process(id, "Request to delete a PP.");
             return id;
         }
