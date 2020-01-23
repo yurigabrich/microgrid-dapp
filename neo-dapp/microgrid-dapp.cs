@@ -766,7 +766,7 @@ namespace Neo.SmartContract
         }
 
         // To calculate the referendum result only once.
-        private static void CalcResult( string id )
+        private static void CalcResult( byte[] id )
         {
             if ( GetRef(id, "Has Result").Length == 0 )
             {
