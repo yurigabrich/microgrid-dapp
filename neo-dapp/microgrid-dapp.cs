@@ -791,11 +791,13 @@ namespace Neo.SmartContract
         // Once the time stated is reached, any member can then resume the process.
         private static bool isLock( byte[] id )
         {
-            if (id[0] == "R")
+            BigInteger endTime;
+            
+            if (id.AsString()[0] == 'R')
             {
-                uint endTime = GetRef(id, "End Time"); // --PENDING-- provavelmente vai dar erro de conversão!
+                endTime = GetRef(id, "endtime").AsBigInteger();
             }
-            uint endTime = GetCrowd(id, "End Time"); // --PENDING-- provavelmente vai dar erro de conversão!
+            endTime = GetCrowd(id, "endtime").AsBigInteger();
             
             if (InvokeTime() <= endTime) return true;
             return false;
