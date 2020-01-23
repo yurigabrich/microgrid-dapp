@@ -566,7 +566,7 @@ namespace Neo.SmartContract
         public static string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
         {
             string notes = Rec( Rec( Int2Str(capacity), utility) , Int2Str(timeToMarket) );
-            string id = Ref( "New PP request_", notes, cost );
+            byte[] id = Ref( "New PP request_", notes, cost );
             Process( id, "Request to add a new PP." );
             return id;
         }
