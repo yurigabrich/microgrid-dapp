@@ -1495,7 +1495,7 @@ namespace Neo.SmartContract
         {
             if ( (opt == "Total Amount") || (opt == "Contributions") || (opt == "Has Result") )
             {
-                BigInteger orig = GetCrowd(ICOid, opt).AsBigInteger();
+                BigInteger orig = GetCrowd(id, opt).AsBigInteger();
                 
                 if (orig == val)
                 {
