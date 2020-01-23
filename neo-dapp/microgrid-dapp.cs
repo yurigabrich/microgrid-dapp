@@ -576,8 +576,8 @@ namespace Neo.SmartContract
         // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
         public static bool Trade( byte[] fromAddress, byte[] toAddress, BigInteger exchange, BigInteger price )
         {
-            BigInteger[] toWallet = new BigInteger[];
-            BigInteger[] fromWallet = new BigInteger[];
+            BigInteger[] toWallet = new BigInteger[2];
+            BigInteger[] fromWallet = new BigInteger[2];
             
             // register = {"Quota", "Tokens"}
             foreach (string data in register)
