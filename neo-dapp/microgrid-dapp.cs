@@ -145,7 +145,7 @@ namespace Neo.SmartContract
                 if ( !Runtime.CheckWitness((byte[])args[0]) )
                     throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
 
-                if ( ((string)GetMemb((byte[])args[0], "FullName")).Length != 0 )
+                if ( GetMemb((byte[])args[0]).AsString().Length != 0 )
                     throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
                 
                 if ( Storage.Get("firstCall").AsBigInteger() == 0 )
@@ -172,7 +172,7 @@ namespace Neo.SmartContract
                 if ( args.Length != 1 )
                     throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
-                if ( (((string)GetMemb(Caller(), "FullName")).Length == 0) | (((byte[])args[0])[0] == 'A') ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+                if ( (GetMemb(Caller()).AsString().Length == 0) | (((byte[])args[0])[0] == 'A') ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
                     throw Warning();
 
                 return Summary( (byte[])args[0],     // Address/ID
@@ -180,7 +180,7 @@ namespace Neo.SmartContract
             }
 
             // Restricted operations.
-            if ( ((string)GetMemb(Caller(), "FullName")).Length != 0 )
+            if ( GetMemb(Caller()).AsString().Length != 0 )
             {
                 // Group operations.
                 if (operation == "vote")
@@ -235,7 +235,7 @@ namespace Neo.SmartContract
                     if ( (((string)args[1])[0] != 'A') || (((string)args[1]).Length == 0) )
                         throw new InvalidOperationException("Provide a valid destiny address.");
                         
-                    if ( ((string)GetMemb((byte[])args[1], "FullName")).Length != 0 )
+                    if ( GetMemb((byte[])args[1]).AsString().Length != 0 )
                         throw new InvalidOperationException("The address you are transaction to must be a member too.");
 
                     if ( (GetMemb((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
@@ -377,7 +377,7 @@ namespace Neo.SmartContract
 
                 if ((opt == "") || (opt == "detailed"))
                 {
-                    string[] brief = new string[] { (string)GetMemb(address,"FullName"), (string)GetMemb(address,"Utility"), (string)GetMemb(address,"Quota"), (string)GetMemb(address,"Tokens") };
+                    object[] brief = new object[] { GetMemb(address), GetMemb(address,"utility"), GetMemb(address,"quota"), GetMemb(address,"tokens") };
 
                     if (opt == "detailed")
                     {
