@@ -576,14 +576,15 @@ namespace Neo.SmartContract
         // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
         public static bool Trade( byte[] fromAddress, byte[] toAddress, BigInteger exchange, BigInteger price )
         {
-            BigInteger[] toWallet = new BigInteger[2];
-            BigInteger[] fromWallet = new BigInteger[2];
+            int n = 2;
+            BigInteger[] toWallet = new BigInteger[n];
+            BigInteger[] fromWallet = new BigInteger[n];
             
-            // register = {"Quota", "Tokens"}
-            foreach (string data in register)
+            // register = {"quota", "tokens"}
+            for (int r = 0; r < n; r++)
             {
-                fromWallet.append( GetMemb(fromAddress, data).AsBigInteger() );
-                toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
+                fromWallet[r] = GetMemb( fromAddress, register[r] ).AsBigInteger();
+                toWallet[r] = GetMemb( toAddress, register[r] ).AsBigInteger();
             }
             
             if ( ( fromWallet[0] < exchange ) || ( toWallet[1] < price ) ) return false;
