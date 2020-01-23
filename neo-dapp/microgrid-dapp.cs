@@ -811,6 +811,8 @@ namespace Neo.SmartContract
 
         public static bool AdmissionResult( byte[] id )
         {
+            // ESTÁ TUDO ERRADO!
+
             // Calculates the result
             CalcResult(id);
             
