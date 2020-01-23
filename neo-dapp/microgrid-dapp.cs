@@ -58,8 +58,8 @@ namespace Neo.SmartContract
         public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", "NEP-10" };
 
         // Member's dataset.
-        private static string[] profile => new string[] {"FullName", "Utility"};
-        private static string[] register => new string[] {"Quota", "Tokens"};
+        private static string[] profile => new string[] {"fullname", "utility"};
+        private static string[] register => new string[] {"quota", "tokens"};
         private struct MemberData
         {
             public static StorageMap ID => Storage.CurrentContext.CreateMap(nameof(ID));
