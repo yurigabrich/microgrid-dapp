@@ -1082,14 +1082,12 @@ namespace Neo.SmartContract
         }
 
         // --> read
-        private static object GetMemb( byte[] address, string opt )
+        private static byte[] GetMemb( byte[] address, string opt = "fullname" )
         {
-            if (opt == "fullname") return MemberData.FullName.Get(address);
             if (opt == "utility") return MemberData.Utility.Get(address);
-            if (opt == "quota") return MemberData.Quota.Get(address);
-            if (opt == "tokens") return MemberData.Tokens.Get(address);
-                    
-            return false; // Must never happen.
+            else if (opt == "quota") return MemberData.Quota.Get(address);
+            else if (opt == "tokens") return MemberData.Tokens.Get(address);
+            else return MemberData.FullName.Get(address);
         }
 
         // --> update
