@@ -360,7 +360,7 @@ namespace Neo.SmartContract
         // GROUP FUNCTIONS - The restrictions are made on the 'Main'.
 
         // To request to join the group.
-        public static byte[] Admission( byte[] address, string fullName, string utility)
+        public static byte[] Admission( byte[] address, string fullName, string utility )
         {
             byte[] id = Ref( "Membership request_", String.Concat( fullName, utility ) );
             Membership( address, "Request for admission." );
@@ -831,7 +831,7 @@ namespace Neo.SmartContract
             return false;
         }
 
-        public static void ChangeResult( byte[] id, params string[] listOfMembers)
+        public static void ChangeResult( byte[] id ) // , params string[] listOfMembers)
         {
             // MUITA COISA ESTRANHA...
             // REFAZER!
@@ -907,7 +907,7 @@ namespace Neo.SmartContract
             }
         }
 
-        public static object PowerUpResult( byte[] id, byte[] PPid = null, params string[] listOfFunders )
+        public static object PowerUpResult( byte[] id, byte[] PPid = null ) // , params string[] listOfFunders )
         {
             // STEP 1 - After a 'timeFrameRef' waiting period.
             if (PPid == null)
