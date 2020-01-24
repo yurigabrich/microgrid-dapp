@@ -278,7 +278,7 @@ namespace Neo.SmartContract
                     if ( (((byte[])args[0])[0] == 'P') || (((string)args[1]).Length > 2) )
                         throw new InvalidOperationException("Provide valid arguments to update a PP subject.");
                     
-                    if ( (Array.Exists(profile, element => element == (string)((object[])args[1])[0])) & !(Runtime.CheckWitness((byte[])args[0])) )
+                    if ( ( ((string)((object[])args[1])[0] == profile[0]) | ((string)((object[])args[1])[1] == profile[0]) ) & !(Runtime.CheckWitness((byte[])args[0])) )
                         throw new InvalidOperationException("Only the member can change its own personal data.");
                     
                     if ( (((byte[])args[0])[0] == 'P') & (((string)args[1]).Length == 1) & !(((object[])args[1])[0] is string) )
