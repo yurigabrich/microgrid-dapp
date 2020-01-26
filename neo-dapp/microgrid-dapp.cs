@@ -648,7 +648,7 @@ namespace Neo.SmartContract
                 }
             }
 
-            return Hash256(str);
+            return Hash256(str.AsByteArray());
         }
 
         // To properly store a boolean variable.
