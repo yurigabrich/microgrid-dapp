@@ -17,13 +17,13 @@ namespace Neo.SmartContract
         [DisplayName("membership")]
         public static event Action<byte[], string> Membership;
         [DisplayName("process")]
-        public static event Action<byte[], string> Process;
+        public static event Action<string, string> Process;
         [DisplayName("ballot")]
-        public static event Action<byte[], byte[], bool> Ballot;
+        public static event Action<string, byte[], bool> Ballot;
         [DisplayName("offer")]
-        public static event Action<byte[], byte[], BigInteger> Offer;
+        public static event Action<string, byte[], BigInteger> Offer;
         [DisplayName("change")]
-        public static event Action<string, byte[]> Update;
+        public static event Action<string, object> Update;
 
 
         //---------------------------------------------------------------------------------------------
