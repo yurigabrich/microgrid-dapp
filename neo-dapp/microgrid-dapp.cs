@@ -175,7 +175,7 @@ namespace Neo.SmartContract
                 if ( (GetMemb(Caller()).AsString().Length == 0) | (((byte[])args[0])[0] == 'A') ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
                     throw Warning();
 
-                return Summary( (byte[])args[0],     // Address/ID
+                return Summary( (object)args[0],     // any ID
                                 (string)args[1] );   // option
             }
 
@@ -191,10 +191,10 @@ namespace Neo.SmartContract
                     if ( !Runtime.CheckWitness((byte[])args[1]) )
                         throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
 
-                    if ( isLock( (byte[])args[0]) )
+                    if ( isLock( (string)args[0]) )
                         throw new InvalidOperationException("The ballot has ended.");
                     
-                    return Vote( (byte[])args[0],    // referendum id
+                    return Vote( (string)args[0],    // referendum id
                                  (byte[])args[1],    // member address
                                  (bool)args[2] );    // answer
                 }
@@ -207,19 +207,19 @@ namespace Neo.SmartContract
                     if ( !Runtime.CheckWitness((byte[])args[1]) )
                         throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
 
-                    if ( (((byte[])args[0])[0] != 'P') || (((byte[])args[0]).Length == 0) )
+                    if ( (((string)args[0])[0] != 'P') || (((string)args[0]).Length == 0) )
                         throw new InvalidOperationException("Provide a valid PP ID.");
 
-                    if ( (GetPP((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
+                    if ( (GetPP((string)args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
                         throw new InvalidOperationException("This member cannot profit from this power utility." );
 
                     if ( (byte)args[2] <= minOffer )
                         throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                     
-                    if ( isLock( (byte[])args[0] ) )
+                    if ( isLock( (string)args[0] ) )
                         throw new InvalidOperationException("The campaign has ended.");
 
-                    return Bid( (byte[])args[0],        // PP id
+                    return Bid( (string)args[0],        // PP id
                                 (byte[])args[1],        // member address
                                 (BigInteger)args[2] );  // bid value
                 }
