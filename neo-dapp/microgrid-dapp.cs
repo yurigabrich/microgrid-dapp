@@ -804,11 +804,11 @@ namespace Neo.SmartContract
         // Before a given time frame, no one is allowed to continue the process.
         // The monitoring of the time happens off-chain.
         // Once the time stated is reached, any member can then resume the process.
-        private static bool isLock( byte[] id )
+        private static bool isLock( string id )
         {
             BigInteger endTime;
             
-            if (id.AsString()[0] == 'R')
+            if (id[0] == 'R')
             {
                 endTime = GetRef(id, "endtime").AsBigInteger();
             }
