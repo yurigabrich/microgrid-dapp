@@ -380,43 +380,41 @@ namespace Neo.SmartContract
         }
 
         // To get information about something.
-        public static object Summary( byte[] key, string opt = "" )
+        public static object Summary( object id, string opt = "" )
         {
-            // If 'key' is an 'address' ==  member.
-            if (key.AsString()[0] == 'M')
+            // If 'id' is a 'byte[]' ==  member.
+            if (!(id is string))
             {
-                byte[] address = MemberData.ID.Get(key);
-
                 if ((opt == "") || (opt == "detailed"))
                 {
-                    object[] brief = new object[] { GetMemb(address), GetMemb(address,"utility"), GetMemb(address,"quota"), GetMemb(address,"tokens") };
+                    object[] brief = new object[] { GetMemb(id), GetMemb(id,"utility"), GetMemb(id,"quota"), GetMemb(id,"tokens") };
 
                     if (opt == "detailed")
                     {
-                        GetContributeValue( key, ListOfPPs() );
+                        ShowContributedValues( key, ListOfPPs() );
                     }
                     return brief;
                 }
-                return GetMemb(address,opt);
+                return GetMemb(id,opt);
             }
 
-            // If 'key' is an 'id' with prefix 'P' == power plant.
-            else if (key.AsString()[0] == 'P')
+            // If 'id' is a 'string' with prefix 'P' == power plant.
+            else if (id[0] == 'P')
             {
                 // The PP's crowdfunding had succeed and the PP is operating.
-                if ( GetPP(key).AsBigInteger() == 1 )
+                if ( GetPP(id) )
                 {
                     if ( (opt == "") || (opt == "detailed") )
                     {
-                        object[] brief = new object[] { GetPP(key,"Capacity"), GetPP(key,"Cost"), GetPP(key,"Utility"), GetPP(key,"TotMembers") };
+                        object[] brief = new object[] { GetPP(id,"Capacity"), GetPP(id,"Cost"), GetPP(id,"Utility"), GetPP(id,"TotMembers") };
             
                         if (opt == "detailed")
                         {
-                            GetContributeValue( key, ListOfMembers() );
+                            ShowContributedValues( id, ListOfMembers() );
                         }
                         return brief;
                     }
-                    return GetPP(key,opt);
+                    return GetPP(id,opt);
                 }
                 
                 // The PP's crowdfunding may be succeed or not, and the PP is definitely not operating.
@@ -424,35 +422,35 @@ namespace Neo.SmartContract
                 {
                     if ( (opt == "") || (opt == "detailed") )
                     {
-                        object[] brief = new object[] { GetCrowd(key,"Start Time"), GetCrowd(key,"End Time"), GetCrowd(key,"Total Amount"), GetCrowd(key,"Contributions"), GetCrowd(key,"Success") };
+                        object[] brief = new object[] { GetCrowd(id,"Start Time"), GetCrowd(id,"End Time"), GetCrowd(id,"Total Amount"), GetCrowd(id,"Contributions"), GetCrowd(id,"Success") };
 
                         if (opt == "detailed")
                         {
-                            for (int num = 0; num < NumOfMemb(); num++)
+                            // for (int num = 0; num < NumOfMemb(); num++)
+                            foreach (byte[] member in ListOfMembers())
                             {
-                                string memberAddress = Storage.Get( String.Concat( "M", Int2Str(num) )).AsString();
-                                BigInteger bid = GetBid(key, memberAddress);
+                                BigInteger bid = GetBid(id, member);
                                 
                                 if ( bid != 0 )
                                 {
-                                    Runtime.Notify( new object[] { memberAddress, bid } );
+                                    Runtime.Notify( new object[] { member, bid } );
                                 }
                             }
                         }
                         return brief;
                     }
-                    return GetCrowd(key,opt); // sempre vai retornar byte[], a conversão final tem q ser feita de acordo com a opção escolhida para se ter o valor correto de número, texto ou boleano.
+                    return GetCrowd(id, opt);
                 }
             }
 
-            // If 'key' is an 'id' with prefix 'R' == referendum process.
-            else if (key.AsString()[0] == 'R')
+            // If 'id' is a 'string' with prefix 'R' == referendum process.
+            else if (id[0] == 'R')
             {
                 if (opt == "")
                 {
-                    return new object[] { GetRef(key,"Proposal"), GetRef(key,"Notes"), GetRef(key,"Cost"), GetRef(key,"Outcome") };
+                    return new object[] { GetRef(id,"Proposal"), GetRef(id,"Notes"), GetRef(id,"Cost"), GetRef(id,"Outcome") };
                 }
-                return GetRef(key,opt);
+                return GetRef(id,opt);
             }
 
             // Wrap-up the group information.
@@ -991,8 +989,10 @@ namespace Neo.SmartContract
 
         // To filter the relationship of members and PPs.
         // Displays how much a member has contributed to a PP crowdfunding.
-        private static void GetContributeValue( byte[] lookForID, byte[][] listOfIDs )
+        private static void ShowContributedValues( object lookForID, object[] listOfIDs )
         {
+            // --PENDING!-- inputs must be adjusted to follow the conditions below.
+
             // Gets values by each ID registered on the contract storage space.
             if ( lookForID.AsString()[0] == 'P' )
             {
@@ -1076,7 +1076,7 @@ namespace Neo.SmartContract
             Storage.Put("NumOfMemb", temp);
             
             // Stores the address of each member.
-            MemberData.ID.Put( String.Concat( "M", Int2Str(temp) ), address );
+            // MemberData.ID.Put( String.Concat( "M", Int2Str(temp) ), address ); // Isto torna tudo muito mais complexo!
         }
 
         // --> read
@@ -1443,13 +1443,13 @@ namespace Neo.SmartContract
         // The function to bid on a crowdfunding is declared above because it is public.
 
         // --> read
-        private static BigInteger GetBid( byte[] id, byte[] member )
+        private static BigInteger GetBid( string id, byte[] member )
         {
-            byte[] bidID = Hash256( id.Concat(member) );
+            byte[] bidID = Hash256( id.AsByteArray().Concat(member) );
             return ICOData.Bid.Get(bidID).AsBigInteger();
         }
 
-        private static byte[] GetCrowd( byte[] id, string opt = "hasresult" )
+        private static object GetCrowd( string id, string opt = "hasresult" )
         {
             if (opt == "starttime") return ICOData.StartTime.Get(id);
             else if (opt == "endtime") return ICOData.EndTime.Get(id);
