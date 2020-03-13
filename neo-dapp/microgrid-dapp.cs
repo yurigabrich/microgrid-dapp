@@ -310,23 +310,23 @@ namespace Neo.SmartContract
                 if (operation == "admission result")
                 {
                     if ( args.Length != 1 )
-                        throw new InvalidOperationException("Please provide the admission process ID.");
+                        throw new InvalidOperationException("Please provide only the admission process ID.");
                     
                     if ( isLock( (string)args[0] ) )
                         throw new InvalidOperationException("There isn't a result yet.");
                     
-                    return AdmissionResult( (byte[])args[0] ); // Referendum ID
+                    return AdmissionResult( (string)args[0] ); // Referendum ID
                 }
                 
                 if (operation == "change result")
                 {
                     if ( args.Length != 1 )
-                        throw new InvalidOperationException("Please provide the change process ID.");
+                        throw new InvalidOperationException("Please provide only the change process ID.");
                     
                     if ( isLock( (string)args[0] ) )
                         throw new InvalidOperationException("There isn't a result yet.");
                     
-                    ChangeResult( (byte[])args[0] ); // Referendum ID
+                    ChangeResult( (string)args[0] ); // Referendum ID
                 }
                 
                 if (operation == "power up result")
@@ -337,8 +337,8 @@ namespace Neo.SmartContract
                     if ( args.Length > 2 )
                         throw new InvalidOperationException("Please provide at most the new PP process ID, and the PP ID itself if any.");
                     
-                    PowerUpResult( (byte[])args[0],     // Referendum ID
-                                   (byte[])args[1] );   // PP ID
+                    PowerUpResult( (string)args[0],     // Referendum ID
+                                   (string)args[1] );   // PP ID
                 }
 
                 if (operation == "list of power plants")
@@ -799,7 +799,7 @@ namespace Neo.SmartContract
         // After a period of 'timeFrameRef' days, a member should invoke those functions to state the referendum process.
         // An off-chain operation should handle this waiting time.
 
-        public static bool AdmissionResult( byte[] id )
+        public static bool AdmissionResult( string id )
         {
             // ESTÁ TUDO ERRADO!
 
@@ -818,7 +818,7 @@ namespace Neo.SmartContract
             return false;
         }
 
-        public static void ChangeResult( byte[] id ) // , params string[] listOfMembers)
+        public static void ChangeResult( string id ) // , params string[] listOfMembers)
         {
             // MUITA COISA ESTRANHA...
             // REFAZER!
@@ -894,7 +894,7 @@ namespace Neo.SmartContract
             }
         }
 
-        public static object PowerUpResult( byte[] id, byte[] PPid = null ) // , params string[] listOfFunders )
+        public static object PowerUpResult( string id, string PPid = null ) // , params string[] listOfFunders )
         {
             // STEP 1 - After a 'timeFrameRef' waiting period.
             if (PPid == null)
