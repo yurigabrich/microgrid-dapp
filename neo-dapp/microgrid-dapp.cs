@@ -372,9 +372,9 @@ namespace Neo.SmartContract
         // GROUP FUNCTIONS - The restrictions are made on the 'Main'.
 
         // To request to join the group.
-        public static byte[] Admission( byte[] address, string fullName, string utility )
+        public static string Admission( byte[] address, string fullName, string utility )
         {
-            byte[] id = Ref( "Membership request_", String.Concat( fullName, utility ) );
+            string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
             Membership( address, "Request for admission." );
             return id;
         }
@@ -633,34 +633,9 @@ namespace Neo.SmartContract
         }
 
         // To create a custom ID of a process based on its particular specifications.
-        private static byte[] ID( params object[] args )
+        private static string ID( params object[] args )
         {
-            // REFAZER para ficar de acordo com o 'work around':
-            // https://gist.github.com/yurigabrich/1d912961f462b2bbed6227872974acaf#gistcomment-3148093
-
-            string str = null;
-            
-            for (int k = 0; k < args.Length; k++)
-            {
-                int count = 0;
-                for (int n = 0; n < Alpha().Length; n++)
-                {
-                    if ( Alpha()[n] == ((string)args[k])[0] ) // args[k] is a 'string'
-                    {
-                        str = Rec( str, (string)args[k] );
-                        break;
-                    }
-                    count++;
-                }
-                
-                if ( count == Alpha().Length ) // args[k] is a 'integer'
-                {
-                    // Converts the related argument to string and concatenate.
-                    str = Rec( str, Int2Str( (int)args[k] ) );
-                }
-            }
-
-            return Hash256(str.AsByteArray());
+            return "Will be replaced to Base58 encoding.";
         }
 
         // To properly store a boolean variable.
@@ -1350,11 +1325,11 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // METHODS FOR REFERENDUMS
         // --> create
-        private static byte[] Ref( string proposal, string notes, int cost = 0 )
+        private static string Ref( string proposal, string notes, int cost = 0 )
         {
-            byte[] id = ID("R", proposal, notes, cost);
+            string id = ID("R", proposal, notes, cost);
 
-            if ( GetRef(id, "proposal").Length != 0 )
+            if ( ((string)GetRef(id, "proposal")).Length != 0 )
             {
                 Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.");
             }
@@ -1388,7 +1363,7 @@ namespace Neo.SmartContract
         // The function to vote on a referendum is declared above because it is public.
 
         // --> read
-        private static byte[] GetRef( byte[] id, string opt = "hasresult" )
+        private static object GetRef( string id, string opt = "hasresult" )
         {
             if (opt == "proposal") return RefData.Proposal.Get(id);
             else if (opt == "notes") return RefData.Notes.Get(id);
