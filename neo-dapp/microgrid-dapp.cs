@@ -1246,7 +1246,7 @@ namespace Neo.SmartContract
         }
 
         // --> read
-        private static byte[] GetPP( byte[] id, string opt = "hasstarted" )
+        private static object GetPP( string id, string opt = "hasstarted" )
         {
             if (opt == "capacity") return PPData.Capacity.Get(id);
             else if (opt == "cost") return PPData.Cost.Get(id);
