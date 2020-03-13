@@ -560,10 +560,10 @@ namespace Neo.SmartContract
         }
 
         // The whole process to integrate a new PP on the group power generation.
-        public static byte[] PowerUp( int capacity, int cost, string utility, uint timeToMarket )
+        public static string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
         {
             string notes = Rec( Rec( Int2Str(capacity), utility) , Int2Str(timeToMarket) );
-            byte[] id = Ref( "New PP request_", notes, cost );
+            string id = Ref( "New PP request_", notes, cost );
             Process( id, "Request to add a new PP." );
             return id;
         }
