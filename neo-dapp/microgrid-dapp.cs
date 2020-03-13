@@ -513,7 +513,7 @@ namespace Neo.SmartContract
         }
 
         // To update something on the ledger.
-        public static object Change( byte[] key, params object[] opts )
+        public static object Change( object key, params object[] opts )
         {
             byte[] id;
 
