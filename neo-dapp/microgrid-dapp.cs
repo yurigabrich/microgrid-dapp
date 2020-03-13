@@ -232,7 +232,7 @@ namespace Neo.SmartContract
                     if ( !Runtime.CheckWitness((byte[])args[0]) )
                         throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
                     
-                    if ( GetMemb((byte[])args[1]).Length == 0 )
+                    if ( ((string)GetMemb((byte[])args[1])).Length == 0 )
                         throw new InvalidOperationException("The address you are transaction to must be a member too.");
 
                     if ( (GetMemb((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
@@ -268,7 +268,7 @@ namespace Neo.SmartContract
                     
                     if ( args[0] is string ) // Should be a PP ID.
                     {
-                        if ( GetPP((string)args[0], "utility").Length == 0 )
+                        if ( ((string)GetPP((string)args[0], "utility")).Length == 0 )
                             throw new InvalidOperationException("Provide a valid PP ID.");
 
                         var opt = (object[])args[1];
@@ -292,7 +292,7 @@ namespace Neo.SmartContract
                     }
                     else // Should be a member ID (address).
                     {
-                        if ( GetMemb((byte[])args[0]).Length == 0 )
+                        if ( ((string)GetMemb((byte[])args[0])).Length == 0 )
                             throw new InvalidOperationException("Provide a valid member address.");
 
                         if ( (((object[])args[1]).Length != 2) || (((object[])args[1]).Length != 0) )
@@ -312,7 +312,7 @@ namespace Neo.SmartContract
                     if ( args.Length != 1 )
                         throw new InvalidOperationException("Please provide the admission process ID.");
                     
-                    if ( isLock( (byte[])args[0] ) )
+                    if ( isLock( (string)args[0] ) )
                         throw new InvalidOperationException("There isn't a result yet.");
                     
                     return AdmissionResult( (byte[])args[0] ); // Referendum ID
@@ -323,7 +323,7 @@ namespace Neo.SmartContract
                     if ( args.Length != 1 )
                         throw new InvalidOperationException("Please provide the change process ID.");
                     
-                    if ( isLock( (byte[])args[0] ) )
+                    if ( isLock( (string)args[0] ) )
                         throw new InvalidOperationException("There isn't a result yet.");
                     
                     ChangeResult( (byte[])args[0] ); // Referendum ID
