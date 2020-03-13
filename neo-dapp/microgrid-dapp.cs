@@ -231,11 +231,8 @@ namespace Neo.SmartContract
 
                     if ( !Runtime.CheckWitness((byte[])args[0]) )
                         throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
-
-                    if ( (((string)args[1])[0] != 'A') || (((string)args[1]).Length == 0) )
-                        throw new InvalidOperationException("Provide a valid destiny address.");
-                        
-                    if ( GetMemb((byte[])args[1]).AsString().Length != 0 )
+                    
+                    if ( GetMemb((byte[])args[1]).Length == 0 )
                         throw new InvalidOperationException("The address you are transaction to must be a member too.");
 
                     if ( (GetMemb((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
@@ -1093,7 +1090,7 @@ namespace Neo.SmartContract
         }
 
         // --> read
-        private static byte[] GetMemb( byte[] address, string opt = "fullname" )
+        private static object GetMemb( byte[] address, string opt = "fullname" )
         {
             if (opt == "utility") return MemberData.Utility.Get(address);
             else if (opt == "quota") return MemberData.Quota.Get(address);
