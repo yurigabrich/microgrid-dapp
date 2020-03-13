@@ -169,10 +169,10 @@ namespace Neo.SmartContract
             // Partially restricted operation.
             if (operation == "summary")
             {
-                if ( args.Length != 1 )
+                if ( args.Length < 1 )
                     throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
-                if ( (GetMemb(Caller()).AsString().Length == 0) | (((byte[])args[0])[0] == 'A') ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
+                if ( (((string)GetMemb(Caller())).Length == 0) && (((string)GetMemb((byte[])args[0])).Length != 0) ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
                     throw Warning();
 
                 return Summary( (object)args[0],     // any ID
