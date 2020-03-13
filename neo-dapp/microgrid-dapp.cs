@@ -611,189 +611,7 @@ namespace Neo.SmartContract
             return true;
         }
 
-
-        //---------------------------------------------------------------------------------------------
-        // SYSTEM FUNCTIONS
-
-        // A new PP will only distribute tokens and shares after a crowdfunding process succeed.
-        // All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
-        private static void Distribute( string toAddress, BigInteger quota, BigInteger tokens )
-        {
-            BigInteger[] toWallet = new BigInteger[];
-
-            // register = {"Quota", "Tokens"}
-            foreach (string data in register)
-            {
-                toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
-            }
-            
-            UpMemb(toAddress, register[0], toWallet[0] + quota);
-            UpMemb(toAddress, register[1], toWallet[1] + tokens);
-            Transfer(null, toAddress, quota, tokens);
-        }
-
-        // To create a custom ID of a process based on its particular specifications.
-        private static string ID( params object[] args )
-        {
-            return "Will be replaced to Base58 encoding.";
-        }
-
-        // To properly store a boolean variable.
-        private static string Bool2Str( bool val )
-        {
-            if (val) return "1";
-            return "0";
-        }
-
-        // To properly read a boolean from storage.
-        private static bool Str2Bool( string val )
-        {
-            if (val == "1") return true;
-            return false;
-        }
-
-        // To affordably convert a integer to a string.
-        private static string Int2Str(int num, string s = null)
-        {
-            if (num == 0) return s;
-
-            int quotient = num / 10;
-            int remainder = num % 10;
-            
-            string trick = Digits()[ remainder ];
-                
-            return Int2Str(quotient, String.Concat(trick, s) );
-        }
-
-        // Polimorfism to deal with BigInteger instead of Integer --PENDING-- evaluate if both methods is required.
-        private static string Int2Str(BigInteger num, string s = null)
-        {
-            if (num == 0) return s;
-
-            BigInteger quotient = num / 10;
-            BigInteger remainder = num % 10;
-            
-            string trick = Digits()[ (int)remainder ];
-                
-            return Int2Str(quotient, String.Concat(trick, s) );
-        }
-
-        // To affordably concatenate string variables.
-        private static string Rec(string start, string end)
-        {
-            return String.Concat(start, end);
-        }
-
-        // To affordably split string variables. Text and number must be intercalated!
-        private static object[] Split(string notes, int start, int slice, bool lookForNum)
-        {
-            int step = 0;
-            
-            while (step < slice)
-            {
-                string temp = notes.Substring(start + step, 1);
-                
-                int num = 0;
-                while ( num < Digits().Length )
-                {
-                    if ( temp == Digits()[num] )
-                    {
-                        break;
-                    }
-                    num++;
-                }
-                
-                if (lookForNum)
-                {
-                    if (num == 10)
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    if (num != 10)
-                    {
-                        break;
-                    }
-                }
-                step++;
-            }
-            return new object[] {notes.Substring(start, step), start + step};
-        }
-
-        // To filter the relationship of members and PPs.
-        // Displays how much a member has contributed to a PP crowdfunding.
-        private static void GetContributeValue( byte[] lookForID, byte[][] listOfIDs )
-        {
-            // Gets values by each ID registered on the contract storage space.
-            if ( lookForID.AsString()[0] == 'P' )
-            {
-                // Gets members' bid by a PP funding process.
-                foreach (byte[] memberAddress in listOfIDs)
-                {
-                    BigInteger bid = GetBid(lookForID, memberAddress);
-                    
-                    if ( bid != 0 )
-                    {
-                        Runtime.Notify( new object[] { memberAddress, bid } );
-                    }
-                }
-            }
-            else // lookForID.AsString()[0] == 'A'
-            {
-                // Gets PPs by a member investments.
-                foreach (byte[] PPid in listOfIDs)
-                {
-                    BigInteger bid = GetBid(PPid, lookForID);
-                    
-                    if ( bid != 0 )
-                    {
-                        Runtime.Notify( new object[] { PPid, bid } );
-                    }
-                }
-            }
-        }
-
-        // To calculate the referendum result only once.
-        private static void CalcResult( byte[] id )
-        {
-            if ( GetRef(id, "Has Result").Length == 0 )
-            {
-                UpRef(id, "Has Result", 1);
-            
-                BigInteger totalOfVotes = GetRef(id, "Num of Votes").AsBigInteger();
-                BigInteger totalOfTrues = GetRef(id, "Count True").AsBigInteger();
-                    
-                if ( totalOfTrues > (totalOfVotes / 2) )
-                {
-                    // Referendum has succeeded.
-                    UpRef(id, true);
-                }
-                
-                // Otherwise, the "Outcome" remains as 'false'.
-            }
-        }
-
-        // Actualy, it restricts a given operation to happen based on a timestamp.
-        // Before a given time frame, no one is allowed to continue the process.
-        // The monitoring of the time happens off-chain.
-        // Once the time stated is reached, any member can then resume the process.
-        private static bool isLock( string id )
-        {
-            BigInteger endTime;
-            
-            if (id[0] == 'R')
-            {
-                endTime = GetRef(id, "endtime").AsBigInteger();
-            }
-            endTime = GetCrowd(id, "endtime").AsBigInteger();
-            
-            if (InvokeTime() <= endTime) return true;
-            return false;
-        }
-
-
+        
         //---------------------------------------------------------------------------------------------
         // ADMINISTRATIVE FUNCTIONS
         // After a period of 'timeFrameRef' days, a member should invoke those functions to state the referendum process.
@@ -1058,6 +876,188 @@ namespace Neo.SmartContract
                 addresses[num] = memberAddress;
             }
             return addresses;
+        }
+
+
+        //---------------------------------------------------------------------------------------------
+        // SYSTEM FUNCTIONS
+
+        // A new PP will only distribute tokens and shares after a crowdfunding process succeed.
+        // All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
+        private static void Distribute( string toAddress, BigInteger quota, BigInteger tokens )
+        {
+            BigInteger[] toWallet = new BigInteger[];
+
+            // register = {"Quota", "Tokens"}
+            foreach (string data in register)
+            {
+                toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
+            }
+            
+            UpMemb(toAddress, register[0], toWallet[0] + quota);
+            UpMemb(toAddress, register[1], toWallet[1] + tokens);
+            Transfer(null, toAddress, quota, tokens);
+        }
+
+        // To create a custom ID of a process based on its particular specifications.
+        private static string ID( params object[] args )
+        {
+            return "Will be replaced to Base58 encoding.";
+        }
+
+        // To properly store a boolean variable.
+        private static string Bool2Str( bool val )
+        {
+            if (val) return "1";
+            return "0";
+        }
+
+        // To properly read a boolean from storage.
+        private static bool Str2Bool( string val )
+        {
+            if (val == "1") return true;
+            return false;
+        }
+
+        // To affordably convert a integer to a string.
+        private static string Int2Str(int num, string s = null)
+        {
+            if (num == 0) return s;
+
+            int quotient = num / 10;
+            int remainder = num % 10;
+            
+            string trick = Digits()[ remainder ];
+                
+            return Int2Str(quotient, String.Concat(trick, s) );
+        }
+
+        // Polimorfism to deal with BigInteger instead of Integer --PENDING-- evaluate if both methods is required.
+        private static string Int2Str(BigInteger num, string s = null)
+        {
+            if (num == 0) return s;
+
+            BigInteger quotient = num / 10;
+            BigInteger remainder = num % 10;
+            
+            string trick = Digits()[ (int)remainder ];
+                
+            return Int2Str(quotient, String.Concat(trick, s) );
+        }
+
+        // To affordably concatenate string variables.
+        private static string Rec(string start, string end)
+        {
+            return String.Concat(start, end);
+        }
+
+        // To affordably split string variables. Text and number must be intercalated!
+        private static object[] Split(string notes, int start, int slice, bool lookForNum)
+        {
+            int step = 0;
+            
+            while (step < slice)
+            {
+                string temp = notes.Substring(start + step, 1);
+                
+                int num = 0;
+                while ( num < Digits().Length )
+                {
+                    if ( temp == Digits()[num] )
+                    {
+                        break;
+                    }
+                    num++;
+                }
+                
+                if (lookForNum)
+                {
+                    if (num == 10)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    if (num != 10)
+                    {
+                        break;
+                    }
+                }
+                step++;
+            }
+            return new object[] {notes.Substring(start, step), start + step};
+        }
+
+        // To filter the relationship of members and PPs.
+        // Displays how much a member has contributed to a PP crowdfunding.
+        private static void GetContributeValue( byte[] lookForID, byte[][] listOfIDs )
+        {
+            // Gets values by each ID registered on the contract storage space.
+            if ( lookForID.AsString()[0] == 'P' )
+            {
+                // Gets members' bid by a PP funding process.
+                foreach (byte[] memberAddress in listOfIDs)
+                {
+                    BigInteger bid = GetBid(lookForID, memberAddress);
+                    
+                    if ( bid != 0 )
+                    {
+                        Runtime.Notify( new object[] { memberAddress, bid } );
+                    }
+                }
+            }
+            else // lookForID.AsString()[0] == 'A'
+            {
+                // Gets PPs by a member investments.
+                foreach (byte[] PPid in listOfIDs)
+                {
+                    BigInteger bid = GetBid(PPid, lookForID);
+                    
+                    if ( bid != 0 )
+                    {
+                        Runtime.Notify( new object[] { PPid, bid } );
+                    }
+                }
+            }
+        }
+
+        // To calculate the referendum result only once.
+        private static void CalcResult( byte[] id )
+        {
+            if ( GetRef(id, "Has Result").Length == 0 )
+            {
+                UpRef(id, "Has Result", 1);
+            
+                BigInteger totalOfVotes = GetRef(id, "Num of Votes").AsBigInteger();
+                BigInteger totalOfTrues = GetRef(id, "Count True").AsBigInteger();
+                    
+                if ( totalOfTrues > (totalOfVotes / 2) )
+                {
+                    // Referendum has succeeded.
+                    UpRef(id, true);
+                }
+                
+                // Otherwise, the "Outcome" remains as 'false'.
+            }
+        }
+
+        // Actualy, it restricts a given operation to happen based on a timestamp.
+        // Before a given time frame, no one is allowed to continue the process.
+        // The monitoring of the time happens off-chain.
+        // Once the time stated is reached, any member can then resume the process.
+        private static bool isLock( string id )
+        {
+            BigInteger endTime;
+            
+            if (id[0] == 'R')
+            {
+                endTime = GetRef(id, "endtime").AsBigInteger();
+            }
+            endTime = GetCrowd(id, "endtime").AsBigInteger();
+            
+            if (InvokeTime() <= endTime) return true;
+            return false;
         }
 
 
