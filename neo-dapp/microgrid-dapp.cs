@@ -463,7 +463,7 @@ namespace Neo.SmartContract
         }
 
         // To vote in a given ID process.
-        public static bool Vote( byte[] id, byte[] member, bool answer )
+        public static bool Vote( string id, byte[] member, bool answer )
         {
             // Increases the number of votes.
             BigInteger temp = GetRef(id,"Num of Votes").AsBigInteger();
@@ -483,7 +483,7 @@ namespace Neo.SmartContract
         }
 
         // To make a bid in a new PP crowdfunding process.
-        public static bool Bid( byte[] id, byte[] member, BigInteger bid )
+        public static bool Bid( string id, byte[] member, BigInteger bid )
         {
             BigInteger target = GetPP(id, "cost").AsBigInteger();
             BigInteger funds = GetCrowd(id, "totalamount").AsBigInteger();
