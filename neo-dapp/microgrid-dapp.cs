@@ -483,8 +483,8 @@ namespace Neo.SmartContract
         // To make a bid in a new PP crowdfunding process.
         public static bool Bid( string id, byte[] member, BigInteger bid )
         {
-            BigInteger target = GetPP(id, "cost").AsBigInteger();
-            BigInteger funds = GetCrowd(id, "totalamount").AsBigInteger();
+            BigInteger target = (BigInteger)GetPP(id, "cost");
+            BigInteger funds = (BigInteger)GetCrowd(id, "totalamount");
             
             if ( bid > (target - funds) )
                 throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str(target - funds) ), ",00). Bid again!" ));
@@ -496,8 +496,8 @@ namespace Neo.SmartContract
             UpCrowd(id, "totalamount", funds + bid);
             
             // Increases the number of contributions.
-            BigInteger temp = GetCrowd(id, "contributions").AsBigInteger();
-            UpCrowd(id, "contributions", temp++);
+            BigInteger temp = (BigInteger)GetCrowd(id, "contributions");
+            UpCrowd(id, "contributions", temp+1);
             
             // Tracks bid by member for each ICO process.
             UpBid(id, member, bid);
@@ -1460,7 +1460,7 @@ namespace Neo.SmartContract
         }
 
         // --> update
-        private static void UpBid( byte[] id, byte[] member, BigInteger bid )
+        private static void UpBid( string id, byte[] member, BigInteger bid )
         {
             BigInteger orig = GetBid(id, member);
             
@@ -1472,17 +1472,17 @@ namespace Neo.SmartContract
             }
             else
             {
-                byte[] bidID = Hash256( id.Concat(member) );
+                byte[] bidID = Hash256( id.AsByteArray().Concat(member) );
                 ICOData.Bid.Put( bidID, orig + bid );
             }
         }
 
         // Only the 'Total Amount', 'Contributions', 'HasResult' and 'Success' can be updated.
-        private static void UpCrowd( byte[] id, string opt, BigInteger val )
+        private static void UpCrowd( string id, string opt, BigInteger val )
         {
             if ( (opt == "Total Amount") || (opt == "Contributions") || (opt == "Has Result") )
             {
-                BigInteger orig = GetCrowd(id, opt).AsBigInteger();
+                BigInteger orig = (BigInteger)GetCrowd(id, opt);
                 
                 if (orig == val)
                 {
@@ -1505,9 +1505,9 @@ namespace Neo.SmartContract
             }
         }
 
-        private static void UpCrowd( byte[] id, bool val )
+        private static void UpCrowd( string id, bool val )
         {
-            string orig = GetCrowd(id, "success").AsString();
+            string orig = (string)GetCrowd(id, "success");
             
             if ( orig == Bool2Str(val) )
             {
