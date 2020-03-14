@@ -464,14 +464,14 @@ namespace Neo.SmartContract
         public static bool Vote( string id, byte[] member, bool answer )
         {
             // Increases the number of votes.
-            BigInteger temp = GetRef(id,"Num of Votes").AsBigInteger();
-            UpRef(id, "Num of Votes", temp++);
+            BigInteger temp = (BigInteger)GetRef(id,"Num of Votes");
+            UpRef(id, "Num of Votes", temp+1);
 
             if (answer)
             {
                 // Increases the number of "trues".
-                temp = GetRef(id,"Count True").AsBigInteger();
-                UpRef(id, "Count True", temp++);
+                temp = (BigInteger)GetRef(id,"Count True");
+                UpRef(id, "Count True", temp+1);
             }
 
             // Publishes the vote.
@@ -1379,11 +1379,11 @@ namespace Neo.SmartContract
 
         // --> update
         // It is only possible to internally change the 'MoneyRaised', the 'NumOfVotes', the 'CountTrue', the 'HasResult' and the 'Outcome'.
-        private static void UpRef( byte[] id, string opt, BigInteger val )
+        private static void UpRef( string id, string opt, BigInteger val )
         {
             if ((opt == "numofvotes") || (opt == "moneyraised") || (opt == "counttrue") || (opt == "hasresult") )
             {
-                BigInteger orig = GetRef(id, opt).AsBigInteger();
+                BigInteger orig = (BigInteger)GetRef(id, opt);
                 
                 if (orig == val)
                 {
@@ -1408,9 +1408,9 @@ namespace Neo.SmartContract
             }
         }
 
-        private static void UpRef( byte[] id, bool val )
+        private static void UpRef( string id, bool val )
         {
-            bool orig = Str2Bool( GetRef(id, "outcome").AsString() );
+            bool orig = Str2Bool( (string)GetRef(id, "outcome") );
 
             if ( orig == val )
             {
