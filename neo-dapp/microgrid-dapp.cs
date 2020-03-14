@@ -519,6 +519,8 @@ namespace Neo.SmartContract
         // To update something on the ledger.
         public static object Change( object id, params object[] opts )
         {
+            string rID;
+
             // If 'id' is a 'byte[]' ==  member.
             if (!(id is string))
             {
@@ -526,7 +528,7 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['profile option', 'value'].
                 if ( opts[1] is string )
                 {
-                    UpMemb(id, (string)opts[0], (string)opts[1]);
+                    UpMemb((byte[])id, (string)opts[0], (string)opts[1]);
                     Update("Profile data.", id);
                     return true;
                 }
@@ -535,14 +537,14 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['register option', 'value'].
                 if ( opts[1] is BigInteger )
                 {
-                    string rID = Ref( "Change register_", String.Concat( (string)id, (string)opts[0] ) );
+                    rID = Ref( "Change register_", String.Concat( (string)id, (string)opts[0] ) );
                     Process( rID, "Request the change of registration data of a member." );
                     return rID;
                 }
                 
                 // Any member can request to delete another member.
                 // The 'opts.Length' is empty.
-                string rID = Ref("Delete member_", (string)id);
+                rID = Ref("Delete member_", (string)id);
                 Process(rID, "Request to dismiss a member.");
                 return rID;
             }
@@ -553,8 +555,8 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['address', 'new bid value'].
             if ( opts.Length == 2 )
             {
-                UpBid(key, (byte[])opts[0], (BigInteger)opts[1]);
-                Update("Bid.", key);
+                UpBid((string)id, (byte[])opts[0], (BigInteger)opts[1]);
+                Update("Bid.", id);
                 return true;
             }
             
@@ -562,16 +564,16 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['new utility name'].
             if ( opts.Length == 1 )
             {
-                id = Ref( "Change utility_", String.Concat( key.AsString(), (string)opts[0] ) );
-                Process( id, "Request the change of utility name of a PP." );
-                return id;
+                rID = Ref( "Change utility_", String.Concat( (string)id, (string)opts[0] ) );
+                Process( rID, "Request the change of utility name of a PP." );
+                return rID;
             }
 
             // Any member can request to DELETE a PP.
             // The 'opts.Length' is empty.
-            id = Ref("Delete PP_", key.AsString());
-            Process(id, "Request to delete a PP.");
-            return id;
+            rID = Ref("Delete PP_", (string)id);
+            Process(rID, "Request to delete a PP.");
+            return rID;
         }
 
         // The whole process to integrate a new PP on the group power generation.
