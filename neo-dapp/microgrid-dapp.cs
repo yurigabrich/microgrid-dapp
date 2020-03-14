@@ -537,14 +537,14 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['register option', 'value'].
                 if ( opts[1] is BigInteger )
                 {
-                    rID = Ref( "Change register_", String.Concat( (string)id, (string)opts[0] ) );
+                    rID = Ref( "Change register_", String.Concat( ((byte[])id).AsString(), (string)opts[0] ) );
                     Process( rID, "Request the change of registration data of a member." );
                     return rID;
                 }
                 
                 // Any member can request to delete another member.
                 // The 'opts.Length' is empty.
-                rID = Ref("Delete member_", (string)id);
+                rID = Ref("Delete member_", ((byte[])id).AsString());
                 Process(rID, "Request to dismiss a member.");
                 return rID;
             }
