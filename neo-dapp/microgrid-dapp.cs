@@ -266,7 +266,7 @@ namespace Neo.SmartContract
                     if (args.Length != 2)
                         throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
                     
-                    if ( args[0] is string ) // Should be a PP ID.
+                    if ( (args[0] is string) & (((string)args[0])[0] == 'P') ) // Must be a PP ID.
                     {
                         if ( ((string)GetPP((string)args[0], "utility")).Length == 0 )
                             throw new InvalidOperationException("Provide a valid PP ID.");
@@ -535,19 +535,19 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['register option', 'value'].
                 if ( opts[1] is BigInteger )
                 {
-                    rid = Ref( "Change register_", String.Concat( key.AsString(), (string)opts[0] ) ); // --PENDING-- vai retornar a mesma 'hash' para o mesmo tipo de mudança. talvez colocar timestamp para gerar números diferentes.
-                    Process( id, "Request the change of registration data of a member." );
-                    return id;
+                    string rID = Ref( "Change register_", String.Concat( (string)id, (string)opts[0] ) );
+                    Process( rID, "Request the change of registration data of a member." );
+                    return rID;
                 }
                 
                 // Any member can request to delete another member.
                 // The 'opts.Length' is empty.
-                id = Ref("Delete member_", address.AsString());
-                Process(id, "Request to dismiss a member.");
-                return id;
+                string rID = Ref("Delete member_", (string)id);
+                Process(rID, "Request to dismiss a member.");
+                return rID;
             }
             
-            // Otherwise, the 'key' is an 'id' with prefix 'P' == power plant.
+            // Otherwise, the 'id' is a 'string' with prefix 'P' == power plant.
 
             // Only the member can change its own bid.
             // To UPDATE, the params must be ['address', 'new bid value'].
