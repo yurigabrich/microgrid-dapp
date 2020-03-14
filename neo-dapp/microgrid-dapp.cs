@@ -346,9 +346,9 @@ namespace Neo.SmartContract
                     if ( args.Length != 0 )
                         throw new InvalidOperationException("This function does not need attributes.");
                     
-                    foreach (byte[] PPid in ListOfPPs())
+                    foreach (byte[] ppID in ListOfPPs())
                     {
-                        Runtime.Notify( PPid );
+                        Runtime.Notify( ppID );
                     }
                 }
 
@@ -385,36 +385,40 @@ namespace Neo.SmartContract
             // If 'id' is a 'byte[]' ==  member.
             if (!(id is string))
             {
+                var address = (byte[])id;
+                
                 if ((opt == "") || (opt == "detailed"))
                 {
-                    object[] brief = new object[] { GetMemb(id), GetMemb(id,"utility"), GetMemb(id,"quota"), GetMemb(id,"tokens") };
+                    object[] brief = new object[] { GetMemb(address), GetMemb(address,"utility"), GetMemb(address,"quota"), GetMemb(address,"tokens") };
 
                     if (opt == "detailed")
                     {
-                        ShowContributedValues( key, ListOfPPs() );
+                        ShowContributedValues( address, ListOfPPs() );
                     }
                     return brief;
                 }
-                return GetMemb(id,opt);
+                return GetMemb(address,opt);
             }
 
             // If 'id' is a 'string' with prefix 'P' == power plant.
-            else if (id[0] == 'P')
+            else if (((string)id)[0] == 'P')
             {
+                var ppID = (string)id;
+                
                 // The PP's crowdfunding had succeed and the PP is operating.
-                if ( GetPP(id) )
+                if ( (bool)GetPP(ppID) )
                 {
                     if ( (opt == "") || (opt == "detailed") )
                     {
-                        object[] brief = new object[] { GetPP(id,"Capacity"), GetPP(id,"Cost"), GetPP(id,"Utility"), GetPP(id,"TotMembers") };
+                        object[] brief = new object[] { GetPP(ppID,"Capacity"), GetPP(ppID,"Cost"), GetPP(ppID,"Utility"), GetPP(ppID,"TotMembers") };
             
                         if (opt == "detailed")
                         {
-                            ShowContributedValues( id, ListOfMembers() );
+                            ShowContributedValues( ppID, ListOfMembers() );
                         }
                         return brief;
                     }
-                    return GetPP(id,opt);
+                    return GetPP(ppID,opt);
                 }
                 
                 // The PP's crowdfunding may be succeed or not, and the PP is definitely not operating.
@@ -422,14 +426,14 @@ namespace Neo.SmartContract
                 {
                     if ( (opt == "") || (opt == "detailed") )
                     {
-                        object[] brief = new object[] { GetCrowd(id,"Start Time"), GetCrowd(id,"End Time"), GetCrowd(id,"Total Amount"), GetCrowd(id,"Contributions"), GetCrowd(id,"Success") };
+                        object[] brief = new object[] { GetCrowd(ppID,"Start Time"), GetCrowd(ppID,"End Time"), GetCrowd(ppID,"Total Amount"), GetCrowd(ppID,"Contributions"), GetCrowd(ppID,"Success") };
 
                         if (opt == "detailed")
                         {
                             // for (int num = 0; num < NumOfMemb(); num++)
                             foreach (byte[] member in ListOfMembers())
                             {
-                                BigInteger bid = GetBid(id, member);
+                                BigInteger bid = GetBid(ppID, member);
                                 
                                 if ( bid != 0 )
                                 {
@@ -439,18 +443,20 @@ namespace Neo.SmartContract
                         }
                         return brief;
                     }
-                    return GetCrowd(id, opt);
+                    return GetCrowd(ppID, opt);
                 }
             }
 
             // If 'id' is a 'string' with prefix 'R' == referendum process.
-            else if (id[0] == 'R')
+            else if (((string)id)[0] == 'R')
             {
+                var rID = (string)id;
+                
                 if (opt == "")
                 {
-                    return new object[] { GetRef(id,"Proposal"), GetRef(id,"Notes"), GetRef(id,"Cost"), GetRef(id,"Outcome") };
+                    return new object[] { GetRef(rID,"Proposal"), GetRef(rID,"Notes"), GetRef(rID,"Cost"), GetRef(rID,"Outcome") };
                 }
-                return GetRef(id,opt);
+                return GetRef(rID,opt);
             }
 
             // Wrap-up the group information.
@@ -511,21 +517,17 @@ namespace Neo.SmartContract
         }
 
         // To update something on the ledger.
-        public static object Change( object key, params object[] opts )
+        public static object Change( object id, params object[] opts )
         {
-            byte[] id;
-
-            // If 'key' is an 'address' ==  member.
-            if (key.AsString()[0] == 'M')
+            // If 'id' is a 'byte[]' ==  member.
+            if (!(id is string))
             {
-                byte[] address = MemberData.ID.Get(key);    //--PENDING-- isso não faz sentido!
-
                 // Only the member can change its own personal data.
                 // To UPDATE, the params must be ['profile option', 'value'].
                 if ( opts[1] is string )
                 {
-                    UpMemb(address, (string)opts[0], (string)opts[1]);
-                    Update("Profile data.", address);
+                    UpMemb(id, (string)opts[0], (string)opts[1]);
+                    Update("Profile data.", id);
                     return true;
                 }
                 
@@ -533,7 +535,7 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['register option', 'value'].
                 if ( opts[1] is BigInteger )
                 {
-                    id = Ref( "Change register_", String.Concat( key.AsString(), (string)opts[0] ) ); // --PENDING-- vai retornar a mesma 'hash' para o mesmo tipo de mudança. talvez colocar timestamp para gerar números diferentes.
+                    rid = Ref( "Change register_", String.Concat( key.AsString(), (string)opts[0] ) ); // --PENDING-- vai retornar a mesma 'hash' para o mesmo tipo de mudança. talvez colocar timestamp para gerar números diferentes.
                     Process( id, "Request the change of registration data of a member." );
                     return id;
                 }
@@ -710,10 +712,10 @@ namespace Neo.SmartContract
             }
         }
 
-        public static object PowerUpResult( string id, string PPid = null ) // , params string[] listOfFunders )
+        public static object PowerUpResult( string id, string ppID = null ) // , params string[] listOfFunders )
         {
             // STEP 1 - After a 'timeFrameRef' waiting period.
-            if (PPid == null)
+            if (ppID == null)
             {
                 if ( isLock(id) )
                     throw new InvalidOperationException("There isn't a result about the new PP request yet.");
@@ -749,12 +751,12 @@ namespace Neo.SmartContract
                         }
                         
                         //            PP(capacity, cost, utility, time to market)
-                        string PPid = PP(notes[0], GetRef(id, "Cost"), notes[1], notes[2]);
+                        string ppID = PP(notes[0], GetRef(id, "Cost"), notes[1], notes[2]);
                         
                         // Starts to raise money for it.
-                        CrowdFunding(PPid);
-                        Process(PPid, "Shut up and give me money!");
-                        return PPid;
+                        CrowdFunding(ppID);
+                        Process(ppID, "Shut up and give me money!");
+                        return ppID;
                     }
                     
                     // Otherwise...
@@ -766,25 +768,25 @@ namespace Neo.SmartContract
             }
             
             // STEP 2 - After a 'timeFrameCrowd' waiting period.
-            if ( isLock(PPid) )
+            if ( isLock(ppID) )
                 throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
             
             // Evaluates the crowdfunding result only once.
-            if ( GetCrowd(PPid, "Has Result").Length == 0 )
+            if ( GetCrowd(ppID, "Has Result").Length == 0 )
             {
-                UpCrowd(PPid, "Has Result", 1);
+                UpCrowd(ppID, "Has Result", 1);
                 
-                BigInteger target = GetPP(PPid, "Cost").AsBigInteger();
-                BigInteger funding = GetCrowd(PPid, "Total Amount").AsBigInteger();
+                BigInteger target = GetPP(ppID, "Cost").AsBigInteger();
+                BigInteger funding = GetCrowd(ppID, "Total Amount").AsBigInteger();
                     
                 // Starts or not the building of the new PP.
                 if (funding == target)
                 {
                     // Crowdfunding has succeeded.
-                    UpCrowd(PPid, true);
+                    UpCrowd(ppID, true);
                     
                     // Updates the number of investors.
-                    UpPP(PPid, "numOfFundMemb", listOfFunders.Length);
+                    UpPP(ppID, "numOfFundMemb", listOfFunders.Length);
                     
                     Process(id, "New power plant on the way.");
                     return true;
@@ -793,7 +795,7 @@ namespace Neo.SmartContract
                 // Otherwise, the "Success" remains as 'false'.
                 foreach (string funder in litsOfFunders)
                 {
-                    Refund(PPid, funder);
+                    Refund(ppID, funder);
                 }
                 
                 Process(id, "Fundraising has failed.");
@@ -804,20 +806,20 @@ namespace Neo.SmartContract
             
             // Calculates the date the new PP is planned to start to operate, that can always be updated until the deadline.
             // operationDate = ICO_endTime + PP_timeToMarket
-            uint operationDate = GetCrowd(PPid, "End Time") + GetPP(PPid, "Time to Market");
+            uint operationDate = GetCrowd(ppID, "End Time") + GetPP(ppID, "Time to Market");
             
             if ( InvokeTime() <= operationDate )
                 throw new InvalidOperationException("The new PP is not ready to operate yet.");
             
             // Evaluates the construction only once.
-            if ( GetPP(PPid, "Has Started").Length == 0 )
+            if ( GetPP(ppID, "Has Started").Length == 0 )
             {
                 // When the PP is ready to operate, it's time to distribute tokens and shares.
                 
                 
                     
                 // Increases the total power supply of the group.
-                BigInteger capOfPP = GetPP(PPid, "Capacity");               // [MW]
+                BigInteger capOfPP = GetPP(ppID, "Capacity");               // [MW]
                 BigInteger capOfGroup = TotalSupply() + capOfPP;            // [MW]
                 Storage.Put("TotalSupply", capOfGroup);
             
@@ -827,10 +829,10 @@ namespace Neo.SmartContract
                 foreach (string funder in litsOfFunders)
                 {
                     // Gets the member contribution.
-                    BigInteger grant = GetBid(PPid, funder);                // [R$]
+                    BigInteger grant = GetBid(ppID, funder);                // [R$]
 
                     // Identifies the member participaction rate.
-                    BigInteger rate = grant/(GetRef(PPid, "Cost"));         // [pu]
+                    BigInteger rate = grant/(GetRef(ppID, "Cost"));         // [pu]
                     
                     // Defines how much of crypto-currency a member acquires from the new PP's capacity.
                     BigInteger tokens = (rate * capOfPP)/factor;            // [MW/1000 = kW == SEB]
@@ -841,7 +843,7 @@ namespace Neo.SmartContract
                     Distribute(funder, quota, tokens);
                 }
             
-                Process(PPid, "A new power plant is now operating.");
+                Process(ppID, "A new power plant is now operating.");
                 return true;
             }
             
@@ -851,15 +853,15 @@ namespace Neo.SmartContract
         // To return the IDs of each PP to be later used on other functions.
         private static byte[][] ListOfPPs()
         {
-            byte[][] PPids = new byte[ (int)NumOfPP() ][];
+            byte[][] ppIDs = new byte[ (int)NumOfPP() ][];
             
             for (int num = 0; num < NumOfPP(); num++)
             {
                 var index = String.Concat( "P", Int2Str(num+1) );
-                var PPid = PPData.ID.Get(index);
-                PPids[num] = PPid;
+                var ppID = PPData.ID.Get(index);
+                ppIDs[num] = ppID;
             }
-            return PPids;
+            return ppIDs;
         }
 
         // To return the address of each member to be later used on other functions.
@@ -1010,13 +1012,13 @@ namespace Neo.SmartContract
             else // lookForID.AsString()[0] == 'A'
             {
                 // Gets PPs by a member investments.
-                foreach (byte[] PPid in listOfIDs)
+                foreach (byte[] ppID in listOfIDs)
                 {
-                    BigInteger bid = GetBid(PPid, lookForID);
+                    BigInteger bid = GetBid(ppID, lookForID);
                     
                     if ( bid != 0 )
                     {
-                        Runtime.Notify( new object[] { PPid, bid } );
+                        Runtime.Notify( new object[] { ppID, bid } );
                     }
                 }
             }
@@ -1268,7 +1270,7 @@ namespace Neo.SmartContract
             
             if (opt == "timetomarket")
             {
-                if ( InvokeTime() > ( GetCrowd(PPid, "End Time") + GetPP(PPid, "timetomarket") ) ) // --PENDING--
+                if ( InvokeTime() > ( GetCrowd(ppID, "End Time") + GetPP(ppID, "timetomarket") ) ) // --PENDING--
                     throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
                 
                 // Don't invoke Put if value is unchanged.
