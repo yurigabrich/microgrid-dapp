@@ -597,8 +597,8 @@ namespace Neo.SmartContract
             // register = {"quota", "tokens"}
             for (int r = 0; r < n; r++)
             {
-                fromWallet[r] = GetMemb( fromAddress, register[r] ).AsBigInteger();
-                toWallet[r] = GetMemb( toAddress, register[r] ).AsBigInteger();
+                fromWallet[r] = (BigInteger)GetMemb( fromAddress, register[r] );
+                toWallet[r] = (BigInteger)GetMemb( toAddress, register[r] );
             }
             
             if ( ( fromWallet[0] < exchange ) || ( toWallet[1] < price ) ) return false;
