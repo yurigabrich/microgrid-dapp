@@ -374,7 +374,7 @@ namespace Neo.SmartContract
         // To request to join the group.
         public static string Admission( byte[] address, string fullName, string utility )
         {
-            string id = Ref( "Membership request_", String.Concat( fullName, utility ) );
+            string id = Ref( fullName, utility, address );
             Membership( address, "Request for admission." );
             return id;
         }
