@@ -76,6 +76,7 @@ namespace Neo.SmartContract
             public static StorageMap Proposal => Storage.CurrentContext.CreateMap(nameof(Proposal));
             public static StorageMap Notes => Storage.CurrentContext.CreateMap(nameof(Notes));
             public static StorageMap Cost => Storage.CurrentContext.CreateMap(nameof(Cost));
+            public static StorageMap Address => Storage.CurrentContext.CreateMap(nameof(Address));
             public static StorageMap MoneyRaised => Storage.CurrentContext.CreateMap(nameof(MoneyRaised));
             public static StorageMap NumOfVotes => Storage.CurrentContext.CreateMap(nameof(NumOfVotes));
             public static StorageMap CountTrue => Storage.CurrentContext.CreateMap(nameof(CountTrue));
@@ -1313,7 +1314,7 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // METHODS FOR REFERENDUMS
         // --> create
-        private static string Ref( string proposal, string notes, int cost = 0 )
+        private static string Ref( string proposal, string notes, int cost = 0, byte[] address )
         {
             string id = ID("R", proposal, notes, cost);
 
@@ -1327,41 +1328,7 @@ namespace Neo.SmartContract
                 RefData.Proposal.Put(id, proposal);
                 RefData.Notes.Put(id, notes);
                 RefData.Cost.Put(id, cost);
-                // RefData.MoneyRaised.Put(id, 0); // Expensive to create with null value. Just state it out!
-                // RefData.NumOfVotes.Put(id, 0); // Expensive to create with null value. Just state it out!
-                // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
-                RefData.Outcome.Put(id, Bool2Str(false));
-                // RefData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
-                RefData.StartTime.Put(id, InvokeTime());
-                RefData.EndTime.Put(id, InvokeTime() + timeFrameRef);
-                
-                // Increases the total number of referendum processes.
-                BigInteger temp = NumOfRef() + 1;
-                Storage.Put("NumOfRef", temp);
-                
-                // Stores the ID of each Ref.
-                RefData.ID.Put( String.Concat( "R", Int2Str(temp) ), id );
-
-                Process(id, "The referendum process has started.");
-            }
-
-            return id;
-        }
-
-        private static string Ref( string proposal, string notes, byte[] address )
-        {
-            string id = ID("R", proposal, notes, address.ToBigInteger());
-
-            if ( ((string)GetRef(id, "proposal")).Length != 0 )
-            {
-                Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.");
-            }
-            else
-            {
-                // Stores the values.
-                RefData.Proposal.Put(id, proposal);
-                RefData.Notes.Put(id, notes);
-                RefData.Cost.Put(id, address);
+                RefData.Address.Put(id, address);
                 // RefData.MoneyRaised.Put(id, 0); // Expensive to create with null value. Just state it out!
                 // RefData.NumOfVotes.Put(id, 0); // Expensive to create with null value. Just state it out!
                 // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
