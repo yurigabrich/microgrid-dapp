@@ -1369,6 +1369,41 @@ namespace Neo.SmartContract
             return id;
         }
 
+        private static string Ref( string proposal, string notes, byte[] address )
+        {
+            string id = ID("R", proposal, notes, address.ToBigInteger());
+
+            if ( ((string)GetRef(id, "proposal")).Length != 0 )
+            {
+                Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.");
+            }
+            else
+            {
+                // Stores the values.
+                RefData.Proposal.Put(id, proposal);
+                RefData.Notes.Put(id, notes);
+                RefData.Cost.Put(id, address);
+                // RefData.MoneyRaised.Put(id, 0); // Expensive to create with null value. Just state it out!
+                // RefData.NumOfVotes.Put(id, 0); // Expensive to create with null value. Just state it out!
+                // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
+                RefData.Outcome.Put(id, Bool2Str(false));
+                // RefData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
+                RefData.StartTime.Put(id, InvokeTime());
+                RefData.EndTime.Put(id, InvokeTime() + timeFrameRef);
+                
+                // Increases the total number of referendum processes.
+                BigInteger temp = NumOfRef() + 1;
+                Storage.Put("NumOfRef", temp);
+                
+                // Stores the ID of each Ref.
+                RefData.ID.Put( String.Concat( "R", Int2Str(temp) ), id );
+
+                Process(id, "The referendum process has started.");
+            }
+
+            return id;
+        }
+
         // The function to vote on a referendum is declared above because it is public.
 
         // --> read
@@ -1377,6 +1412,7 @@ namespace Neo.SmartContract
             if (opt == "proposal") return RefData.Proposal.Get(id);
             else if (opt == "notes") return RefData.Notes.Get(id);
             else if (opt == "cost") return RefData.Cost.Get(id);
+            else if (opt == "address") return RefData.Cost.Get(id);
             else if (opt == "moneyraised") return RefData.MoneyRaised.Get(id);
             else if (opt == "numofvotes") return RefData.NumOfVotes.Get(id);
             else if (opt == "counttrue") return RefData.CountTrue.Get(id);
