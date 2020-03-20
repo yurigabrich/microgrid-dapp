@@ -621,19 +621,24 @@ namespace Neo.SmartContract
 
         public static bool AdmissionResult( string id )
         {
-            // ESTÁ TUDO ERRADO!
-
-            // Calculates the result
+            // Calculates the result.
             CalcResult(id);
             
-            if ( Str2Bool( GetRef(id, "Outcome") ) )
+            // Retrives the address from private storage.
+            byte[] address = (byte[])GetRef(id, "address");
+
+            if ( Str2Bool( (string)GetRef(id, "outcome") ) )
             {
-                // Add a new member after approval from group members.
+                // Retrives the member data from private storage.
+                string fullName = (string)GetRef(id, "proposal");
+                string utility = (string)GetRef(id, "notes");
+
+                // Adds a new member after the group approval.
                 Member( address, fullName, utility, 0, 0 );
                 Membership( address, "Welcome on board!" );
                 return true;
             }
-
+            // Otherwise, leave the user out of the group.
             Membership( address, "Not approved yet." );
             return false;
         }
@@ -1027,22 +1032,22 @@ namespace Neo.SmartContract
         }
 
         // To calculate the referendum result only once.
-        private static void CalcResult( byte[] id )
+        private static void CalcResult( string id )
         {
-            if ( GetRef(id, "Has Result").Length == 0 )
+            if ( Str2Bool( (string)GetRef(id) ) )
             {
-                UpRef(id, "Has Result", 1);
-            
-                BigInteger totalOfVotes = GetRef(id, "Num of Votes").AsBigInteger();
-                BigInteger totalOfTrues = GetRef(id, "Count True").AsBigInteger();
+                BigInteger totalOfVotes = (BigInteger)GetRef(id, "numofvotes");
+                BigInteger totalOfTrues = (BigInteger)GetRef(id, "counttrue");
                     
                 if ( totalOfTrues > (totalOfVotes / 2) )
                 {
                     // Referendum has succeeded.
                     UpRef(id, true);
-                }
-                
-                // Otherwise, the "Outcome" remains as 'false'.
+                }                
+                // Otherwise, the "outcome" remains as 'false'.
+
+                // Certifies the calculation happens only once.
+                UpRef(id, "hasresult", 1);
             }
         }
 
