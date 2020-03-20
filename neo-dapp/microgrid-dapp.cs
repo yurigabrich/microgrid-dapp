@@ -1314,7 +1314,7 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // METHODS FOR REFERENDUMS
         // --> create
-        private static string Ref( string proposal, string notes, int cost = 0, byte[] address )
+        private static string Ref( string proposal, string notes, byte[] address, int cost = 0 )
         {
             string id = ID("R", proposal, notes, cost);
 
