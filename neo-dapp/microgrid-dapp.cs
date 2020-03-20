@@ -643,34 +643,26 @@ namespace Neo.SmartContract
             return false;
         }
 
-        public static void ChangeResult( string id ) // , params string[] listOfMembers)
+        public static bool ChangeResult( string id )
         {
-            // MUITA COISA ESTRANHA...
-            // REFAZER!
-
-            string proposal = GetRef(id, "Proposal").AsString();
+            // Calculates the result.
+            CalcResult(id);
             
-            if (proposal == "Change register_")
+            if ( Str2Bool( GetRef(id, "outcome") ) )
             {
-                CalcResult(id);
-                
-                if ( Str2Bool( GetRef(id, "Outcome") ) )
+                Process(id, "Approved.");
+
+                // Identifies the proposal and does the respective operation.
+                string proposal = (string)GetRef(id, "proposal");
+
+                if (proposal == "Change register_")
                 {
-                    Process(id, "Approved.");
                     UpMemb(key, opts[0], opts[1]); // missing dependency --PENDING--
                     Update("Registration data.", key);
                 }
-                
-                Process(id, "Denied.");
-            }
-                        
-            if (proposal == "Delete member_")
-            {
-                CalcResult(id);
-                
-                if ( Str2Bool( GetRef(id, "Outcome") ) )
+                            
+                if (proposal == "Delete member_")
                 {
-                    Process(id, "Approved.");
                     BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
                     BigInteger give_out = portion/(NumOfMemb() - 1);
                     
@@ -686,37 +678,24 @@ namespace Neo.SmartContract
                     DelMemb(key);
                     Membership(key, "Goodbye.");
                 }
-            
-                Process(id, "Denied.");
-            }
-            
-            if (proposal == "Change utility_")
-            {
-                CalcResult(id);
                 
-                if ( Str2Bool( GetRef(id, "Outcome") ) )
+                if (proposal == "Change utility_")
                 {
-                    Process(id, "Approved.");
                     UpPP(key, opts[0]);  // missing dependency --PENDING--
                     Update("Belonging of.", key);
                 }
-
-                Process(id, "Denied.");
-            }
-                
-            if (proposal == "Delete PP_")
-            {
-                CalcResult(id);
-                
-                if ( Str2Bool( GetRef(id, "Outcome") ) )
+                    
+                if (proposal == "Delete PP_")
                 {
-                    Process(id, "Approved.");
                     DelPP(key);
                     Update("Deletion of.", key);
                 }
 
-                Process(id, "Denied.");
+                return true;
             }
+
+            Process(id, "Denied.");
+            return false;
         }
 
         public static object PowerUpResult( string id, string ppID = null ) // , params string[] listOfFunders )
