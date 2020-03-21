@@ -538,14 +538,14 @@ namespace Neo.SmartContract
                 // To UPDATE, the params must be ['register option', 'value'].
                 if ( opts[1] is BigInteger )
                 {
-                    rID = Ref( "Change register_", String.Concat( ((byte[])id).AsString(), (string)opts[0] ) );
+                    rID = Ref( "Change register_", (string)opts[0], (byte[])id, (int)opts[1] );
                     Process( rID, "Request the change of registration data of a member." );
                     return rID;
                 }
                 
                 // Any member can request to delete another member.
                 // The 'opts.Length' is empty.
-                rID = Ref("Delete member_", ((byte[])id).AsString());
+                rID = Ref( "Delete member_", null, (byte[])id );
                 Process(rID, "Request to dismiss a member.");
                 return rID;
             }
@@ -565,14 +565,15 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['new utility name'].
             if ( opts.Length == 1 )
             {
-                rID = Ref( "Change utility_", String.Concat( (string)id, (string)opts[0] ) );
+                // Ref( string proposal, string notes, byte[] address, int cost )
+                rID = Ref( "Change utility_", (string)opts[0],  ((string)id).AsByteArray() );
                 Process( rID, "Request the change of utility name of a PP." );
                 return rID;
             }
 
             // Any member can request to DELETE a PP.
             // The 'opts.Length' is empty.
-            rID = Ref("Delete PP_", (string)id);
+            rID = Ref("Delete PP_", null, ((string)id).AsByteArray());
             Process(rID, "Request to delete a PP.");
             return rID;
         }
@@ -581,7 +582,7 @@ namespace Neo.SmartContract
         public static string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
         {
             string notes = Rec( Rec( Int2Str(capacity), utility) , Int2Str(timeToMarket) );
-            string id = Ref( "New PP request_", notes, cost );
+            string id = Ref( "New PP request_", notes, new byte[1] {0x00}, cost );
             Process( id, "Request to add a new PP." );
             return id;
         }
