@@ -565,7 +565,6 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['new utility name'].
             if ( opts.Length == 1 )
             {
-                // Ref( string proposal, string notes, byte[] address, int cost )
                 rID = Ref( "Change utility_", (string)opts[0],  ((string)id).AsByteArray() );
                 Process( rID, "Request the change of utility name of a PP." );
                 return rID;
@@ -659,13 +658,15 @@ namespace Neo.SmartContract
 
                 if (proposal == "Change register_")
                 {
-                    UpMemb(key, opts[0], opts[1]); // missing dependency --PENDING--
+                    byte[] key = (byte[])GetRef(id, "address");
+                    UpMemb(key, GetRef(id, "notes"), GetRef(id, "cost"));
                     Update("Registration data.", key);
                 }
                             
                 if (proposal == "Delete member_")
                 {
-                    BigInteger portion = GetMemb(key, "Quota").AsBigInteger();
+                    byte[] key = (byte[])GetRef(id, "address");
+                    BigInteger portion = (BigInteger)GetMemb(key, "Quota");
                     BigInteger give_out = portion/(NumOfMemb() - 1);
                     
                     foreach (string member in listOfMembers)
@@ -683,14 +684,14 @@ namespace Neo.SmartContract
                 
                 if (proposal == "Change utility_")
                 {
-                    UpPP(key, opts[0]);  // missing dependency --PENDING--
-                    Update("Belonging of.", key);
+                    UpPP(id, GetRef(id, "notes"));
+                    Update("Belonging of.", id);
                 }
                     
                 if (proposal == "Delete PP_")
                 {
-                    DelPP(key);
-                    Update("Deletion of.", key);
+                    DelPP(id);
+                    Update("Deletion of.", id);
                 }
 
                 return true;
@@ -872,7 +873,7 @@ namespace Neo.SmartContract
 
         // A new PP will only distribute tokens and shares after a crowdfunding process succeed.
         // All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
-        private static void Distribute( string toAddress, BigInteger quota, BigInteger tokens )
+        private static void Distribute( byte[] toAddress, BigInteger quota, BigInteger tokens )
         {
             BigInteger[] toWallet = new BigInteger[];
 
@@ -1225,7 +1226,7 @@ namespace Neo.SmartContract
         // The 'Utility', the 'HasStarted', and the 'Time To Market' are the only options that can be changed.
         // However, the 'Utility' can be changed anytime, the 'HasStarted' can be changed only once, while the 'Time to Market' is restricted by its deadline of start operation date.
         // To update the other options, delete the current PP and create a new one.
-        private static void UpPP( byte[] id, string opt, object val )
+        private static void UpPP( string id, string opt, object val )
         {
             if (opt == "utility")
             {
@@ -1274,7 +1275,7 @@ namespace Neo.SmartContract
         }
 
         // --> delete
-        private static void DelPP( byte[] id )
+        private static void DelPP( string id )
         {
             PPData.Capacity.Delete(id);
             PPData.Cost.Delete(id);
