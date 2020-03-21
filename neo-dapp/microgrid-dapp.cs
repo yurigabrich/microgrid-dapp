@@ -1359,7 +1359,7 @@ namespace Neo.SmartContract
             if (opt == "proposal") return RefData.Proposal.Get(id);
             else if (opt == "notes") return RefData.Notes.Get(id);
             else if (opt == "cost") return RefData.Cost.Get(id);
-            else if (opt == "address") return RefData.Cost.Get(id);
+            else if (opt == "address") return RefData.Address.Get(id);
             else if (opt == "moneyraised") return RefData.MoneyRaised.Get(id);
             else if (opt == "numofvotes") return RefData.NumOfVotes.Get(id);
             else if (opt == "counttrue") return RefData.CountTrue.Get(id);
