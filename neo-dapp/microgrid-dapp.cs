@@ -649,7 +649,7 @@ namespace Neo.SmartContract
             // Calculates the result.
             CalcResult(id);
             
-            if ( Str2Bool( GetRef(id, "outcome") ) )
+            if ( Str2Bool( (string)GetRef(id, "outcome") ) )
             {
                 Process(id, "Approved.");
 
@@ -659,7 +659,7 @@ namespace Neo.SmartContract
                 if (proposal == "Change register_")
                 {
                     byte[] key = (byte[])GetRef(id, "address");
-                    UpMemb(key, GetRef(id, "notes"), GetRef(id, "cost"));
+                    UpMemb(key, (string)GetRef(id, "notes"), (BigInteger)GetRef(id, "cost"));
                     Update("Registration data.", key);
                 }
                             
@@ -669,7 +669,7 @@ namespace Neo.SmartContract
                     BigInteger portion = (BigInteger)GetMemb(key, "Quota");
                     BigInteger give_out = portion/(NumOfMemb() - 1);
                     
-                    foreach (string member in listOfMembers)
+                    foreach (byte[] member in ListOfMembers())
                     {
                         // In an infinitesimal period of time the group will be disbalanced
                         // until the related member be completely deleted.
@@ -684,10 +684,10 @@ namespace Neo.SmartContract
                 
                 if (proposal == "Change utility_")
                 {
-                    UpPP(id, GetRef(id, "notes"));
+                    UpPP(id, "utility", (string)GetRef(id, "notes"));
                     Update("Belonging of.", id);
                 }
-                    
+                
                 if (proposal == "Delete PP_")
                 {
                     DelPP(id);
