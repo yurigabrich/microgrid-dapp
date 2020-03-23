@@ -622,7 +622,7 @@ namespace Neo.SmartContract
 
         public static bool AdmissionResult( string id )
         {
-            // Calculates the result.
+            // Updates the result.
             CalcResult(id);
             
             // Retrives the address from private storage.
@@ -646,7 +646,7 @@ namespace Neo.SmartContract
 
         public static bool ChangeResult( string id )
         {
-            // Calculates the result.
+            // Updates the result.
             CalcResult(id);
             
             if ( Str2Bool( (string)GetRef(id, "outcome") ) )
@@ -701,43 +701,34 @@ namespace Neo.SmartContract
             return false;
         }
 
-        public static object PowerUpResult( string id, string ppID = null ) // , params string[] listOfFunders )
+        public static object PowerUpResult( string id, string ppID = null )
         {
-            // STEP 1 - After a 'timeFrameRef' waiting period.
+            // STEP 1 - Analyses the referendum about the new PP.
             if (ppID == null)
             {
                 if ( isLock(id) )
                     throw new InvalidOperationException("There isn't a result about the new PP request yet.");
                 
+                // After a 'timeFrameRef' waiting period...
+
                 // Evaluates the referendum result only once.
-                if ( GetRef(id, "Has Result").Length == 0 )
+                if ( (BigInteger)GetRef(id) == 0 )
                 {
+                    // Updates the result.
                     CalcResult(id);
                     
-                    if ( Str2Bool( GetRef(id, "Outcome") ) )
+                    if ( Str2Bool( (string)GetRef(id, "outcome") ) )
                     {
                         // Referendum has succeeded. It's time to add a new PP.
 
                         string notes = GetRef(id, "Notes");
                         
                         // separa os termos em Notes!           // --PENDING--
-                        notes.Substring
+                        capacity
+                        cost
+                        utility
+                        time to market
                         
-        // ------------------------------------------------------------------AQUI-------------------------------------
-                        
-                        capSlice = PowGenLimits()[1].Length; // max capacity
-                        
-                        while (capSlice != 0)
-                        {
-                            cap = notes.Substring(0, capSlice);
-                            if ( cap[-1] in Digits() )
-                            {
-                                int capacity = (int)cap;
-                                break
-                            }
-
-                            capSlice--;
-                        }
                         
                         //            PP(capacity, cost, utility, time to market)
                         string ppID = PP(notes[0], GetRef(id, "Cost"), notes[1], notes[2]);
