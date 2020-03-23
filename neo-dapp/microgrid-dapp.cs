@@ -77,6 +77,7 @@ namespace Neo.SmartContract
             public static StorageMap Notes => Storage.CurrentContext.CreateMap(nameof(Notes));
             public static StorageMap Cost => Storage.CurrentContext.CreateMap(nameof(Cost));
             public static StorageMap Address => Storage.CurrentContext.CreateMap(nameof(Address));
+            public static StorageMap Time => Storage.CurrentContext.CreateMap(nameof(Time));
             public static StorageMap MoneyRaised => Storage.CurrentContext.CreateMap(nameof(MoneyRaised));
             public static StorageMap NumOfVotes => Storage.CurrentContext.CreateMap(nameof(NumOfVotes));
             public static StorageMap CountTrue => Storage.CurrentContext.CreateMap(nameof(CountTrue));
@@ -580,8 +581,7 @@ namespace Neo.SmartContract
         // The whole process to integrate a new PP on the group power generation.
         public static string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
         {
-            string notes = Rec( Rec( Int2Str(capacity), utility) , Int2Str(timeToMarket) );
-            string id = Ref( "New PP request_", notes, new byte[1] {0x00}, cost );
+            string id = Ref( Int2Str(capacity), utility, new byte[1] {0x00}, cost, timeToMarket );
             Process( id, "Request to add a new PP." );
             return id;
         }
@@ -1307,7 +1307,7 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // METHODS FOR REFERENDUMS
         // --> create
-        private static string Ref( string proposal, string notes, byte[] address, int cost = 0 )
+        private static string Ref( string proposal, string notes, byte[] address, int cost = 0, uint time = 0 )
         {
             string id = ID("R", proposal, notes, cost);
 
@@ -1320,8 +1320,9 @@ namespace Neo.SmartContract
                 // Stores the values.
                 RefData.Proposal.Put(id, proposal);
                 RefData.Notes.Put(id, notes);
-                RefData.Cost.Put(id, cost);
-                RefData.Address.Put(id, address);
+                RefData.Cost.Put(id, cost); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
+                RefData.Address.Put(id, address); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
+                RefData.Time.Put(id, time); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
                 // RefData.MoneyRaised.Put(id, 0); // Expensive to create with null value. Just state it out!
                 // RefData.NumOfVotes.Put(id, 0); // Expensive to create with null value. Just state it out!
                 // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
