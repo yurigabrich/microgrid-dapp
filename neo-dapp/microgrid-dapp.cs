@@ -720,18 +720,15 @@ namespace Neo.SmartContract
                     if ( Str2Bool( (string)GetRef(id, "outcome") ) )
                     {
                         // Referendum has succeeded. It's time to add a new PP.
-
-                        string notes = GetRef(id, "Notes");
                         
-                        // separa os termos em Notes!           // --PENDING--
-                        capacity
-                        cost
-                        utility
-                        time to market
+                        // Gets the terms from the begining of the process.
+                        BigInteger capacity = Str2Int( (string)GetRef(id, "proposal") );
+                        BigInteger cost = (BigInteger)GetRef(id, "cost");
+                        string utility = (string)GetRef(id, "notes");
+                        BigInteger timeToMarket = (BigInteger)GetRef(id, "time");
                         
-                        
-                        //            PP(capacity, cost, utility, time to market)
-                        string ppID = PP(notes[0], GetRef(id, "Cost"), notes[1], notes[2]);
+                        // Generates the PP ID.
+                        string ppID = PP(capacity, cost, utility, timeToMarket);
                         
                         // Starts to raise money for it.
                         CrowdFunding(ppID);
@@ -744,7 +741,7 @@ namespace Neo.SmartContract
                     return false;
                 }
                 
-                return "This process are completed.";
+                return "This process step is completed.";
             }
             
             // STEP 2 - After a 'timeFrameCrowd' waiting period.
@@ -1353,6 +1350,7 @@ namespace Neo.SmartContract
             else if (opt == "notes") return RefData.Notes.Get(id);
             else if (opt == "cost") return RefData.Cost.Get(id);
             else if (opt == "address") return RefData.Address.Get(id);
+            else if (opt == "time") return RefData.Time.Get(id);
             else if (opt == "moneyraised") return RefData.MoneyRaised.Get(id);
             else if (opt == "numofvotes") return RefData.NumOfVotes.Get(id);
             else if (opt == "counttrue") return RefData.CountTrue.Get(id);
