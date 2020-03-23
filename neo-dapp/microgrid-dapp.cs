@@ -14,6 +14,8 @@ namespace Neo.SmartContract
 
         [DisplayName("transaction")]
         public static event Action<byte[], byte[], BigInteger, BigInteger> Transfer;
+        [DisplayName("transaction")]
+        public static event Action<string, byte[], BigInteger, BigInteger> Return;
         [DisplayName("membership")]
         public static event Action<byte[], string> Membership;
         [DisplayName("process")]
@@ -722,18 +724,18 @@ namespace Neo.SmartContract
                         // Referendum has succeeded. It's time to add a new PP.
                         
                         // Gets the terms from the begining of the process.
-                        BigInteger capacity = Str2Int( (string)GetRef(id, "proposal") );
+                        string capacity = (string)GetRef(id, "proposal");
                         BigInteger cost = (BigInteger)GetRef(id, "cost");
                         string utility = (string)GetRef(id, "notes");
-                        BigInteger timeToMarket = (BigInteger)GetRef(id, "time");
+                        uint timeToMarket = (uint)GetRef(id, "time");
                         
                         // Generates the PP ID.
-                        string ppID = PP(capacity, cost, utility, timeToMarket);
+                        string PPid = PP(capacity, cost, utility, timeToMarket);
                         
                         // Starts to raise money for it.
-                        CrowdFunding(ppID);
-                        Process(ppID, "Shut up and give me money!");
-                        return ppID;
+                        CrowdFunding(PPid);
+                        Process(PPid, "Shut up and give me money!");
+                        return PPid;
                     }
                     
                     // Otherwise...
@@ -1180,13 +1182,13 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // METHODS FOR POWER PLANTS
         // --> create
-        private static byte[] PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
+        private static string PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
         {
             // Creates the unique identifier.
-            byte[] id = ID("P", capacity, cost, utility);
+            string id = ID("P", capacity, cost, utility);
 
             // Checks if the PP register already exists.
-            if ( GetPP(id, "capacity").AsString().Length != 0 )
+            if ( ((string)GetPP(id, "capacity")).Length != 0 )
             {
                 Process(id, "This power plant already exists. Use the method UpPP to change its registering data.");
             }
@@ -1207,7 +1209,7 @@ namespace Neo.SmartContract
                 // Stores the ID of each PP.
                 PPData.ID.Put( String.Concat( "P", Int2Str(temp) ), id );
 
-                Process(id, "New PP created.")
+                Process(id, "New PP created.");
             }
 
             return id;
@@ -1426,7 +1428,7 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // METHODS TO FINANCE A NEW POWER PLANT
         // --> create
-        private static void CrowdFunding( byte[] id ) // This ID must come from a success Referendum process or it is a PP ID? --PENDING-- DEFINITION!
+        private static void CrowdFunding( string id ) // This ID must come from a success Referendum process or it is a PP ID? --PENDING-- DEFINITION!
         {
             
             ICOData.StartTime.Put(id, InvokeTime());
@@ -1517,31 +1519,31 @@ namespace Neo.SmartContract
         }
 
         // --> delete
-        private static void Refund( byte[] id, byte[] member )
+        private static void Refund( string id, byte[] member )
         {
             BigInteger grant = GetBid(id, member);
             
             // Decreases the total amount of funds.
-            BigInteger funds = GetCrowd(id, "totalamount");
+            BigInteger funds = (BigInteger)GetCrowd(id, "totalamount");
             UpCrowd(id, "totalamount", funds - grant);
 
             // Decreases the total number of contributions.
-            BigInteger contributions = GetCrowd(id, "contributions");
-            UpCrowd(id, "contributions", contributions--);
+            BigInteger contributions = (BigInteger)GetCrowd(id, "contributions");
+            UpCrowd(id, "contributions", contributions-1);
             
             // Deletes the member's offer.
-            byte[] bidID = Hash256( id.Concat(member) );
+            byte[] bidID = Hash256( id.AsByteArray().Concat(member) );
             ICOData.Bid.Delete(bidID);
 
             // Notifies about the cancel of the bid.
-            Transfer(id, member, 0, (-1 * grant));
+            Return(id, member, 0, (-1 * grant));
         }
 
         // Only the 'Total Amount' and 'Contributions' can be "deleted"
         // because the failure of a crowdfunding must be preserved.
         // Actually it is only used to "store" null values cheaply, and
         // it must solely happen if the refund (due to a bid cancel) reaches zero.
-        private static void DelCrowd( byte[] id, string opt )
+        private static void DelCrowd( string id, string opt )
         {
             if ( (opt == "totalamount") || (opt == "contributions") )
             {
