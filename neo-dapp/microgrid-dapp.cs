@@ -748,12 +748,12 @@ namespace Neo.SmartContract
             if ( isLock(ppID) )
                 throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
             
-            // After a 'timeFrameCrowd' waiting period.
+            // After a 'timeFrameCrowd' waiting period...
 
             // Evaluates the crowdfunding result only once.
             if ( (BigInteger)GetCrowd(ppID) == 0 )
             {                
-                // Certifies the result updating happens only once.
+                // Updates the result.
                 UpCrowd(ppID, "hasresult", 1);
 
                 // Gets the values from the crowdfunding process.
@@ -783,49 +783,51 @@ namespace Neo.SmartContract
                 return false;
             }
             
-            // STEP 3 - 
-            
-            // After waiting for the time to market.
-            
+            // STEP 3 - Analyzes the PP operation status.
+
             // Calculates the date the new PP is planned to start to operate, that can always be updated until the deadline.
             // operationDate = ICO_endTime + PP_timeToMarket
-            uint operationDate = GetCrowd(ppID, "End Time") + GetPP(ppID, "Time to Market");
+            uint operationDate = (uint)GetCrowd(ppID, "endtime") + (uint)GetPP(ppID, "timetomarket");
             
             if ( InvokeTime() <= operationDate )
                 throw new InvalidOperationException("The new PP is not ready to operate yet.");
             
+            // After waiting for the time to market.
+
             // Evaluates the construction only once.
-            if ( GetPP(ppID, "Has Started").Length == 0 )
+            if ( (BigInteger)GetPP(ppID) == 0 )
             {
                 // When the PP is ready to operate, it's time to distribute tokens and shares.
-                
-                
-                    
+
                 // Increases the total power supply of the group.
-                BigInteger capOfPP = GetPP(ppID, "Capacity");               // [MW]
-                BigInteger capOfGroup = TotalSupply() + capOfPP;            // [MW]
+                BigInteger capOfPP = (BigInteger)GetPP(ppID, "capacity");       // [MW]
+                BigInteger capOfGroup = TotalSupply() + capOfPP;                // [MW]
                 Storage.Put("TotalSupply", capOfGroup);
             
                 // Identifies how much the new Power Plant takes part on the group total power supply.
-                BigInteger sharesOfPP = capOfPP/capOfGroup;                 // [pu]
+                BigInteger sharesOfPP = capOfPP/capOfGroup;                     // [pu]
                 
-                foreach (string funder in ListOfFunders(ppID))
+                foreach (byte[] funder in ListOfFunders(ppID))
                 {
                     // Gets the member contribution.
-                    BigInteger grant = GetBid(ppID, funder);                // [R$]
+                    BigInteger grant = GetBid(ppID, funder);                    // [R$]
 
                     // Identifies the member participaction rate.
-                    BigInteger rate = grant/(GetRef(ppID, "Cost"));         // [pu]
+                    BigInteger rate = grant/((BigInteger)GetRef(ppID, "cost")); // [pu]
                     
                     // Defines how much of crypto-currency a member acquires from the new PP's capacity.
-                    BigInteger tokens = (rate * capOfPP)/factor;            // [MW/1000 = kW == SEB]
+                    BigInteger tokens = (rate * capOfPP)/factor;                // [MW/1000 = kW == SEB]
                     
                     // Defines how much of energy a member is entitled over the total power supply.
-                    BigInteger quota = rate * sharesOfPP * capOfGroup;      // [MW]
+                    BigInteger quota = rate * sharesOfPP * capOfGroup;          // [MW]
             
+                    // Updates the member register data.
                     Distribute(funder, quota, tokens);
                 }
             
+                // Updates the result.
+                UpPP(ppID, "hasstarted", 1);
+
                 Process(ppID, "A new power plant is now operating.");
                 return true;
             }
@@ -1251,7 +1253,7 @@ namespace Neo.SmartContract
                 if (orig == (BigInteger)val) return;
                 
                 // Do nothing if the new value is empty.
-                if ((BigInteger)val == null) return; // acho q isso não existe!! --PENDING--
+                if ((BigInteger)val == 0) return;
                 
                 // else
                 PPData.HasStarted.Put(id, val);
@@ -1267,7 +1269,7 @@ namespace Neo.SmartContract
                 if (orig == (BigInteger)val) return;
                 
                 // Do nothing if the new value is empty.
-                if ((BigInteger)val == null) return; // acho q isso não existe!! --PENDING--
+                if ((BigInteger)val == 0) return;
                 
                 // else
                 PPData.TimeToMarket.Put(id, val);
