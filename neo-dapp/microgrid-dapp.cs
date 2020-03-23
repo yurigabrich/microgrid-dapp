@@ -703,7 +703,7 @@ namespace Neo.SmartContract
 
         public static object PowerUpResult( string id, string ppID = null )
         {
-            // STEP 1 - Analyses the referendum about the new PP.
+            // STEP 1 - Analyzes the referendum about the request for a new PP.
             if (ppID == null)
             {
                 if ( isLock(id) )
@@ -744,33 +744,37 @@ namespace Neo.SmartContract
                 return "This process step is completed.";
             }
             
-            // STEP 2 - After a 'timeFrameCrowd' waiting period.
+            // STEP 2 - Analyzes the crowdfunding of the new PP approved.
             if ( isLock(ppID) )
                 throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
             
+            // After a 'timeFrameCrowd' waiting period.
+
             // Evaluates the crowdfunding result only once.
-            if ( GetCrowd(ppID, "Has Result").Length == 0 )
-            {
-                UpCrowd(ppID, "Has Result", 1);
-                
-                BigInteger target = GetPP(ppID, "Cost").AsBigInteger();
-                BigInteger funding = GetCrowd(ppID, "Total Amount").AsBigInteger();
-                    
-                // Starts or not the building of the new PP.
+            if ( (BigInteger)GetCrowd(ppID) == 0 )
+            {                
+                // Certifies the result updating happens only once.
+                UpCrowd(ppID, "hasresult", 1);
+
+                // Gets the values from the crowdfunding process.
+                BigInteger target = (BigInteger)GetPP(ppID, "cost");
+                BigInteger funding = (BigInteger)GetCrowd(ppID, "totalamount");
+
+                // Evaluates if the building of the new PP starts or not.
                 if (funding == target)
                 {
                     // Crowdfunding has succeeded.
                     UpCrowd(ppID, true);
                     
                     // Updates the number of investors.
-                    UpPP(ppID, "numOfFundMemb", listOfFunders.Length);
+                    UpPP(ppID, "numOfFundMemb", ListOfFunders(ppID).Length);
                     
                     Process(id, "New power plant on the way.");
                     return true;
                 }
                 
-                // Otherwise, the "Success" remains as 'false'.
-                foreach (string funder in litsOfFunders)
+                // Otherwise, the "success" remains as 'false'.
+                foreach (byte[] funder in ListOfFunders(ppID))
                 {
                     Refund(ppID, funder);
                 }
@@ -779,7 +783,9 @@ namespace Neo.SmartContract
                 return false;
             }
             
-            // STEP 3 - After waiting for the time to market.
+            // STEP 3 - 
+            
+            // After waiting for the time to market.
             
             // Calculates the date the new PP is planned to start to operate, that can always be updated until the deadline.
             // operationDate = ICO_endTime + PP_timeToMarket
@@ -803,7 +809,7 @@ namespace Neo.SmartContract
                 // Identifies how much the new Power Plant takes part on the group total power supply.
                 BigInteger sharesOfPP = capOfPP/capOfGroup;                 // [pu]
                 
-                foreach (string funder in litsOfFunders)
+                foreach (string funder in ListOfFunders(ppID))
                 {
                     // Gets the member contribution.
                     BigInteger grant = GetBid(ppID, funder);                // [R$]
@@ -853,6 +859,12 @@ namespace Neo.SmartContract
                 addresses[num] = memberAddress;
             }
             return addresses;
+        }
+
+        // To return a list of members that have financed a new PP.
+        private static byte[][] ListOfFunders( string PPid )
+        {
+            return new byte[][] { "Only for tests purposes.".AsByteArray() };
         }
 
 
@@ -1463,7 +1475,7 @@ namespace Neo.SmartContract
         // Only the 'Total Amount', 'Contributions', 'HasResult' and 'Success' can be updated.
         private static void UpCrowd( string id, string opt, BigInteger val )
         {
-            if ( (opt == "Total Amount") || (opt == "Contributions") || (opt == "Has Result") )
+            if ( (opt == "totalamount") || (opt == "contributions") || (opt == "hasresult") )
             {
                 BigInteger orig = (BigInteger)GetCrowd(id, opt);
                 
