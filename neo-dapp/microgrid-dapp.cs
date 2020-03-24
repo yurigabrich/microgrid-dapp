@@ -890,16 +890,18 @@ namespace Neo.SmartContract
         // All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
         private static void Distribute( byte[] toAddress, BigInteger quota, BigInteger tokens )
         {
-            BigInteger[] toWallet = new BigInteger[];
-
+            BigInteger[] pastWallet = new BigInteger[ register.Length ];
+            int num = 0;
+            
             // register = {"Quota", "Tokens"}
             foreach (string data in register)
             {
-                toWallet.append( GetMemb(toAddress, data).AsBigInteger() );
+                pastWallet[num] = ( (BigInteger)GetMemb(toAddress, data) );
+                num++;
             }
             
-            UpMemb(toAddress, register[0], toWallet[0] + quota);
-            UpMemb(toAddress, register[1], toWallet[1] + tokens);
+            UpMemb(toAddress, register[0], pastWallet[0] + quota);
+            UpMemb(toAddress, register[1], pastWallet[1] + tokens);
             Transfer(null, toAddress, quota, tokens);
         }
 
