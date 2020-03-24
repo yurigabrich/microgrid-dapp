@@ -844,8 +844,7 @@ namespace Neo.SmartContract
             
             for (int num = 0; num < NumOfPP(); num++)
             {
-                var index = String.Concat( "P", Int2Str(num+1) );
-                var ppID = PPData.ID.Get(index);
+                var ppID = PPData.ID.Get( Int2Str(num+1) );
                 ppIDs[num] = ppID;
             }
             return ppIDs;
@@ -1207,7 +1206,7 @@ namespace Neo.SmartContract
                 Storage.Put("NumOfPP", temp);
                 
                 // Stores the ID of each PP.
-                PPData.ID.Put( String.Concat( "P", Int2Str(temp) ), id );
+                PPData.ID.Put( Int2Str(temp), id );
 
                 Process(id, "New PP created.");
             }
