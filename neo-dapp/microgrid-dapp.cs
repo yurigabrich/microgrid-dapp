@@ -837,7 +837,7 @@ namespace Neo.SmartContract
             return "There is nothing more to be done.";
         }
 
-        // To return the IDs of each PP to be later used on other functions.
+        // To return the IDs of each PP.
         private static byte[][] ListOfPPs()
         {
             byte[][] ppIDs = new byte[ (int)NumOfPP() ][];
@@ -850,7 +850,7 @@ namespace Neo.SmartContract
             return ppIDs;
         }
 
-        // To return the address of each member to be later used on other functions.
+        // To return the address of each member.
         private static byte[][] ListOfMembers()
         {
             byte[][] addresses = new byte[ (int)NumOfMemb() ][];
@@ -864,9 +864,22 @@ namespace Neo.SmartContract
         }
 
         // To return a list of members that have financed a new PP.
-        private static byte[][] ListOfFunders( string PPid )
+        private static byte[][] ListOfFunders( string ppID )
         {
-            return new byte[][] { "Only for tests purposes.".AsByteArray() };
+            byte[][] funders = new byte[ (int)GetCrowd(ppID, "contributions") ][];
+
+            int num = 0;
+            foreach (byte[] member in ListOfMembers())
+            {
+                var bid = GetBid( ppID, member );
+                
+                if (bid != 0)
+                {
+                    funders[num] = member;
+                    num++;
+                }
+            }
+            return funders;
         }
 
 
