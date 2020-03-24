@@ -857,8 +857,7 @@ namespace Neo.SmartContract
             
             for (int num = 0; num < NumOfMemb(); num++)
             {
-                var index = String.Concat( "M", Int2Str(num+1) );
-                var memberAddress = MemberData.ID.Get(index);
+                var memberAddress = MemberData.ID.Get( Int2Str(num+1) );
                 addresses[num] = memberAddress;
             }
             return addresses;
@@ -1070,7 +1069,7 @@ namespace Neo.SmartContract
             Storage.Put("NumOfMemb", temp);
             
             // Stores the address of each member.
-            // MemberData.ID.Put( String.Concat( "M", Int2Str(temp) ), address ); // Isto torna tudo muito mais complexo!
+            MemberData.ID.Put( Int2Str(temp), address );
         }
 
         // --> read
@@ -1155,7 +1154,7 @@ namespace Neo.SmartContract
                 // Looks for the member 'key' (that may vary during the life cycle of the group).
                 for (int num = 1; num < NumOfMemb()+1; num++)
                 {
-                    var index = String.Concat( "M", Int2Str(num) );
+                    var index = Int2Str(num);
                     if ( address == MemberData.ID.Get(index) )
                     {
                         // Wipes off the address of the member.
@@ -1165,8 +1164,8 @@ namespace Neo.SmartContract
                         while (num <= NumOfMemb())
                         {
                             num++;
-                            var newIndexSameAddress = MemberData.ID.Get( String.Concat("M", Int2Str(num)) );
-                            MemberData.ID.Put( String.Concat("M", Int2Str(num-1)), newIndexSameAddress );
+                            var newIndexSameAddress = MemberData.ID.Get( Int2Str(num) );
+                            MemberData.ID.Put( Int2Str(num-1), newIndexSameAddress );
                         }
                         break;
                     }
