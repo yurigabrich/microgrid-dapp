@@ -1330,29 +1330,32 @@ namespace Neo.SmartContract
         {
             string id = ID( "\x5A", new string[] {proposal, notes, Int2Str(cost)} );
 
-            // Stores the values.
+            // Stores the practical values.
             RefData.Proposal.Put(id, proposal);
             RefData.Notes.Put(id, notes);
-            RefData.Cost.Put(id, cost); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
-            RefData.Address.Put(id, address); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
-            RefData.Time.Put(id, time); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
-            // RefData.MoneyRaised.Put(id, 0); // Expensive to create with null value. Just state it out!
-            // RefData.NumOfVotes.Put(id, 0); // Expensive to create with null value. Just state it out!
-            // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
             RefData.Outcome.Put(id, Bool2Str(false));
-            // RefData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
             RefData.StartTime.Put(id, InvokedTime());
             RefData.EndTime.Put(id, InvokedTime() + timeFrameRef);
+
+            // Evaluates the values before stores them since it is expensive to store null values.
+            if (address.Length != 0) RefData.Address.Put(id, address);
+            if (cost != 0) RefData.Cost.Put(id, cost);
+            if (time != 0) RefData.Time.Put(id, time);
+            
+            // Just states the other values since it is expensive to store null values.
+            // RefData.MoneyRaised.Put(id, 0);
+            // RefData.NumOfVotes.Put(id, 0);
+            // RefData.CountTrue.Put(id, 0);
+            // RefData.HasResult.Put(id, 0);
             
             // Increases the total number of referendum processes.
             BigInteger temp = NumOfRef() + 1;
             Storage.Put("NumOfRef", temp);
             
             // Stores the ID of each Ref.
-            RefData.ID.Put( String.Concat( "R", Int2Str((int)temp) ), id );
+            RefData.ID.Put( Int2Str((int)temp), id );
 
             Process(id, "The referendum process has started.");
-
             return id;
         }
 
