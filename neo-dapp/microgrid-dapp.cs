@@ -1104,7 +1104,7 @@ namespace Neo.SmartContract
         private static bool UpMemb( byte[] address, string opt, string val )
         {
             // Don't invoke Put if value is unchanged.
-            string orig = GetMemb(address, opt).AsString();
+            string orig = (string)GetMemb(address, opt);
             if (orig == val) return true;
              
             // Use Delete rather than Put if the new value is empty.
@@ -1112,11 +1112,10 @@ namespace Neo.SmartContract
             {
                 DelMemb(address, opt);
             }
-            else
-            {
-                if (opt == "fullname") MemberData.FullName.Put(address, val);
-                if (opt == "utility") MemberData.Utility.Put(address, val);
-            }
+            
+            // else
+            if (opt == "fullname") MemberData.FullName.Put(address, val);
+            if (opt == "utility") MemberData.Utility.Put(address, val);
 
             return true;
         }
@@ -1124,7 +1123,7 @@ namespace Neo.SmartContract
         private static bool UpMemb( byte[] address, string opt, BigInteger val )
         {
             // Don't invoke Put if value is unchanged.
-            BigInteger orig = GetMemb(address, opt).AsBigInteger();
+            BigInteger orig = (BigInteger)GetMemb(address, opt);
             if (orig == val) return true;
              
             // Use Delete rather than Put if the new value is zero.
@@ -1132,11 +1131,10 @@ namespace Neo.SmartContract
             {
                 DelMemb(address, opt);
             }
-            else
-            {
-                if (opt == "quota") MemberData.Quota.Put(address, val);
-                if (opt == "tokens") MemberData.Tokens.Put(address, val);
-            }
+            
+            // else
+            if (opt == "quota") MemberData.Quota.Put(address, val);
+            if (opt == "tokens") MemberData.Tokens.Put(address, val);
 
             return true;
         }
