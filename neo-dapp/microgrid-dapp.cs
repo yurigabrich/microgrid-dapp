@@ -1251,7 +1251,7 @@ namespace Neo.SmartContract
         private static string PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
         {
             // Creates the unique identifier.
-            string id = ID("P", capacity, cost, utility);
+            string id = ID( "\x53", new string[] {capacity, Int2Str(cost), utility, Int2Str((int)timeToMarket)} );
 
             // Checks if the PP register already exists.
             if ( ((string)GetPP(id, "capacity")).Length != 0 )
@@ -1388,7 +1388,7 @@ namespace Neo.SmartContract
         // --> create
         private static string Ref( string proposal, string notes, byte[] address, int cost = 0, uint time = 0 )
         {
-            string id = ID("R", proposal, notes, cost);
+            string id = ID( "\x5A", new string[] {proposal, notes, Int2Str(cost)} );
 
             if ( ((string)GetRef(id, "proposal")).Length != 0 )
             {
