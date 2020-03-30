@@ -1454,12 +1454,12 @@ namespace Neo.SmartContract
 
         private static object GetCrowd( string ppID, string opt = "hasresult" )
         {
-            if (opt == "starttime") return ICOData.StartTime.Get(id);
-            else if (opt == "endtime") return ICOData.EndTime.Get(id);
-            else if (opt == "totalamount") return ICOData.TotalAmount.Get(id);
-            else if (opt == "contributions") return ICOData.Contributions.Get(id);
-            else if (opt == "success") return ICOData.Success.Get(id);
-            else return ICOData.HasResult.Get(id);
+            if (opt == "starttime") return ICOData.StartTime.Get(ppID);
+            else if (opt == "endtime") return ICOData.EndTime.Get(ppID);
+            else if (opt == "totalamount") return ICOData.TotalAmount.Get(ppID);
+            else if (opt == "contributions") return ICOData.Contributions.Get(ppID);
+            else if (opt == "success") return ICOData.Success.Get(ppID);
+            else return ICOData.HasResult.Get(ppID);
         }
 
         // --> update
