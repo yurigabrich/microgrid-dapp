@@ -1465,19 +1465,15 @@ namespace Neo.SmartContract
         // --> update
         private static void UpBid( string ppID, byte[] member, BigInteger bid )
         {
-            BigInteger orig = GetBid(id, member);
+            BigInteger orig = GetBid(ppID, member);
             
-            if ((orig == bid) || (bid == 0))
-            {
-                // Don't invoke Put if value is unchanged.
-                // AND
-                // Keeps the storage with the original value.
-            }
-            else
-            {
-                byte[] bidID = Hash256( id.AsByteArray().Concat(member) );
-                ICOData.Bid.Put( bidID, orig + bid );
-            }
+            // Don't invoke Put if value is unchanged AND
+            // keeps the storage with the original value.
+            if ((orig == bid) || (bid == 0)) return;
+            
+            // else
+            string bidID = ID( "\x27", false, new string[] {ppID, member.AsString()} );
+            ICOData.Bid.Put( bidID, orig + bid );
         }
 
         // Only the 'Total Amount', 'Contributions', 'HasResult' and 'Success' can be updated.
