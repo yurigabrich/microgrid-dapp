@@ -1108,10 +1108,8 @@ namespace Neo.SmartContract
             if (orig == val) return true;
              
             // Use Delete rather than Put if the new value is empty.
-            if (val.Length == 0)
-            {
-                DelMemb(address, opt);
-            }
+            if (val.Length == 0) DelMemb(address, opt);
+            return true;
             
             // else
             if (opt == "fullname") MemberData.FullName.Put(address, val);
@@ -1127,10 +1125,8 @@ namespace Neo.SmartContract
             if (orig == val) return true;
              
             // Use Delete rather than Put if the new value is zero.
-            if (val == 0)
-            {
-                DelMemb(address, opt);
-            }
+            if (val == 0) DelMemb(address, opt);
+            return true;
             
             // else
             if (opt == "quota") MemberData.Quota.Put(address, val);
