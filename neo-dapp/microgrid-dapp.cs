@@ -1239,54 +1239,60 @@ namespace Neo.SmartContract
         }
 
         // --> update
-        // The 'Utility', the 'HasStarted', and the 'Time To Market' are the only options that can be changed.
-        // However, the 'Utility' can be changed anytime, the 'HasStarted' can be changed only once, while the 'Time to Market' is restricted by its deadline of start operation date.
+        // The 'utility', the 'hasstarted', and the 'timetomarket' are the only options that can be changed.
+        // However, the 'utility' can be changed anytime, the 'hasStarted' can be changed only once, while
+        // the 'timetomarket' is restricted by its deadline of start operation date.
         // To update the other options, delete the current PP and create a new one.
         private static void UpPP( string id, string opt, object val )
         {
             if (opt == "utility")
             {
-                // Don't invoke Put if value is unchanged.
-                string orig = GetPP(id, "utility").AsString();
+                // Doesn't invoke Put if value is unchanged.
+                string orig = (string)GetPP(id, "utility");
                 if (orig == (string)val) return;
                 
-                // Do nothing if the new value is empty.
-                if ((string)val.Length == 0) return;
+                // Does nothing if the new value is empty.
+                if (((string)val).Length == 0) return;
                 
                 // else
-                PPData.Utility.Put(id, val);
-                // And must 'update' each member 'utility' field as well.
-                // 'Utility' should be a pointer and similar to 'Member' dataset.
-                // This was not implemented! --PENDING--
+                PPData.Utility.Put(id, (string)val);
+                // WARNING: Logic constraints!
+                // Must updates each member utility name as well.
+                // However, only the member her/himself can change this information.
+                // Therefore, 'utility' of both member's and PP's dataset must pointer to a common database.
+                // THIS WAS NOT IMPLEMENTED!
             }
             
             if (opt == "hasstarted")
             {
-                // Don't invoke Put if value is unchanged.
-                BigInteger orig = GetPP(id, "hasstarted").AsBigInteger();
+                // Doesn't invoke Put if value is unchanged.
+                BigInteger orig = (BigInteger)GetPP(id, "hasstarted");
                 if (orig == (BigInteger)val) return;
                 
-                // Do nothing if the new value is empty.
+                // Does nothing if the new value is empty.
                 if ((BigInteger)val == 0) return;
                 
                 // else
-                PPData.HasStarted.Put(id, val);
+                PPData.HasStarted.Put(id, (BigInteger)val);
             }
             
             if (opt == "timetomarket")
             {
-                if ( InvokedTime() > ( GetCrowd(ppID, "End Time") + GetPP(ppID, "timetomarket") ) ) // --PENDING--
+                // Doesn't invoke Put if value is unchanged.
+                uint orig = (uint)GetPP(id, "timetomarket");
+                if (orig == (uint)val) return;
+                
+                // Does nothing if the new value is empty.
+                if ((uint)val == 0) return;
+
+                // Does nothing if the deadline has passed by.
+                uint deadline = (uint)GetCrowd(id, "endtime") + (uint)GetPP(id, "timetomarket");
+                
+                if ( InvokedTime() > deadline )
                     throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
                 
-                // Don't invoke Put if value is unchanged.
-                BigInteger orig = GetPP(id, "timetomarket").BigInteger();
-                if (orig == (BigInteger)val) return;
-                
-                // Do nothing if the new value is empty.
-                if ((BigInteger)val == 0) return;
-                
                 // else
-                PPData.TimeToMarket.Put(id, val);
+                PPData.TimeToMarket.Put(id, (uint)val);
             }
         }
 
