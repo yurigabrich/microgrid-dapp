@@ -909,12 +909,13 @@ namespace Neo.SmartContract
         }
 
         // To create a custom ID of a process based on its particular specifications.
-        private static string ID( string prefix, params string[] args )
+        private static string ID( string prefix, bool unique, params string[] args )
         {
             // Assuming that all operations are little-endian.
             
             // STEP 1 - HASH
-            string data = Int2Str((int)InvokedTime());
+            string data = null;
+            if (unique) data = Int2Str((int)InvokedTime());
             foreach( string a in args )
             {
                 data = String.Concat(data,a);
@@ -1188,7 +1189,7 @@ namespace Neo.SmartContract
         private static string PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
         {
             // Creates the unique identifier.
-            string id = ID( "\x53", new string[] {capacity, Int2Str((int)cost), utility, Int2Str((int)timeToMarket)} );
+            string id = ID( "\x53", true, new string[] {capacity, Int2Str((int)cost), utility, Int2Str((int)timeToMarket)} );
 
             // Stores the practical values.
             PPData.Capacity.Put(id, capacity);
@@ -1328,7 +1329,7 @@ namespace Neo.SmartContract
         // --> create
         private static string Ref( string proposal, string notes, byte[] address, int cost = 0, uint time = 0 )
         {
-            string id = ID( "\x5A", new string[] {proposal, notes, Int2Str(cost)} );
+            string id = ID( "\x5A", true, new string[] {proposal, notes, Int2Str(cost)} );
 
             // Stores the practical values.
             RefData.Proposal.Put(id, proposal);
@@ -1447,7 +1448,7 @@ namespace Neo.SmartContract
         // --> read
         private static BigInteger GetBid( string ppID, byte[] member )
         {
-            string bidID = ID( "\x27", new string[] {ppID, member.AsString()} );
+            string bidID = ID( "\x27", false, new string[] {ppID, member.AsString()} );
             return ICOData.Bid.Get(bidID).AsBigInteger();
         }
 
