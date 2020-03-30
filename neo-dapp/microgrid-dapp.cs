@@ -1206,13 +1206,15 @@ namespace Neo.SmartContract
             // Creates the unique identifier.
             string id = ID( "\x53", new string[] {capacity, Int2Str((int)cost), utility, Int2Str((int)timeToMarket)} );
 
-            // Stores the values.
+            // Stores the practical values.
             PPData.Capacity.Put(id, capacity);
             PPData.Cost.Put(id, cost);
             PPData.Utility.Put(id, utility);
             PPData.TimeToMarket.Put(id, timeToMarket);
-            // PPData.NumOfFundMemb.Put(id, 0); // Expensive to create with null value. Just state it out!
-            // PPData.HasStarted.Put(id, 0); // Expensive to create with null value. Just state it out!
+
+            // Just states the other values since it is expensive to store null values.
+            // PPData.NumOfFundMemb.Put(id, 0);
+            // PPData.HasStarted.Put(id, 0);
 
             // Increases the total number of power plant units.
             BigInteger temp = NumOfPP() + 1;
@@ -1222,7 +1224,6 @@ namespace Neo.SmartContract
             PPData.ID.Put( Int2Str((int)temp), id );
 
             Process(id, "New PP created.");
-
             return id;
         }
 
