@@ -1428,27 +1428,30 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // METHODS TO FINANCE A NEW POWER PLANT
         // --> create
-        private static void CrowdFunding( string id ) // This ID must come from a success Referendum process or it is a PP ID? --PENDING-- DEFINITION!
+        private static void CrowdFunding( string ppID )
         {
-            
-            ICOData.StartTime.Put(id, InvokedTime());
-            ICOData.EndTime.Put(id, InvokedTime() + timeFrameCrowd);
-            // ICOData.TotalAmount.Put(id, 0); // Expensive to create with null value. Just state it out!
-            // ICOData.Contributions.Put(id, 0); // Expensive to create with null value. Just state it out!
-            ICOData.Success.Put(id, Bool2Str(false));
-            // ICOData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
+            // Stores the practical values.
+            ICOData.StartTime.Put(ppID, InvokedTime());
+            ICOData.EndTime.Put(ppID, InvokedTime() + timeFrameCrowd);
+            ICOData.Success.Put(ppID, Bool2Str(false));
+
+            // Just states the other values since it is expensive to store null values.
+            // ICOData.TotalAmount.Put(ppID, 0);
+            // ICOData.Contributions.Put(ppID, 0);
+            // ICOData.HasResult.Put(ppID, 0);
         }
 
         // The function to bid on a crowdfunding is declared above because it is public.
+        // However, the option 'ICOData.Bid.Put(bidID, value)' is only available through the updating method.
 
         // --> read
-        private static BigInteger GetBid( string id, byte[] member )
+        private static BigInteger GetBid( string ppID, byte[] member )
         {
             byte[] bidID = Hash256( id.AsByteArray().Concat(member) );
             return ICOData.Bid.Get(bidID).AsBigInteger();
         }
 
-        private static object GetCrowd( string id, string opt = "hasresult" )
+        private static object GetCrowd( string ppID, string opt = "hasresult" )
         {
             if (opt == "starttime") return ICOData.StartTime.Get(id);
             else if (opt == "endtime") return ICOData.EndTime.Get(id);
@@ -1459,7 +1462,7 @@ namespace Neo.SmartContract
         }
 
         // --> update
-        private static void UpBid( string id, byte[] member, BigInteger bid )
+        private static void UpBid( string ppID, byte[] member, BigInteger bid )
         {
             BigInteger orig = GetBid(id, member);
             
@@ -1477,7 +1480,7 @@ namespace Neo.SmartContract
         }
 
         // Only the 'Total Amount', 'Contributions', 'HasResult' and 'Success' can be updated.
-        private static void UpCrowd( string id, string opt, BigInteger val )
+        private static void UpCrowd( string ppID, string opt, BigInteger val )
         {
             if ( (opt == "totalamount") || (opt == "contributions") || (opt == "hasresult") )
             {
@@ -1504,7 +1507,7 @@ namespace Neo.SmartContract
             }
         }
 
-        private static void UpCrowd( string id, bool val )
+        private static void UpCrowd( string ppID, bool val )
         {
             string orig = (string)GetCrowd(id, "success");
             
@@ -1519,7 +1522,7 @@ namespace Neo.SmartContract
         }
 
         // --> delete
-        private static void Refund( string id, byte[] member )
+        private static void Refund( string ppID, byte[] member )
         {
             BigInteger grant = GetBid(id, member);
             
@@ -1543,7 +1546,7 @@ namespace Neo.SmartContract
         // because the failure of a crowdfunding must be preserved.
         // Actually it is only used to "store" null values cheaply, and
         // it must solely happen if the refund (due to a bid cancel) reaches zero.
-        private static void DelCrowd( string id, string opt )
+        private static void DelCrowd( string ppID, string opt )
         {
             if ( (opt == "totalamount") || (opt == "contributions") )
             {
