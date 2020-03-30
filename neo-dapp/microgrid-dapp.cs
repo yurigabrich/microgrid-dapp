@@ -1159,17 +1159,20 @@ namespace Neo.SmartContract
             {
                 MemberData.Tokens.Delete(address);
             }
-            else // If a member exits the group (opt == "").
+            
+            // If a member exits the group (opt == "").
+            else
             {
-                MemberData.FullName.Delete(address);
-                MemberData.Utility.Delete(address);
-                MemberData.Quota.Delete(address);
-                MemberData.Tokens.Delete(address);
+                foreach ( string option in new string[]{"fullname", "utility", "quota", "tokens"} )
+                {
+                    DelMemb(address, option);
+                }
                 
                 // Looks for the member 'key' (that may vary during the life cycle of the group).
                 for (int num = 1; num < NumOfMemb()+1; num++)
                 {
                     var index = Int2Str(num);
+                    
                     if ( address == MemberData.ID.Get(index) )
                     {
                         // Wipes off the address of the member.
@@ -1182,6 +1185,8 @@ namespace Neo.SmartContract
                             var newIndexSameAddress = MemberData.ID.Get( Int2Str(num) );
                             MemberData.ID.Put( Int2Str(num-1), newIndexSameAddress );
                         }
+                        
+                        // Ends the for loop.
                         break;
                     }
                 }
@@ -1192,6 +1197,7 @@ namespace Neo.SmartContract
             }
         }
 
+
         //---------------------------------------------------------------------------------------------
         // METHODS FOR POWER PLANTS
         // --> create
@@ -1200,30 +1206,22 @@ namespace Neo.SmartContract
             // Creates the unique identifier.
             string id = ID( "\x53", new string[] {capacity, Int2Str((int)cost), utility, Int2Str((int)timeToMarket)} );
 
-            // Checks if the PP register already exists.
-            if ( ((string)GetPP(id, "capacity")).Length != 0 )
-            {
-                Process(id, "This power plant already exists. Use the method UpPP to change its registering data.");
-            }
-            else
-            {
-                // Stores the values.
-                PPData.Capacity.Put(id, capacity);
-                PPData.Cost.Put(id, cost);
-                PPData.Utility.Put(id, utility);
-                PPData.TimeToMarket.Put(id, timeToMarket);
-                // PPData.NumOfFundMemb.Put(id, 0); // Expensive to create with null value. Just state it out!
-                // PPData.HasStarted.Put(id, 0); // Expensive to create with null value. Just state it out!
+            // Stores the values.
+            PPData.Capacity.Put(id, capacity);
+            PPData.Cost.Put(id, cost);
+            PPData.Utility.Put(id, utility);
+            PPData.TimeToMarket.Put(id, timeToMarket);
+            // PPData.NumOfFundMemb.Put(id, 0); // Expensive to create with null value. Just state it out!
+            // PPData.HasStarted.Put(id, 0); // Expensive to create with null value. Just state it out!
 
-                // Increases the total number of power plant units.
-                BigInteger temp = NumOfPP() + 1;
-                Storage.Put("NumOfPP", temp);
-                
-                // Stores the ID of each PP.
-                PPData.ID.Put( Int2Str((int)temp), id );
+            // Increases the total number of power plant units.
+            BigInteger temp = NumOfPP() + 1;
+            Storage.Put("NumOfPP", temp);
+            
+            // Stores the ID of each PP.
+            PPData.ID.Put( Int2Str((int)temp), id );
 
-                Process(id, "New PP created.");
-            }
+            Process(id, "New PP created.");
 
             return id;
         }
@@ -1329,6 +1327,7 @@ namespace Neo.SmartContract
             BigInteger temp = NumOfPP() - 1;
             Storage.Put("NumOfPP", temp);
         }
+
 
         //---------------------------------------------------------------------------------------------
         // METHODS FOR REFERENDUMS
