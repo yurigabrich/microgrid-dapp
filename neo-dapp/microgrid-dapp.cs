@@ -998,8 +998,10 @@ namespace Neo.SmartContract
         {
             BigInteger bid;
 
-            if (lookForID is string) // It's a PP ID.
+            if (lookForID is string) // --PENDING!-- não sei se isso vai funcionar direito!
             {
+                // 'lookForID' is a PP ID.
+
                 // Gets members' bid by a PP funding process.
                 foreach (byte[] member in listOfIDs)
                 {
@@ -1011,8 +1013,10 @@ namespace Neo.SmartContract
                     }
                 }
             }
-            else // It's a member ID.
+            else
             {
+                // 'lookForID' is a member ID.
+
                 // Gets PPs by a member investments.
                 foreach (string ppID in listOfIDs)
                 {
@@ -1052,13 +1056,15 @@ namespace Neo.SmartContract
         // Once the time stated is reached, any member can then resume the process.
         private static bool isLock( string id )
         {
-            BigInteger endTime;
+            uint endTime;
             
             if (id[0] == 'R')
             {
-                endTime = GetRef(id, "endtime").AsBigInteger();
+                endTime = (uint)GetRef(id, "endtime");
             }
-            endTime = GetCrowd(id, "endtime").AsBigInteger();
+            
+            // else id[0] == 'P'
+            endTime = (uint)GetCrowd(id, "endtime");
             
             if (InvokedTime() <= endTime) return true;
             return false;
