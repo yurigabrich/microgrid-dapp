@@ -1447,7 +1447,7 @@ namespace Neo.SmartContract
         // --> read
         private static BigInteger GetBid( string ppID, byte[] member )
         {
-            byte[] bidID = Hash256( id.AsByteArray().Concat(member) );
+            string bidID = ID( "\x27", new string[] {ppID, member.AsString()} );
             return ICOData.Bid.Get(bidID).AsBigInteger();
         }
 
