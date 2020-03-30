@@ -571,7 +571,7 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['new utility name'].
             if ( opts.Length == 1 )
             {
-                rID = Ref( "Change utility_", (string)opts[0],  ((string)id).AsByteArray() );
+                rID = Ref( "Change utility_", (string)opts[0], ((string)id).AsByteArray() );
                 Process( rID, "Request the change of utility name of a PP." );
                 return rID;
             }
@@ -586,7 +586,7 @@ namespace Neo.SmartContract
         // The whole process to integrate a new PP on the group power generation.
         public static string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
         {
-            string id = Ref( Int2Str(capacity), utility, new byte[1] {0x00}, cost, timeToMarket );
+            string id = Ref( Int2Str(capacity), utility, "".AsByteArray(), cost, timeToMarket );
             Process( id, "Request to add a new PP." );
             return id;
         }
