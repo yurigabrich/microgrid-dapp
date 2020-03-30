@@ -50,7 +50,7 @@ namespace Neo.SmartContract
         private const uint timeFrameRef = 259200;   // 30 days
 
         // The time a given function is invoked.
-        private static uint InvokeTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
+        private static uint InvokedTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
 
         // Token settings.
         public static string Name() => "Sharing Electricity in Brazil";
@@ -791,7 +791,7 @@ namespace Neo.SmartContract
             // operationDate = ICO_endTime + PP_timeToMarket
             uint operationDate = (uint)GetCrowd(ppID, "endtime") + (uint)GetPP(ppID, "timetomarket");
             
-            if ( InvokeTime() <= operationDate )
+            if ( InvokedTime() <= operationDate )
                 throw new InvalidOperationException("The new PP is not ready to operate yet.");
             
             // After waiting for the time to market.
@@ -906,9 +906,27 @@ namespace Neo.SmartContract
         }
 
         // To create a custom ID of a process based on its particular specifications.
-        private static string ID( params object[] args )
+        private static string ID( string prefix, params string[] args )
         {
-            return "Will be replaced to Base58 encoding.";
+            // Assuming that all operations are little-endian.
+            
+            // STEP 1 - HASH
+            string data = Int2Str((int)InvokedTime());
+            foreach( string a in args )
+            {
+                data = String.Concat(data,a);
+            }
+            byte[] scriptHash = Hash160( data.AsByteArray() );          // length = 20 bytes
+            
+            // STEP 2 - Enlarge the array to get the desired BigInteger's numbers range.
+            byte[] temp = scriptHash.Take(1);
+            scriptHash = scriptHash.Concat(temp);                       // length = 21 bytes
+            
+            // STEP 2 - PREFIX
+            byte[] preID = scriptHash.Concat( prefix.AsByteArray() );   // length = 22 bytes
+            
+            // STEP 3 - BASE58
+            return Encode58( preID );
         }
 
         // To properly store a boolean variable.
@@ -1064,7 +1082,7 @@ namespace Neo.SmartContract
             }
             endTime = GetCrowd(id, "endtime").AsBigInteger();
             
-            if (InvokeTime() <= endTime) return true;
+            if (InvokedTime() <= endTime) return true;
             return false;
         }
 
@@ -1276,7 +1294,7 @@ namespace Neo.SmartContract
             
             if (opt == "timetomarket")
             {
-                if ( InvokeTime() > ( GetCrowd(ppID, "End Time") + GetPP(ppID, "timetomarket") ) ) // --PENDING--
+                if ( InvokedTime() > ( GetCrowd(ppID, "End Time") + GetPP(ppID, "timetomarket") ) ) // --PENDING--
                     throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
                 
                 // Don't invoke Put if value is unchanged.
@@ -1354,8 +1372,8 @@ namespace Neo.SmartContract
                 // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
                 RefData.Outcome.Put(id, Bool2Str(false));
                 // RefData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
-                RefData.StartTime.Put(id, InvokeTime());
-                RefData.EndTime.Put(id, InvokeTime() + timeFrameRef);
+                RefData.StartTime.Put(id, InvokedTime());
+                RefData.EndTime.Put(id, InvokedTime() + timeFrameRef);
                 
                 // Increases the total number of referendum processes.
                 BigInteger temp = NumOfRef() + 1;
@@ -1444,8 +1462,8 @@ namespace Neo.SmartContract
         private static void CrowdFunding( string id ) // This ID must come from a success Referendum process or it is a PP ID? --PENDING-- DEFINITION!
         {
             
-            ICOData.StartTime.Put(id, InvokeTime());
-            ICOData.EndTime.Put(id, InvokeTime() + timeFrameCrowd);
+            ICOData.StartTime.Put(id, InvokedTime());
+            ICOData.EndTime.Put(id, InvokedTime() + timeFrameCrowd);
             // ICOData.TotalAmount.Put(id, 0); // Expensive to create with null value. Just state it out!
             // ICOData.Contributions.Put(id, 0); // Expensive to create with null value. Just state it out!
             ICOData.Success.Put(id, Bool2Str(false));
