@@ -1516,22 +1516,22 @@ namespace Neo.SmartContract
         // --> delete
         private static void Refund( string ppID, byte[] member )
         {
-            BigInteger grant = GetBid(id, member);
+            BigInteger grant = GetBid(ppID, member);
             
             // Decreases the total amount of funds.
-            BigInteger funds = (BigInteger)GetCrowd(id, "totalamount");
-            UpCrowd(id, "totalamount", funds - grant);
+            BigInteger funds = (BigInteger)GetCrowd(ppID, "totalamount");
+            UpCrowd(ppID, "totalamount", funds - grant);
 
             // Decreases the total number of contributions.
-            BigInteger contributions = (BigInteger)GetCrowd(id, "contributions");
-            UpCrowd(id, "contributions", contributions-1);
+            BigInteger contributions = (BigInteger)GetCrowd(ppID, "contributions");
+            UpCrowd(ppID, "contributions", contributions - 1);
             
             // Deletes the member's offer.
-            byte[] bidID = Hash256( id.AsByteArray().Concat(member) );
+            string bidID = ID( "\x27", false, new string[] {ppID, member.AsString()} );
             ICOData.Bid.Delete(bidID);
 
             // Notifies about the cancel of the bid.
-            Return(id, member, 0, (-1 * grant));
+            Return(ppID, member, 0, (-1 * grant));
         }
 
         // Only the 'Total Amount' and 'Contributions' can be "deleted"
