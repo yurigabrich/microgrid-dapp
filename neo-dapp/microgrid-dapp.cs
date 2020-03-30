@@ -1379,7 +1379,8 @@ namespace Neo.SmartContract
         }
 
         // --> update
-        // It is only possible to internally change the 'MoneyRaised', the 'NumOfVotes', the 'CountTrue', the 'HasResult' and the 'Outcome'.
+        // It is only possible to internally change the 'MoneyRaised', the 'NumOfVotes',
+        // the 'CountTrue', the 'HasResult' and the 'Outcome'.
         private static void UpRef( string id, string opt, BigInteger val )
         {
             if ((opt == "numofvotes") || (opt == "moneyraised") || (opt == "counttrue") || (opt == "hasresult") )
@@ -1388,11 +1389,11 @@ namespace Neo.SmartContract
                 
                 if (orig == val)
                 {
-                    // Don't invoke Put if value is unchanged.
+                    // Doesn't invoke Put if value is unchanged.
                 }
                 else if (val == 0)
                 {
-                    // Deletes the storage if the new value is zero.
+                    // Deletes the respective storage if the new value is zero.
                     if (opt == "numofvotes") RefData.NumOfVotes.Delete(id);
                     else if (opt == "moneyraised") RefData.MoneyRaised.Delete(id);
                     else if (opt == "counttrue") RefData.CountTrue.Delete(id);
@@ -1400,7 +1401,7 @@ namespace Neo.SmartContract
                 }
                 else
                 {
-                    // Update the storage with the new value.
+                    // Update the respective storage with the new value.
                     if (opt == "numofvotes") RefData.NumOfVotes.Put(id, val);
                     else if (opt == "moneyraised") RefData.MoneyRaised.Put(id, val);
                     else if (opt == "counttrue") RefData.CountTrue.Put(id, val);
@@ -1413,14 +1414,11 @@ namespace Neo.SmartContract
         {
             bool orig = Str2Bool( (string)GetRef(id, "outcome") );
 
-            if ( orig == val )
-            {
-                // Don't invoke Put if value is unchanged.
-            }
-            else   
-            {
-                RefData.Outcome.Put(id, Bool2Str(val));
-            }
+            // Don't invoke Put if value is unchanged.
+            if ( orig == val ) return;
+
+            // else   
+            RefData.Outcome.Put(id, Bool2Str(val));
         }
 
         // --> delete
