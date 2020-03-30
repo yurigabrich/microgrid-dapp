@@ -135,7 +135,7 @@ namespace Neo.SmartContract
         // Trick to get the type of a 'string' (and of a 'integer').
         private static char[] Alpha() => new char[] {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
 
-        // The characters of the Base 58 scheme.
+        // The characters of the Base58 scheme.
         private const string Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
         //---------------------------------------------------------------------------------------------
@@ -500,7 +500,7 @@ namespace Neo.SmartContract
             BigInteger funds = (BigInteger)GetCrowd(id, "totalamount");
             
             if ( bid > (target - funds) )
-                throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str(target - funds) ), ",00). Bid again!" ));
+                throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str( (int)(target - funds) ), ",00). Bid again!" ));
 
             // WARNING!
             // All these steps are part of a crowdfunding process, not of a PP registration.
@@ -972,6 +972,7 @@ namespace Neo.SmartContract
             return Int2Str(quotient, String.Concat(trick, s) );
         }
 
+        // The Base58 enconding scheme.
         private static string Encode58(byte[] preID)
         {
             // Restricts to positive values.
@@ -1002,50 +1003,6 @@ namespace Neo.SmartContract
             }
             
             return b58;
-        }
-
-        // To affordably concatenate string variables.
-        private static string Rec(string start, string end)
-        {
-            return String.Concat(start, end);
-        }
-
-        // To affordably split string variables. Text and number must be intercalated!
-        private static object[] Split(string notes, int start, int slice, bool lookForNum)
-        {
-            int step = 0;
-            
-            while (step < slice)
-            {
-                string temp = notes.Substring(start + step, 1);
-                
-                int num = 0;
-                while ( num < Digits().Length )
-                {
-                    if ( temp == Digits()[num] )
-                    {
-                        break;
-                    }
-                    num++;
-                }
-                
-                if (lookForNum)
-                {
-                    if (num == 10)
-                    {
-                        break;
-                    }
-                }
-                else
-                {
-                    if (num != 10)
-                    {
-                        break;
-                    }
-                }
-                step++;
-            }
-            return new object[] {notes.Substring(start, step), start + step};
         }
 
         // To filter the relationship of members and PPs.
@@ -1137,7 +1094,7 @@ namespace Neo.SmartContract
             Storage.Put("NumOfMemb", temp);
             
             // Stores the address of each member.
-            MemberData.ID.Put( Int2Str(temp), address );
+            MemberData.ID.Put( Int2Str((int)temp), address );
         }
 
         // --> read
@@ -1251,7 +1208,7 @@ namespace Neo.SmartContract
         private static string PP( string capacity, BigInteger cost, string utility, uint timeToMarket )
         {
             // Creates the unique identifier.
-            string id = ID( "\x53", new string[] {capacity, Int2Str(cost), utility, Int2Str((int)timeToMarket)} );
+            string id = ID( "\x53", new string[] {capacity, Int2Str((int)cost), utility, Int2Str((int)timeToMarket)} );
 
             // Checks if the PP register already exists.
             if ( ((string)GetPP(id, "capacity")).Length != 0 )
@@ -1273,7 +1230,7 @@ namespace Neo.SmartContract
                 Storage.Put("NumOfPP", temp);
                 
                 // Stores the ID of each PP.
-                PPData.ID.Put( Int2Str(temp), id );
+                PPData.ID.Put( Int2Str((int)temp), id );
 
                 Process(id, "New PP created.");
             }
@@ -1415,7 +1372,7 @@ namespace Neo.SmartContract
                 Storage.Put("NumOfRef", temp);
                 
                 // Stores the ID of each Ref.
-                RefData.ID.Put( String.Concat( "R", Int2Str(temp) ), id );
+                RefData.ID.Put( String.Concat( "R", Int2Str((int)temp) ), id );
 
                 Process(id, "The referendum process has started.");
             }
