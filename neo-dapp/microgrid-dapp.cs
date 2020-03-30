@@ -1303,35 +1303,38 @@ namespace Neo.SmartContract
             PPData.Cost.Delete(id);
             PPData.Utility.Delete(id);
             PPData.TimeToMarket.Delete(id);
-            if ( GetPP(id, "hasstarted") != 0 ) PPData.HasStarted.Delete(id);
-            if ( GetPP(id, "numoffundmemb") != 0 ) PPData.NumOfFundMemb.Delete(id);
-
+            if ( (BigInteger)GetPP(id, "hasstarted") != 0 ) PPData.HasStarted.Delete(id);
+            if ( (BigInteger)GetPP(id, "numoffundmemb") != 0 ) PPData.NumOfFundMemb.Delete(id);
+            
             // Looks for the PP 'key' (that may vary during the life cycle of the group).
             for (int num = 1; num < NumOfPP()+1; num++)
             {
-                var index = String.Concat( "P", Int2Str(num) );
-                if ( targetId == PP.ID.Get(index) )
+                var index = Int2Str(num);
+
+                if ( id == PPData.ID.Get(index).AsString() )
                 {
                     // Wipes off the ID of the PP.
-                    PP.ID.Delete(index);
+                    PPData.ID.Delete(index);
                     
                     // Updates the following indexes.
                     while (num <= NumOfMemb())
                     {
                         num++;
-                        var newIndexSameId = PP.ID.Get( String.Concat("P", Int2Str(num)) );
-                        PP.ID.Put( String.Concat("P", Int2Str(num-1)), newIndexSameId );
+                        var newIndexSameId = PPData.ID.Get( Int2Str(num) );
+                        PPData.ID.Put( Int2Str(num-1), newIndexSameId );
                     }
+
+                    // Ends the for loop.
                     break;
                 }
             }
 
             // Decreases the total power supply of power plants.
-            BigInteger temp = TotalSupply() - GetPP(id, "Capacity").AsBigInteger();
+            BigInteger temp = TotalSupply() - (BigInteger)GetPP(id, "Capacity");
             Storage.Put("TotalSupply", temp);
 
             // Decreases the total number of power plant units.
-            BigInteger temp = NumOfPP() - 1;
+            temp = NumOfPP() - 1;
             Storage.Put("NumOfPP", temp);
         }
 
