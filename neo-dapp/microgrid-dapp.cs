@@ -1146,7 +1146,7 @@ namespace Neo.SmartContract
             else
             {
                 // The member exits the group (opt == "").
-                
+
                 foreach ( string option in new string[]{"fullname", "utility", "quota", "tokens"} )
                 {
                     DelMemb(address, option);
@@ -1330,35 +1330,28 @@ namespace Neo.SmartContract
         {
             string id = ID( "\x5A", new string[] {proposal, notes, Int2Str(cost)} );
 
-            if ( ((string)GetRef(id, "proposal")).Length != 0 )
-            {
-                Process(id, "This referendum already exists. Use the method UpRef to change its registering data, or just start a new referendum process.");
-            }
-            else
-            {
-                // Stores the values.
-                RefData.Proposal.Put(id, proposal);
-                RefData.Notes.Put(id, notes);
-                RefData.Cost.Put(id, cost); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
-                RefData.Address.Put(id, address); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
-                RefData.Time.Put(id, time); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
-                // RefData.MoneyRaised.Put(id, 0); // Expensive to create with null value. Just state it out!
-                // RefData.NumOfVotes.Put(id, 0); // Expensive to create with null value. Just state it out!
-                // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
-                RefData.Outcome.Put(id, Bool2Str(false));
-                // RefData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
-                RefData.StartTime.Put(id, InvokedTime());
-                RefData.EndTime.Put(id, InvokedTime() + timeFrameRef);
-                
-                // Increases the total number of referendum processes.
-                BigInteger temp = NumOfRef() + 1;
-                Storage.Put("NumOfRef", temp);
-                
-                // Stores the ID of each Ref.
-                RefData.ID.Put( String.Concat( "R", Int2Str((int)temp) ), id );
+            // Stores the values.
+            RefData.Proposal.Put(id, proposal);
+            RefData.Notes.Put(id, notes);
+            RefData.Cost.Put(id, cost); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
+            RefData.Address.Put(id, address); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
+            RefData.Time.Put(id, time); // Expensive to create with null value. Just state it out! -- PENDING -- MISSING 'IF'
+            // RefData.MoneyRaised.Put(id, 0); // Expensive to create with null value. Just state it out!
+            // RefData.NumOfVotes.Put(id, 0); // Expensive to create with null value. Just state it out!
+            // RefData.CountTrue.Put(id, 0); // Expensive to create with null value. Just state it out!
+            RefData.Outcome.Put(id, Bool2Str(false));
+            // RefData.HasResult.Put(id, 0); // Expensive to create with null value. Just state it out!
+            RefData.StartTime.Put(id, InvokedTime());
+            RefData.EndTime.Put(id, InvokedTime() + timeFrameRef);
+            
+            // Increases the total number of referendum processes.
+            BigInteger temp = NumOfRef() + 1;
+            Storage.Put("NumOfRef", temp);
+            
+            // Stores the ID of each Ref.
+            RefData.ID.Put( String.Concat( "R", Int2Str((int)temp) ), id );
 
-                Process(id, "The referendum process has started.");
-            }
+            Process(id, "The referendum process has started.");
 
             return id;
         }
