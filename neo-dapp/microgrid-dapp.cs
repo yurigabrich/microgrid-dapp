@@ -135,6 +135,9 @@ namespace Neo.SmartContract
         // Trick to get the type of a 'string' (and of a 'integer').
         private static char[] Alpha() => new char[] {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
 
+        // The characters of the Base 58 scheme.
+        private const string Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
         //---------------------------------------------------------------------------------------------
         // THE MAIN INTERFACE
 
@@ -967,6 +970,38 @@ namespace Neo.SmartContract
             string trick = Digits()[ (int)remainder ];
                 
             return Int2Str(quotient, String.Concat(trick, s) );
+        }
+
+        private static string Encode58(byte[] preID)
+        {
+            // Restricts to positive values.
+            byte[] data = preID.Concat("\x00".AsByteArray());   // length = 23 bytes
+            
+            // Converts byte[] to BigInteger and then to int.
+            int input = (int)data.ToBigInteger();
+            
+            // Converts BigInteger to Base58.
+            int[] result = new int[40]; // Big value to avoid constraints.
+            
+            int basis = 58;
+            int pos = 0;
+            int quotient = basis + 1;
+            while (quotient > basis)
+            {
+                quotient = input / basis;
+                result[pos] = input % basis;
+                input = quotient;
+                pos++;
+            }
+            result[pos] = input;
+            
+            string b58 = null;
+            for (int k=pos; k >= 0; k--)
+            {
+                b58 += Alphabet[ result[k] ];
+            }
+            
+            return b58;
         }
 
         // To affordably concatenate string variables.
