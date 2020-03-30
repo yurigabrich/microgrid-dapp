@@ -1534,18 +1534,8 @@ namespace Neo.SmartContract
             Return(ppID, member, 0, (-1 * grant));
         }
 
-        // Only the 'Total Amount' and 'Contributions' can be "deleted"
-        // because the failure of a crowdfunding must be preserved.
-        // Actually it is only used to "store" null values cheaply, and
-        // it must solely happen if the refund (due to a bid cancel) reaches zero.
-        private static void DelCrowd( string ppID, string opt )
-        {
-            if ( (opt == "totalamount") || (opt == "contributions") )
-            {
-                if (opt == "totalamount") ICOData.TotalAmount.Delete(id);
-                else ICOData.Contributions.Delete(id); // (opt == "contributions")
-            }
-        }
-
+        // A crowdfunding process remains forever... even if it fails.
+        // In this case, only the 'totalamount' and 'contributions' will
+        // be "deleted" though the function above.
     }
 }
