@@ -1139,26 +1139,14 @@ namespace Neo.SmartContract
         private static void DelMemb( byte[] address, string opt = "" )
         {
             // To support an economic action for the update method.
-            if (opt == "fullname")
-            {
-                MemberData.FullName.Delete(address);
-            }
-            else if (opt == "utility")
-            {
-                MemberData.Utility.Delete(address);
-            }
-            else if (opt == "quota")
-            {
-                MemberData.Quota.Delete(address);
-            }
-            else if (opt == "tokens")
-            {
-                MemberData.Tokens.Delete(address);
-            }
-            
-            // If a member exits the group (opt == "").
+            if (opt == "fullname") MemberData.FullName.Delete(address);
+            else if (opt == "utility") MemberData.Utility.Delete(address);
+            else if (opt == "quota") MemberData.Quota.Delete(address);
+            else if (opt == "tokens") MemberData.Tokens.Delete(address);
             else
             {
+                // The member exits the group (opt == "").
+                
                 foreach ( string option in new string[]{"fullname", "utility", "quota", "tokens"} )
                 {
                     DelMemb(address, option);
