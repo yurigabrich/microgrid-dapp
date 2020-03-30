@@ -959,19 +959,6 @@ namespace Neo.SmartContract
             return Int2Str(quotient, String.Concat(trick, s) );
         }
 
-        // Polimorfism to deal with BigInteger instead of Integer --PENDING-- evaluate if both methods is required.
-        private static string Int2Str(BigInteger num, string s = null)
-        {
-            if (num == 0) return s;
-
-            BigInteger quotient = num / 10;
-            BigInteger remainder = num % 10;
-            
-            string trick = Digits()[ (int)remainder ];
-                
-            return Int2Str(quotient, String.Concat(trick, s) );
-        }
-
         // The Base58 enconding scheme.
         private static string Encode58(byte[] preID)
         {
