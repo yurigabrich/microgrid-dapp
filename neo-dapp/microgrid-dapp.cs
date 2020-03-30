@@ -1467,7 +1467,7 @@ namespace Neo.SmartContract
         {
             BigInteger orig = GetBid(ppID, member);
             
-            // Don't invoke Put if value is unchanged AND
+            // Doesn't invoke Put if value is unchanged AND
             // keeps the storage with the original value.
             if ((orig == bid) || (bid == 0)) return;
             
@@ -1476,46 +1476,42 @@ namespace Neo.SmartContract
             ICOData.Bid.Put( bidID, orig + bid );
         }
 
-        // Only the 'Total Amount', 'Contributions', 'HasResult' and 'Success' can be updated.
+        // Only the 'totalamount', 'contributions', 'hasresult' and 'success' can be updated.
         private static void UpCrowd( string ppID, string opt, BigInteger val )
         {
             if ( (opt == "totalamount") || (opt == "contributions") || (opt == "hasresult") )
             {
-                BigInteger orig = (BigInteger)GetCrowd(id, opt);
+                BigInteger orig = (BigInteger)GetCrowd(ppID, opt);
                 
-                if (orig == val)
+                // Doesn't invoke Put if value is unchanged.
+                if (orig == val) return;
+                
+                // Deletes the respective storage if the new value is zero.
+                if (val == 0)
                 {
-                    // Don't invoke Put if value is unchanged.
-                }
-                else if (val == 0)
-                {
-                    // Deletes the storage if the new value is zero.
-                    if (opt == "totalamount") ICOData.TotalAmount.Delete(id);
-                    else if (opt == "contributions") ICOData.Contributions.Delete(id);
-                    else ICOData.HasResult.Delete(id); // (opt == "hasresult")
+                    if (opt == "totalamount") ICOData.TotalAmount.Delete(ppID);
+                    else if (opt == "contributions") ICOData.Contributions.Delete(ppID);
+                    else ICOData.HasResult.Delete(ppID); // (opt == "hasresult")
                 }
                 else
                 {
-                    // Update the storage with the new value.
-                    if (opt == "totalamount") ICOData.TotalAmount.Put(id, val);
-                    else if (opt == "contributions") ICOData.Contributions.Put(id, val);
-                    else ICOData.HasResult.Put(id, val); // (opt == "hasresult")
+                    // Updates the respective storage with the new value.
+                    if (opt == "totalamount") ICOData.TotalAmount.Put(ppID, val);
+                    else if (opt == "contributions") ICOData.Contributions.Put(ppID, val);
+                    else ICOData.HasResult.Put(ppID, val); // (opt == "hasresult")
                 }
             }
         }
 
         private static void UpCrowd( string ppID, bool val )
         {
-            string orig = (string)GetCrowd(id, "success");
+            string orig = (string)GetCrowd(ppID, "success");
             
-            if ( orig == Bool2Str(val) )
-            {
-                // Don't invoke Put if value is unchanged.
-            }
-            else
-            {
-                ICOData.Success.Put(id, Bool2Str(val));
-            }
+            // Doesn't invoke Put if value is unchanged.
+            if ( orig == Bool2Str(val) ) return;
+            
+            // else
+            ICOData.Success.Put(ppID, Bool2Str(val));
         }
 
         // --> delete
