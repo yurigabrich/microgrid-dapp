@@ -1009,30 +1009,29 @@ namespace Neo.SmartContract
         // Displays how much a member has contributed to a PP crowdfunding.
         private static void ShowContributedValues( object lookForID, object[] listOfIDs )
         {
-            // --PENDING!-- inputs must be adjusted to follow the conditions below.
+            BigInteger bid;
 
-            // Gets values by each ID registered on the contract storage space.
-            if ( lookForID.AsString()[0] == 'P' )
+            if (lookForID is string) // It's a PP ID.
             {
                 // Gets members' bid by a PP funding process.
-                foreach (byte[] memberAddress in listOfIDs)
+                foreach (byte[] member in listOfIDs)
                 {
-                    BigInteger bid = GetBid(lookForID, memberAddress);
+                    bid = GetBid((string)lookForID, member);
                     
-                    if ( bid != 0 )
+                    if (bid != 0)
                     {
-                        Runtime.Notify( new object[] { memberAddress, bid } );
+                        Runtime.Notify( new object[] { member, bid } );
                     }
                 }
             }
-            else // lookForID.AsString()[0] == 'A'
+            else // It's a member ID.
             {
                 // Gets PPs by a member investments.
-                foreach (byte[] ppID in listOfIDs)
+                foreach (string ppID in listOfIDs)
                 {
-                    BigInteger bid = GetBid(ppID, lookForID);
+                    bid = GetBid(ppID, (byte[])lookForID);
                     
-                    if ( bid != 0 )
+                    if (bid != 0)
                     {
                         Runtime.Notify( new object[] { ppID, bid } );
                     }
