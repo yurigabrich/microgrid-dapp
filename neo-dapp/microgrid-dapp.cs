@@ -1380,19 +1380,18 @@ namespace Neo.SmartContract
         }
 
         // --> update
-        // It is only possible to internally change the 'MoneyRaised', the 'NumOfVotes',
-        // the 'CountTrue', the 'HasResult' and the 'Outcome'.
+        // It is only possible to internally change the 'moneyraised', the 'numofvotes',
+        // the 'counttrue', the 'hasresult' and the 'outcome'.
         private static void UpRef( string id, string opt, BigInteger val )
         {
             if ((opt == "numofvotes") || (opt == "moneyraised") || (opt == "counttrue") || (opt == "hasresult") )
             {
                 BigInteger orig = (BigInteger)GetRef(id, opt);
                 
-                if (orig == val)
-                {
-                    // Doesn't invoke Put if value is unchanged.
-                }
-                else if (val == 0)
+                // Doesn't invoke Put if value is unchanged.
+                if (orig == val) return;
+                
+                if (val == 0)
                 {
                     // Deletes the respective storage if the new value is zero.
                     if (opt == "numofvotes") RefData.NumOfVotes.Delete(id);
@@ -1415,7 +1414,7 @@ namespace Neo.SmartContract
         {
             bool orig = Str2Bool( (string)GetRef(id, "outcome") );
 
-            // Don't invoke Put if value is unchanged.
+            // Doesn't invoke Put if value is unchanged.
             if ( orig == val ) return;
 
             // else   
