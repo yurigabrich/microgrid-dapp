@@ -278,7 +278,7 @@ namespace Neo.SmartContract
                     if (args.Length != 2)
                         throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
                     
-                    if ( (args[0] is string) & (((string)args[0])[0] == 'P') ) // Must be a PP ID.
+                    if ( (args[0] is string) & (((string)args[0])[0] == 'P') ) // Should be a PP ID.
                     {
                         if ( ((string)GetPP((string)args[0], "utility")).Length == 0 )
                             throw new InvalidOperationException("Provide a valid PP ID.");
@@ -310,7 +310,7 @@ namespace Neo.SmartContract
                         if ( (((object[])args[1]).Length != 2) || (((object[])args[1]).Length != 0) )
                             throw new InvalidOperationException("Provide valid arguments to update/delete an address.");
 
-                        if ( ( ((string)((object[])args[1])[0] == profile[0]) | ((string)((object[])args[1])[0] == profile[1]) ) & !(Runtime.CheckWitness((byte[])args[0])) )
+                        if ( ( ((string)((object[])args[1])[0] == profile[0]) | ((string)((object[])args[1])[0] == profile[1]) ) & !(Runtime.CheckWitness(address)) )
                             throw new InvalidOperationException("Only the member can change her/his profile data.");
                     }                    
                     
