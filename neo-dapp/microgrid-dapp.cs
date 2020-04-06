@@ -278,28 +278,40 @@ namespace Neo.SmartContract
                     if (args.Length != 2)
                         throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
                     
+                    // To simplify the indexing.
+                    var opt = (object[])args[1];
+                    
                     if ( (args[0] is string) & (((string)args[0])[0] == 'P') ) // Should be a PP ID.
                     {
                         if ( ((string)GetPP((string)args[0], "utility")).Length == 0 )
                             throw new InvalidOperationException("Provide a valid PP ID.");
 
-                        var opt = (object[])args[1];
-
-                        if ( opt.Length > 2 )
-                            throw new InvalidOperationException("A maximum of 2 options are required to update a PP subject.");
-
-                        // Updates PP utility name.
-                        if ( (opt.Length == 1) & !(opt[0] is string) )
-                            throw new InvalidOperationException("Provide a valid power utility name format to be replaced by.");
+                        if ( opt.Length != 1 )
+                            throw new InvalidOperationException("Only one option is required to update a PP subject. It can be a PP utility name, or a new bid value on a PP crowdfunding campaing.");
                         
-                        // Updates the bid on a PP crowdfunding campaing.
-                        if ( opt.Length == 2 )
+                        if ( !(opt[0] is string) )
                         {
+                            // It should be a 'BigInteger'.
+                            
                             if ( isLock( (string)args[0] ) )
                                 throw new InvalidOperationException("The campaign has ended.");
 
-                            if ( !(Runtime.CheckWitness((byte[])opt[0])) )
+                            if ( !(Runtime.CheckWitness(address)) )
                                 throw new InvalidOperationException("Only the member can change its bid.");
+                                
+                            // Updates the option array to pass the 'address' together with the bid value.
+                            int i = opt.Length;
+                            object[] option = new object[i+1];
+                            
+                            while( i > 0 )
+                            {
+                                option[i] =  opt[i-1];
+                                i--;
+                            }
+                            option[i] = address;
+                            
+                            return Change( (object)args[0], // PP ID
+                                            option );       // array with desired values
                         }
                     }
                     else // Should be a member ID (address).
@@ -307,15 +319,15 @@ namespace Neo.SmartContract
                         if ( ((string)GetMemb((byte[])args[0])).Length == 0 )
                             throw new InvalidOperationException("Provide a valid member address.");
 
-                        if ( (((object[])args[1]).Length != 2) || (((object[])args[1]).Length != 0) )
+                        if ( (opt.Length != 2) || (opt.Length != 0) )
                             throw new InvalidOperationException("Provide valid arguments to update/delete an address.");
 
-                        if ( ( ((string)((object[])args[1])[0] == profile[0]) | ((string)((object[])args[1])[0] == profile[1]) ) & !(Runtime.CheckWitness(address)) )
+                        if ( ( ((string)opt[0] == profile[0]) | ((string)opt[0] == profile[1]) ) & !(Runtime.CheckWitness(address)) )
                             throw new InvalidOperationException("Only the member can change her/his profile data.");
-                    }                    
+                    }
                     
-                    return Change( (object)args[0],     // any ID
-                                   (object[])args[1] ); // array with desired values
+                    return Change( (object)args[0], // any ID
+                                    opt );          // array with desired values
                 }
                 
                 // Administrative operations.
