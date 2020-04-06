@@ -238,25 +238,25 @@ namespace Neo.SmartContract
 
                 if (operation == "trade")
                 {
-                    if ( args.Length != 4 )
-                        throw new InvalidOperationException("Please provide the 4 arguments: your account address, the address of who you are transaction to, the quota value, and the amount of tokens.");
-
-                    if ( !Runtime.CheckWitness((byte[])args[0]) )
+                    if ( args.Length != 3 )
+                        throw new InvalidOperationException("Please provide the 3 arguments: the address of who you are transacting to, the quota value, and the amount of tokens.");
+        
+                    if ( !Runtime.CheckWitness(address) )
                         throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
                     
-                    if ( ((string)GetMemb((byte[])args[1])).Length == 0 )
-                        throw new InvalidOperationException("The address you are transaction to must be a member too.");
-
-                    if ( (GetMemb((byte[])args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
+                    if ( ((string)GetMemb((byte[])args[0])).Length == 0 )
+                        throw new InvalidOperationException("The address you are transacting to must be a member too.");
+        
+                    if ( (GetMemb(address, "Utility")) != (GetMemb((byte[])args[0], "Utility")) )
                         throw new InvalidOperationException( "Both members must belong to the same power utility cover area." );
-
-                    if ( ((int)args[2] <= 0) & ((int)args[3] <= 0) )
-                        throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 4th argument empty. Otherwise, to donate tokens let ONLY the 3rd argument empty.");
+        
+                    if ( ((int)args[1] <= 0) & ((int)args[2] <= 0) )
+                        throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 3rd argument empty. Otherwise, to donate tokens let ONLY the 2nd argument empty.");
                     
-                    return Trade( (byte[])args[0],       // from address
-                                  (byte[])args[1],       // to address
-                                  (BigInteger)args[2],   // quota exchange
-                                  (BigInteger)args[3] ); // token price
+                    return Trade( address,               // from address
+                                  (byte[])args[0],       // to address
+                                  (BigInteger)args[1],   // quota exchange
+                                  (BigInteger)args[2] ); // token price
                 }
 
                 if (operation == "power up")
