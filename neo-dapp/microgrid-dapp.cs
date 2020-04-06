@@ -179,8 +179,17 @@ namespace Neo.SmartContract
                 if ( args.Length < 1 )
                     throw new InvalidOperationException("Provide at least a member address or a PP ID.");
 
-                if ( (((string)GetMemb(Caller())).Length == 0) && (((string)GetMemb((byte[])args[0])).Length != 0) ) // definir o caller é foda! --PENDING-- posso usar o VerifySignature?
-                    throw Warning();
+                if ( ((string)GetMemb((byte[])args[0])).Length != 0 )
+                {
+                    if ( args.Length != 3 )
+                        throw new InvalidOperationException("Please provide the 3 arguments: the member address, the option desired, and your address.");
+                    
+                    if ( !Runtime.CheckWitness((byte[])args[2]) )
+                        throw new InvalidOperationException("This request can not be done on someone else's behalf.");
+                    
+                    if ( ((string)GetMemb((byte[])args[2])).Length == 0 )
+                        throw Warning();
+                }
 
                 return Summary( (object)args[0],     // any ID
                                 (string)args[1] );   // option
