@@ -141,32 +141,37 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // THE MAIN INTERFACE
 
-        public static object Main ( string operation, params object[] args )
+        public static object Main ( byte[] address, string operation, params object[] args )
         {
             // General operation.
             if (operation == "admission")
             {
-                if ( args.Length != 3 )
-                    throw new InvalidOperationException("Please provide the 3 arguments: your account address, full name, and power utility name.");
-
-                if ( !Runtime.CheckWitness((byte[])args[0]) )
+                if ( args.Length != 2 )
+                    throw new InvalidOperationException("Please provide the 2 arguments: your full name, and the power utility name.");
+        
+                if ( !Runtime.CheckWitness(address) )
                     throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
-
-                if ( ( (string)GetMemb((byte[])args[0]) ).Length != 0 )
+        
+                if ( ( (string)GetMemb(address) ).Length != 0 )
                     throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
                 
                 if ( Storage.Get("firstCall").AsBigInteger() == 0 )
                 {
                     // No admission process is required.
-
+        
                     // Locks this 'if' statement.
                     OnlyOnce();
                     
                     // Defines the 'invoker/caller' as the first member.
-                    Membership( (byte[])args[0], "Welcome on board!" );
-                    Member( (byte[])args[0], (string)args[1], (string)args[2], 0, 0 );
+                    Membership( address, "Welcome on board!" );
+                    Member( address, (string)args[0], (string)args[1], 0, 0 );
                     return true;
                 }
+        
+                return Admission( (byte[])args[0],   // invoker/caller address
+                                  (string)args[1],   // fullName
+                                  (string)args[2] ); // utility
+            }
 
                 return Admission( (byte[])args[0],   // invoker/caller address
                                   (string)args[1],   // fullName
