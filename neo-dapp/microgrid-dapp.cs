@@ -168,14 +168,9 @@ namespace Neo.SmartContract
                     return true;
                 }
         
-                return Admission( (byte[])args[0],   // invoker/caller address
-                                  (string)args[1],   // fullName
-                                  (string)args[2] ); // utility
-            }
-
-                return Admission( (byte[])args[0],   // invoker/caller address
-                                  (string)args[1],   // fullName
-                                  (string)args[2] ); // utility
+                return Admission( address,           // invoker/caller address
+                                  (string)args[0],   // fullName
+                                  (string)args[1] ); // utility
             }
             
             // Partially restricted operation.
