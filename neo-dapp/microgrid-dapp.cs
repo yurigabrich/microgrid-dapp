@@ -213,27 +213,27 @@ namespace Neo.SmartContract
 
                 if (operation == "bid")
                 {
-                    if ( args.Length != 3 )
-                        throw new InvalidOperationException("Please provide the 3 arguments: the PP id, your account address, and your bid.");
-
-                    if ( !Runtime.CheckWitness((byte[])args[1]) )
+                    if ( args.Length != 2 )
+                        throw new InvalidOperationException("Please provide the 2 arguments: the PP id, and your bid.");
+        
+                    if ( !Runtime.CheckWitness(address) )
                         throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
-
+        
                     if ( (((string)args[0])[0] != 'P') || (((string)args[0]).Length == 0) )
                         throw new InvalidOperationException("Provide a valid PP ID.");
-
-                    if ( (GetPP((string)args[0], "Utility")) != (GetMemb((byte[])args[1], "Utility")) )
+        
+                    if ( (GetPP((string)args[0], "Utility")) != (GetMemb(address, "Utility")) )
                         throw new InvalidOperationException("This member cannot profit from this power utility." );
-
-                    if ( (byte)args[2] <= minOffer )
+        
+                    if ( (byte)args[1] <= minOffer )
                         throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                     
                     if ( isLock( (string)args[0] ) )
                         throw new InvalidOperationException("The campaign has ended.");
-
+        
                     return Bid( (string)args[0],        // PP id
-                                (byte[])args[1],        // member address
-                                (BigInteger)args[2] );  // bid value
+                                address,                // member address
+                                (BigInteger)args[1] );  // bid value
                 }
 
                 if (operation == "trade")
