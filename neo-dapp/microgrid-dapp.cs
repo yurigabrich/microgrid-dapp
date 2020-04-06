@@ -193,7 +193,7 @@ namespace Neo.SmartContract
             }
 
             // Restricted operations.
-            if ( GetMemb(Caller()).AsString().Length != 0 )
+            if ( ((string)GetMemb(address)).Length != 0 )
             {
                 // Group operations.
                 if (operation == "vote")
