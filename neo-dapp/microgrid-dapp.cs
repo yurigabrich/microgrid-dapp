@@ -192,24 +192,23 @@ namespace Neo.SmartContract
                                 (string)args[1] );   // option
             }
 
-            // Restricted operations.
+            // Restricted operations (group operations).
             if ( ((string)GetMemb(address)).Length != 0 )
             {
-                // Group operations.
                 if (operation == "vote")
                 {
-                    if ( args.Length != 3 )
-                        throw new InvalidOperationException("Please provide the 3 arguments: the referendum id, your account address, and your vote.");
-
-                    if ( !Runtime.CheckWitness((byte[])args[1]) )
+                    if ( args.Length != 2 )
+                        throw new InvalidOperationException("Please provide the 2 arguments: the referendum id, and your vote.");
+        
+                    if ( !Runtime.CheckWitness(address) )
                         throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
-
+        
                     if ( isLock( (string)args[0]) )
                         throw new InvalidOperationException("The ballot has ended.");
                     
-                    return Vote( (string)args[0],    // referendum id
-                                 (byte[])args[1],    // member address
-                                 (bool)args[2] );    // answer
+                    return Vote( (string)args[0],   // referendum id
+                                 address,           // member address
+                                 (bool)args[1] );   // answer
                 }
 
                 if (operation == "bid")
