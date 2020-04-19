@@ -55,9 +55,6 @@ namespace Neo.SmartContract
         // Token settings.
         public static string Name() => "Sharing Electricity in Brazil";
         public static string Symbol() => "SEB";
-        public static byte Decimals() => 3;                                                         // {0, 5000}
-        public static byte[] Owner() => ExecutionEngine.ExecutingScriptHash;                        // aka GetReceiver() -- this smart contract == this smart contract ScriptHash
-        public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", "NEP-10" };
         
         // Member's dataset.
         private static string[] profile => new string[] {"fullname", "utility"};
@@ -116,7 +113,7 @@ namespace Neo.SmartContract
         
         // New Power Plant crowdfunding settings.
         private const uint factor = 1000;               // 1kW == 1SEB
-        private const uint minOffer = 100;              // Brazilian Reais (R$)
+        private const int  minOffer = 100;              // Brazilian Reais (R$)
         private const uint timeFrameCrowd = 518400;     // 60 days
         private const uint minTimeToMarket = 259200;    // 30 days
         
@@ -128,9 +125,6 @@ namespace Neo.SmartContract
         
         // Trick to support the conversion from 'int' to 'string'.
         private static string[] Digits() => new string[10] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
-        
-        // Trick to get the type of a 'string' (and of a 'integer').
-        private static char[] Alpha() => new char[] {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
         
         // The characters of the Base58 scheme.
         private const string Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -224,7 +218,7 @@ namespace Neo.SmartContract
                     if ( (GetPP((string)args[0], "Utility")) != (GetMemb(address, "Utility")) )
                         throw new InvalidOperationException("This member cannot profit from this power utility." );
         
-                    if ( (uint)args[1] <= minOffer )
+                    if ( (int)args[1] <= minOffer )
                         throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                     
                     if ( isLock( (string)args[0] ) )
