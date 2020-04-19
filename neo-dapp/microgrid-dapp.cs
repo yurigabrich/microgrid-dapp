@@ -280,7 +280,7 @@ namespace Neo.SmartContract
                     // To simplify the indexing.
                     var opt = (object[])args[1];
                     
-                    if ( (args[0] is string) & (((string)args[0])[0] == 'P') ) // Should be a PP ID.
+                    if ( IsValidId(args[0]) ) // Should be a PP ID.
                     {
                         if ( ((string)GetPP((string)args[0], "utility")).Length == 0 )
                             throw new InvalidOperationException("Provide a valid PP ID.");
@@ -400,7 +400,7 @@ namespace Neo.SmartContract
         public static object Summary( object id, string opt = "" )
         {
             // If 'id' is a 'byte[]' ==  member.
-            if (!(id is string))
+            if ( !IsValidId(id) )
             {
                 var address = (byte[])id;
                 
@@ -539,7 +539,7 @@ namespace Neo.SmartContract
             string rID;
 
             // If 'id' is a 'byte[]' ==  member.
-            if (!(id is string))
+            if (!IsValidId(id))
             {
                 // Only the member can change its own personal data.
                 // To UPDATE, the params must be ['profile option', 'value'].
@@ -1003,13 +1003,19 @@ namespace Neo.SmartContract
             return b58;
         }
         
+        // To evaluate if an object is a 'string' that represents a PP ID or a Ref ID.
+        private static bool IsValidId( object id )
+        {
+            return ( (((string)id)[0] == 'P') || (((string)id)[0] == 'R') );
+        }
+
         // To filter the relationship of members and PPs.
         // Displays how much a member has contributed to a PP crowdfunding.
         private static void ShowContributedValues( object lookForID, object[] listOfIDs )
         {
             BigInteger bid;
 
-            if (lookForID is string) // --PENDING!-- não sei se isso vai funcionar direito!
+            if (IsValidId(lookForID))
             {
                 // 'lookForID' is a PP ID.
 
