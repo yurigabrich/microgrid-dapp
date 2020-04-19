@@ -135,7 +135,7 @@ namespace Neo.SmartContract
         public static object Main ( byte[] address, string operation, params object[] args )
         {
             // General operation.
-            if (operation == "admission")
+            if ( operation == "admission" )
             {
                 if ( args.Length != 2 )
                     throw new InvalidOperationException("Please provide the 2 arguments: your full name, and the power utility name.");
@@ -165,7 +165,7 @@ namespace Neo.SmartContract
             }
             
             // Partially restricted operation.
-            if (operation == "summary")
+            if ( operation == "summary" )
             {
                 if ( args.Length < 1 )
                     throw new InvalidOperationException("Provide at least a member address or a PP ID.");
@@ -188,7 +188,7 @@ namespace Neo.SmartContract
             {
                 
                 // Group operations.
-                if (operation == "vote")
+                if ( operation == "vote" )
                 {
                     if ( args.Length != 2 )
                         throw new InvalidOperationException("Please provide the 2 arguments: the referendum id, and your vote.");
@@ -204,7 +204,7 @@ namespace Neo.SmartContract
                                  (bool)args[1] );   // answer
                 }
         
-                if (operation == "bid")
+                if ( operation == "bid" )
                 {
                     if ( args.Length != 2 )
                         throw new InvalidOperationException("Please provide the 2 arguments: the PP id, and your bid.");
@@ -229,7 +229,7 @@ namespace Neo.SmartContract
                                 (BigInteger)args[1] );  // bid value
                 }
         
-                if (operation == "trade")
+                if ( operation == "trade" )
                 {
                     if ( args.Length != 3 )
                         throw new InvalidOperationException("Please provide the 3 arguments: the address of who you are transacting to, the quota value, and the amount of tokens.");
@@ -252,9 +252,9 @@ namespace Neo.SmartContract
                                   (BigInteger)args[2] ); // token price
                 }
         
-                if (operation == "power up")
+                if ( operation == "power up" )
                 {
-                    if (args.Length != 4)
+                    if ( args.Length != 4 )
                         throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
         
                     if ( ((int)args[3] == 0) || ((int)args[3] < minTimeToMarket) )
@@ -266,9 +266,9 @@ namespace Neo.SmartContract
                                     (uint)args[3] );    // time to market
                 }
         
-                if (operation == "change")
+                if ( operation == "change" )
                 {
-                    if (args.Length != 2)
+                    if ( args.Length != 2 )
                         throw new InvalidOperationException("Please provide 2 arguments only. The first one must be the identification of the member (address) or the PP (id). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the delete of something.");
                     
                     // To simplify the indexing.
@@ -322,7 +322,7 @@ namespace Neo.SmartContract
                 }
                 
                 // Administrative operations.
-                if (operation == "admission result")
+                if ( operation == "admission result" )
                 {
                     if ( args.Length != 1 )
                         throw new InvalidOperationException("Please provide only the admission process ID.");
@@ -333,7 +333,7 @@ namespace Neo.SmartContract
                     return AdmissionResult( (string)args[0] ); // Referendum ID
                 }
                 
-                if (operation == "change result")
+                if ( operation == "change result" )
                 {
                     if ( args.Length != 1 )
                         throw new InvalidOperationException("Please provide only the change process ID.");
@@ -344,7 +344,7 @@ namespace Neo.SmartContract
                     ChangeResult( (string)args[0] ); // Referendum ID
                 }
                 
-                if (operation == "power up result")
+                if ( operation == "power up result" )
                 {
                     if ( args.Length == 0 )
                         throw new InvalidOperationException("Please provide at least the new PP process ID.");
@@ -356,7 +356,7 @@ namespace Neo.SmartContract
                                    (string)args[1] );   // PP ID
                 }
         
-                if (operation == "list of power plants")
+                if ( operation == "list of power plants" )
                 {
                     if ( args.Length != 0 )
                         throw new InvalidOperationException("This function does not need attributes.");
@@ -364,7 +364,7 @@ namespace Neo.SmartContract
                     ListOfPPs();
                 }
         
-                if (operation == "list of members")
+                if ( operation == "list of members" )
                 {
                     if ( args.Length != 0 )
                         throw new InvalidOperationException("This function does not need attributes.");
@@ -396,11 +396,11 @@ namespace Neo.SmartContract
             {
                 var address = (byte[])id;
                 
-                if ((opt == "") || (opt == "detailed"))
+                if ( (opt == "") || (opt == "detailed") )
                 {
                     object[] brief = new object[] { GetMemb(address), GetMemb(address,"utility"), GetMemb(address,"quota"), GetMemb(address,"tokens") };
 
-                    if (opt == "detailed")
+                    if ( opt == "detailed" )
                     {
                         ShowContributedValues( address, ListOfPPs() );
                     }
@@ -410,7 +410,7 @@ namespace Neo.SmartContract
             }
 
             // If 'id' is a 'string' with prefix 'P' == power plant.
-            else if (((string)id)[0] == 'P')
+            else if ( ((string)id)[0] == 'P' )
             {
                 var ppID = (string)id;
                 
@@ -421,7 +421,7 @@ namespace Neo.SmartContract
                     {
                         object[] brief = new object[] { GetPP(ppID,"Capacity"), GetPP(ppID,"Cost"), GetPP(ppID,"Utility"), GetPP(ppID,"TotMembers") };
             
-                        if (opt == "detailed")
+                        if ( opt == "detailed" )
                         {
                             ShowContributedValues( ppID, ListOfMembers() );
                         }
@@ -437,10 +437,9 @@ namespace Neo.SmartContract
                     {
                         object[] brief = new object[] { GetCrowd(ppID,"Start Time"), GetCrowd(ppID,"End Time"), GetCrowd(ppID,"Total Amount"), GetCrowd(ppID,"Contributions"), GetCrowd(ppID,"Success") };
 
-                        if (opt == "detailed")
+                        if ( opt == "detailed" )
                         {
-                            // for (int num = 0; num < NumOfMemb(); num++)
-                            foreach (byte[] member in ListOfMembers())
+                            foreach ( byte[] member in ListOfMembers() )
                             {
                                 BigInteger bid = GetBid(ppID, member);
                                 
@@ -457,11 +456,11 @@ namespace Neo.SmartContract
             }
 
             // If 'id' is a 'string' with prefix 'R' == referendum process.
-            else if (((string)id)[0] == 'R')
+            else if ( ((string)id)[0] == 'R' )
             {
                 var rID = (string)id;
                 
-                if (opt == "")
+                if ( opt == "" )
                 {
                     return new object[] { GetRef(rID,"Proposal"), GetRef(rID,"Notes"), GetRef(rID,"Cost"), GetRef(rID,"Outcome") };
                 }
@@ -482,7 +481,7 @@ namespace Neo.SmartContract
             BigInteger temp = (BigInteger)GetRef(id,"Num of Votes");
             UpRef(id, "Num of Votes", temp+1);
 
-            if (answer)
+            if ( answer )
             {
                 // Increases the number of "trues".
                 temp = (BigInteger)GetRef(id,"Count True");
@@ -531,9 +530,9 @@ namespace Neo.SmartContract
             string rID;
 
             // If 'id' is a 'byte[]' ==  member.
-            if (!IsValidId(id))
+            if ( !IsValidId(id) )
             {
-                if (opts.Length != 0)
+                if ( opts.Length != 0 )
                 {
                     // Only the member can change its own personal data.
                     // To UPDATE, the params must be ['profile option', 'value'].
@@ -603,7 +602,7 @@ namespace Neo.SmartContract
             BigInteger[] fromWallet = new BigInteger[n];
             
             // register = {"quota", "tokens"}
-            for (int r = 0; r < n; r++)
+            for ( int r = 0; r < n; r++ )
             {
                 fromWallet[r] = (BigInteger)GetMemb( fromAddress, register[r] );
                 toWallet[r] = (BigInteger)GetMemb( toAddress, register[r] );
@@ -663,20 +662,20 @@ namespace Neo.SmartContract
                 // Identifies the proposal and does the respective operation.
                 string proposal = (string)GetRef(id, "proposal");
 
-                if (proposal == "Change register_")
+                if ( proposal == "Change register_" )
                 {
                     byte[] key = (byte[])GetRef(id, "address");
                     UpMemb(key, (string)GetRef(id, "notes"), (BigInteger)GetRef(id, "cost"));
                     Update("Registration data.", key);
                 }
                             
-                if (proposal == "Delete member_")
+                if ( proposal == "Delete member_" )
                 {
                     byte[] key = (byte[])GetRef(id, "address");
                     BigInteger portion = (BigInteger)GetMemb(key, "Quota");
                     BigInteger give_out = portion/(NumOfMemb() - 1);
                     
-                    foreach (byte[] member in ListOfMembers())
+                    foreach ( byte[] member in ListOfMembers() )
                     {
                         // In an infinitesimal period of time the group will be disbalanced
                         // until the related member be completely deleted.
@@ -689,13 +688,13 @@ namespace Neo.SmartContract
                     Membership(key, "Goodbye.");
                 }
                 
-                if (proposal == "Change utility_")
+                if ( proposal == "Change utility_" )
                 {
                     UpPP(id, "utility", (string)GetRef(id, "notes"));
                     Update("Belonging of.", id);
                 }
                 
-                if (proposal == "Delete PP_")
+                if ( proposal == "Delete PP_" )
                 {
                     DelPP(id);
                     Update("Deletion of.", id);
@@ -711,7 +710,7 @@ namespace Neo.SmartContract
         public static object PowerUpResult( string id, string ppID = null )
         {
             // STEP 1 - Analyzes the referendum about the request for a new PP.
-            if (ppID == null)
+            if ( ppID == null )
             {
                 if ( isLock(id) )
                     throw new InvalidOperationException("There isn't a result about the new PP request yet.");
@@ -768,7 +767,7 @@ namespace Neo.SmartContract
                 BigInteger funding = (BigInteger)GetCrowd(ppID, "totalamount");
 
                 // Evaluates if the building of the new PP starts or not.
-                if (funding == target)
+                if ( funding == target )
                 {
                     // Crowdfunding has succeeded.
                     UpCrowd(ppID, true);
@@ -781,7 +780,7 @@ namespace Neo.SmartContract
                 }
                 
                 // Otherwise, the "success" remains as 'false'.
-                foreach (byte[] funder in ListOfFunders(ppID))
+                foreach ( byte[] funder in ListOfFunders(ppID) )
                 {
                     Refund(ppID, funder);
                 }
@@ -814,7 +813,7 @@ namespace Neo.SmartContract
                 // Identifies how much the new Power Plant takes part on the group total power supply.
                 BigInteger sharesOfPP = capOfPP/capOfGroup;                     // [pu]
                 
-                foreach (byte[] funder in ListOfFunders(ppID))
+                foreach ( byte[] funder in ListOfFunders(ppID) )
                 {
                     // Gets the member contribution.
                     BigInteger grant = GetBid(ppID, funder);                    // [R$]
@@ -847,7 +846,7 @@ namespace Neo.SmartContract
         {
             byte[][] ppIDs = new byte[ (int)NumOfPP() ][];
             
-            for (int num = 0; num < NumOfPP(); num++)
+            for ( int num = 0; num < NumOfPP(); num++ )
             {
                 var ppID = PPData.ID.Get( Int2Str(num+1) );
                 ppIDs[num] = ppID;
@@ -860,7 +859,7 @@ namespace Neo.SmartContract
         {
             byte[][] addresses = new byte[ (int)NumOfMemb() ][];
             
-            for (int num = 0; num < NumOfMemb(); num++)
+            for ( int num = 0; num < NumOfMemb(); num++ )
             {
                 var memberAddress = MemberData.ID.Get( Int2Str(num+1) );
                 addresses[num] = memberAddress;
@@ -874,11 +873,11 @@ namespace Neo.SmartContract
             byte[][] funders = new byte[ (int)GetCrowd(ppID, "contributions") ][];
 
             int num = 0;
-            foreach (byte[] member in ListOfMembers())
+            foreach ( byte[] member in ListOfMembers() )
             {
                 var bid = GetBid( ppID, member );
                 
-                if (bid != 0)
+                if ( bid != 0 )
                 {
                     funders[num] = member;
                     num++;
@@ -899,7 +898,7 @@ namespace Neo.SmartContract
             int num = 0;
             
             // register = {"Quota", "Tokens"}
-            foreach (string data in register)
+            foreach ( string data in register )
             {
                 pastWallet[num] = ( (BigInteger)GetMemb(toAddress, data) );
                 num++;
@@ -917,8 +916,8 @@ namespace Neo.SmartContract
             
             // STEP 1 - HASH
             string data = null;
-            if (unique) data = Int2Str((int)InvokedTime());
-            foreach( string a in args )
+            if ( unique ) data = Int2Str((int)InvokedTime());
+            foreach ( string a in args )
             {
                 data = String.Concat(data,a);
             }
@@ -938,21 +937,21 @@ namespace Neo.SmartContract
         // To properly store a boolean variable.
         private static string Bool2Str( bool val )
         {
-            if (val) return "1";
+            if ( val ) return "1";
             return "0";
         }
         
         // To properly read a boolean from storage.
         private static bool Str2Bool( string val )
         {
-            if (val == "1") return true;
+            if ( val == "1" ) return true;
             return false;
         }
         
         // To affordably convert a integer to a string.
-        private static string Int2Str(int num, string s = null)
+        private static string Int2Str( int num, string s = null )
         {
-            if (num == 0) return s;
+            if ( num == 0 ) return s;
 
             int quotient = num / 10;
             int remainder = num % 10;
@@ -963,7 +962,7 @@ namespace Neo.SmartContract
         }
         
         // The Base58 enconding scheme.
-        private static string Encode58(byte[] preID)
+        private static string Encode58( byte[] preID )
         {
             // Restricts to positive values.
             byte[] data = preID.Concat("\x00".AsByteArray());   // length = 23 bytes
@@ -987,7 +986,7 @@ namespace Neo.SmartContract
             result[pos] = input;
             
             string b58 = null;
-            for (int k=pos; k >= 0; k--)
+            for ( int k=pos; k >= 0; k-- )
             {
                 b58 += Alphabet[ result[k] ];
             }
@@ -1006,11 +1005,11 @@ namespace Neo.SmartContract
         {
             string temp = (string)test;
             
-            foreach (char t in temp)
+            foreach ( char t in temp )
             {
-                foreach (string d in Digits())
+                foreach ( string d in Digits() )
                 {
-                    if( t.ToString() == d ) return false;
+                    if ( t.ToString() == d ) return false;
                 }
             }
             return true;
@@ -1022,16 +1021,16 @@ namespace Neo.SmartContract
         {
             BigInteger bid;
 
-            if (IsValidId(lookForID))
+            if ( IsValidId(lookForID) )
             {
                 // 'lookForID' is a PP ID.
 
                 // Gets members' bid by a PP funding process.
-                foreach (byte[] member in listOfIDs)
+                foreach ( byte[] member in listOfIDs )
                 {
                     bid = GetBid((string)lookForID, member);
                     
-                    if (bid != 0)
+                    if ( bid != 0 )
                     {
                         Runtime.Notify( new object[] { member, bid } );
                     }
@@ -1042,11 +1041,11 @@ namespace Neo.SmartContract
                 // 'lookForID' is a member ID.
 
                 // Gets PPs by a member investments.
-                foreach (string ppID in listOfIDs)
+                foreach ( string ppID in listOfIDs )
                 {
                     bid = GetBid(ppID, (byte[])lookForID);
                     
-                    if (bid != 0)
+                    if ( bid != 0 )
                     {
                         Runtime.Notify( new object[] { ppID, bid } );
                     }
@@ -1082,7 +1081,7 @@ namespace Neo.SmartContract
         {
             uint endTime;
             
-            if (id[0] == 'R')
+            if ( id[0] == 'R' )
             {
                 endTime = (uint)GetRef(id, "endtime");
             }
@@ -1090,7 +1089,7 @@ namespace Neo.SmartContract
             // else id[0] == 'P'
             endTime = (uint)GetCrowd(id, "endtime");
             
-            if (InvokedTime() <= endTime) return true;
+            if ( InvokedTime() <= endTime ) return true;
             return false;
         }
         
@@ -1116,9 +1115,9 @@ namespace Neo.SmartContract
         // --> read
         private static object GetMemb( byte[] address, string opt = "fullname" )
         {
-            if (opt == "utility") return MemberData.Utility.Get(address);
-            else if (opt == "quota") return MemberData.Quota.Get(address);
-            else if (opt == "tokens") return MemberData.Tokens.Get(address);
+            if ( opt == "utility" ) return MemberData.Utility.Get(address);
+            else if ( opt == "quota" ) return MemberData.Quota.Get(address);
+            else if ( opt == "tokens" ) return MemberData.Tokens.Get(address);
             else return MemberData.FullName.Get(address);
         }
         
@@ -1129,15 +1128,15 @@ namespace Neo.SmartContract
         {
             // Don't invoke Put if value is unchanged.
             string orig = (string)GetMemb(address, opt);
-            if (orig == val) return true;
+            if ( orig == val ) return true;
              
             // Use Delete rather than Put if the new value is empty.
-            if (val.Length == 0) DelMemb(address, opt);
+            if ( val.Length == 0 ) DelMemb(address, opt);
             return true;
             
             // else
-            if (opt == "fullname") MemberData.FullName.Put(address, val);
-            if (opt == "utility") MemberData.Utility.Put(address, val);
+            if ( opt == "fullname" ) MemberData.FullName.Put(address, val);
+            if ( opt == "utility" ) MemberData.Utility.Put(address, val);
 
             return true;
         }
@@ -1146,15 +1145,15 @@ namespace Neo.SmartContract
         {
             // Don't invoke Put if value is unchanged.
             BigInteger orig = (BigInteger)GetMemb(address, opt);
-            if (orig == val) return true;
+            if ( orig == val ) return true;
              
             // Use Delete rather than Put if the new value is zero.
-            if (val == 0) DelMemb(address, opt);
+            if ( val == 0 ) DelMemb(address, opt);
             return true;
             
             // else
-            if (opt == "quota") MemberData.Quota.Put(address, val);
-            if (opt == "tokens") MemberData.Tokens.Put(address, val);
+            if ( opt == "quota" ) MemberData.Quota.Put(address, val);
+            if ( opt == "tokens" ) MemberData.Tokens.Put(address, val);
 
             return true;
         }
@@ -1163,10 +1162,10 @@ namespace Neo.SmartContract
         private static void DelMemb( byte[] address, string opt = "" )
         {
             // To support an economic action for the update method.
-            if (opt == "fullname") MemberData.FullName.Delete(address);
-            else if (opt == "utility") MemberData.Utility.Delete(address);
-            else if (opt == "quota") MemberData.Quota.Delete(address);
-            else if (opt == "tokens") MemberData.Tokens.Delete(address);
+            if ( opt == "fullname" ) MemberData.FullName.Delete(address);
+            else if ( opt == "utility" ) MemberData.Utility.Delete(address);
+            else if ( opt == "quota" ) MemberData.Quota.Delete(address);
+            else if ( opt == "tokens" ) MemberData.Tokens.Delete(address);
             else
             {
                 // The member exits the group (opt == "").
@@ -1177,7 +1176,7 @@ namespace Neo.SmartContract
                 }
                 
                 // Looks for the member 'key' (that may vary during the life cycle of the group).
-                for (int num = 1; num < NumOfMemb()+1; num++)
+                for ( int num = 1; num < NumOfMemb()+1; num++ )
                 {
                     var index = Int2Str(num);
                     
@@ -1238,11 +1237,11 @@ namespace Neo.SmartContract
         // --> read
         private static object GetPP( string id, string opt = "hasstarted" )
         {
-            if (opt == "capacity") return PPData.Capacity.Get(id);
-            else if (opt == "cost") return PPData.Cost.Get(id);
-            else if (opt == "utility") return PPData.Utility.Get(id);
-            else if (opt == "timetomarket") return PPData.TimeToMarket.Get(id);
-            else if (opt == "numoffundmemb") return PPData.NumOfFundMemb.Get(id);
+            if ( opt == "capacity" ) return PPData.Capacity.Get(id);
+            else if ( opt == "cost" ) return PPData.Cost.Get(id);
+            else if ( opt == "utility" ) return PPData.Utility.Get(id);
+            else if ( opt == "timetomarket" ) return PPData.TimeToMarket.Get(id);
+            else if ( opt == "numoffundmemb" ) return PPData.NumOfFundMemb.Get(id);
             else return PPData.HasStarted.Get(id);
         }
         
@@ -1253,14 +1252,14 @@ namespace Neo.SmartContract
         // To update the other options, delete the current PP and create a new one.
         private static void UpPP( string id, string opt, object val )
         {
-            if (opt == "utility")
+            if ( opt == "utility" )
             {
                 // Doesn't invoke Put if value is unchanged.
                 string orig = (string)GetPP(id, "utility");
-                if (orig == (string)val) return;
+                if ( orig == (string)val ) return;
                 
                 // Does nothing if the new value is empty.
-                if (((string)val).Length == 0) return;
+                if ( ((string)val).Length == 0 ) return;
                 
                 // else
                 PPData.Utility.Put(id, (string)val);
@@ -1271,27 +1270,27 @@ namespace Neo.SmartContract
                 // THIS WAS NOT IMPLEMENTED!
             }
             
-            if (opt == "hasstarted")
+            if ( opt == "hasstarted" )
             {
                 // Doesn't invoke Put if value is unchanged.
                 BigInteger orig = (BigInteger)GetPP(id, "hasstarted");
-                if (orig == (BigInteger)val) return;
+                if ( orig == (BigInteger)val ) return;
                 
                 // Does nothing if the new value is empty.
-                if ((BigInteger)val == 0) return;
+                if ( (BigInteger)val == 0 ) return;
                 
                 // else
                 PPData.HasStarted.Put(id, (BigInteger)val);
             }
             
-            if (opt == "timetomarket")
+            if ( opt == "timetomarket" )
             {
                 // Doesn't invoke Put if value is unchanged.
                 uint orig = (uint)GetPP(id, "timetomarket");
-                if (orig == (uint)val) return;
+                if ( orig == (uint)val ) return;
                 
                 // Does nothing if the new value is empty.
-                if ((uint)val == 0) return;
+                if ( (uint)val == 0 ) return;
 
                 // Does nothing if the deadline has passed by.
                 uint deadline = (uint)GetCrowd(id, "endtime") + (uint)GetPP(id, "timetomarket");
@@ -1315,7 +1314,7 @@ namespace Neo.SmartContract
             if ( (BigInteger)GetPP(id, "numoffundmemb") != 0 ) PPData.NumOfFundMemb.Delete(id);
             
             // Looks for the PP 'key' (that may vary during the life cycle of the group).
-            for (int num = 1; num < NumOfPP()+1; num++)
+            for ( int num = 1; num < NumOfPP()+1; num++ )
             {
                 var index = Int2Str(num);
 
@@ -1362,9 +1361,9 @@ namespace Neo.SmartContract
             RefData.EndTime.Put(id, InvokedTime() + timeFrameRef);
 
             // Evaluates the values before stores them since it is expensive to store null values.
-            if (address.Length != 0) RefData.Address.Put(id, address);
-            if (cost != 0) RefData.Cost.Put(id, cost);
-            if (time != 0) RefData.Time.Put(id, time);
+            if ( address.Length != 0 ) RefData.Address.Put(id, address);
+            if ( cost != 0 ) RefData.Cost.Put(id, cost);
+            if ( time != 0 ) RefData.Time.Put(id, time);
             
             // Just states the other values since it is expensive to store null values.
             // RefData.MoneyRaised.Put(id, 0);
@@ -1388,17 +1387,17 @@ namespace Neo.SmartContract
         // --> read
         private static object GetRef( string id, string opt = "hasresult" )
         {
-            if (opt == "proposal") return RefData.Proposal.Get(id);
-            else if (opt == "notes") return RefData.Notes.Get(id);
-            else if (opt == "cost") return RefData.Cost.Get(id);
-            else if (opt == "address") return RefData.Address.Get(id);
-            else if (opt == "time") return RefData.Time.Get(id);
-            else if (opt == "moneyraised") return RefData.MoneyRaised.Get(id);
-            else if (opt == "numofvotes") return RefData.NumOfVotes.Get(id);
-            else if (opt == "counttrue") return RefData.CountTrue.Get(id);
-            else if (opt == "outcome") return RefData.Outcome.Get(id);
-            else if (opt == "starttime") return RefData.StartTime.Get(id);
-            else if (opt == "endtime") return RefData.EndTime.Get(id);
+            if ( opt == "proposal" ) return RefData.Proposal.Get(id);
+            else if ( opt == "notes" ) return RefData.Notes.Get(id);
+            else if ( opt == "cost" ) return RefData.Cost.Get(id);
+            else if ( opt == "address" ) return RefData.Address.Get(id);
+            else if ( opt == "time" ) return RefData.Time.Get(id);
+            else if ( opt == "moneyraised" ) return RefData.MoneyRaised.Get(id);
+            else if ( opt == "numofvotes" ) return RefData.NumOfVotes.Get(id);
+            else if ( opt == "counttrue" ) return RefData.CountTrue.Get(id);
+            else if ( opt == "outcome" ) return RefData.Outcome.Get(id);
+            else if ( opt == "starttime" ) return RefData.StartTime.Get(id);
+            else if ( opt == "endtime" ) return RefData.EndTime.Get(id);
             else return RefData.HasResult.Get(id);
         }
         
@@ -1407,27 +1406,27 @@ namespace Neo.SmartContract
         // the 'counttrue', the 'hasresult' and the 'outcome'.
         private static void UpRef( string id, string opt, BigInteger val )
         {
-            if ((opt == "numofvotes") || (opt == "moneyraised") || (opt == "counttrue") || (opt == "hasresult") )
+            if ( (opt == "numofvotes") || (opt == "moneyraised") || (opt == "counttrue") || (opt == "hasresult") )
             {
                 BigInteger orig = (BigInteger)GetRef(id, opt);
                 
                 // Doesn't invoke Put if value is unchanged.
-                if (orig == val) return;
+                if ( orig == val ) return;
                 
-                if (val == 0)
+                if ( val == 0 )
                 {
                     // Deletes the respective storage if the new value is zero.
-                    if (opt == "numofvotes") RefData.NumOfVotes.Delete(id);
-                    else if (opt == "moneyraised") RefData.MoneyRaised.Delete(id);
-                    else if (opt == "counttrue") RefData.CountTrue.Delete(id);
+                    if ( opt == "numofvotes" ) RefData.NumOfVotes.Delete(id);
+                    else if ( opt == "moneyraised" ) RefData.MoneyRaised.Delete(id);
+                    else if ( opt == "counttrue" ) RefData.CountTrue.Delete(id);
                     else RefData.HasResult.Delete(id); // (opt == "hasresult")
                 }
                 else
                 {
                     // Update the respective storage with the new value.
-                    if (opt == "numofvotes") RefData.NumOfVotes.Put(id, val);
-                    else if (opt == "moneyraised") RefData.MoneyRaised.Put(id, val);
-                    else if (opt == "counttrue") RefData.CountTrue.Put(id, val);
+                    if ( opt == "numofvotes" ) RefData.NumOfVotes.Put(id, val);
+                    else if ( opt == "moneyraised" ) RefData.MoneyRaised.Put(id, val);
+                    else if ( opt == "counttrue" ) RefData.CountTrue.Put(id, val);
                     else RefData.HasResult.Put(id, val); // (opt == "hasresult")
                 }
             }
@@ -1476,11 +1475,11 @@ namespace Neo.SmartContract
 
         private static object GetCrowd( string ppID, string opt = "hasresult" )
         {
-            if (opt == "starttime") return ICOData.StartTime.Get(ppID);
-            else if (opt == "endtime") return ICOData.EndTime.Get(ppID);
-            else if (opt == "totalamount") return ICOData.TotalAmount.Get(ppID);
-            else if (opt == "contributions") return ICOData.Contributions.Get(ppID);
-            else if (opt == "success") return ICOData.Success.Get(ppID);
+            if ( opt == "starttime" ) return ICOData.StartTime.Get(ppID);
+            else if ( opt == "endtime" ) return ICOData.EndTime.Get(ppID);
+            else if ( opt == "totalamount" ) return ICOData.TotalAmount.Get(ppID);
+            else if ( opt == "contributions" ) return ICOData.Contributions.Get(ppID);
+            else if ( opt == "success" ) return ICOData.Success.Get(ppID);
             else return ICOData.HasResult.Get(ppID);
         }
         
@@ -1491,7 +1490,7 @@ namespace Neo.SmartContract
             
             // Don't invoke Put if value is unchanged AND
             // keeps the storage with the original value.
-            if ((orig == bid) || (bid == 0)) return;
+            if ( (orig == bid) || (bid == 0) ) return;
             
             // else
             string bidID = ID( "\x27", false, new string[] {ppID, member.AsString()} );
@@ -1506,20 +1505,20 @@ namespace Neo.SmartContract
                 BigInteger orig = (BigInteger)GetCrowd(ppID, opt);
                 
                 // Doesn't invoke Put if value is unchanged.
-                if (orig == val) return;
+                if ( orig == val ) return;
                 
                 // Deletes the respective storage if the new value is zero.
-                if (val == 0)
+                if ( val == 0 )
                 {
-                    if (opt == "totalamount") ICOData.TotalAmount.Delete(ppID);
-                    else if (opt == "contributions") ICOData.Contributions.Delete(ppID);
+                    if ( opt == "totalamount" ) ICOData.TotalAmount.Delete(ppID);
+                    else if ( opt == "contributions" ) ICOData.Contributions.Delete(ppID);
                     else ICOData.HasResult.Delete(ppID); // (opt == "hasresult")
                 }
                 else
                 {
                     // Updates the respective storage with the new value.
-                    if (opt == "totalamount") ICOData.TotalAmount.Put(ppID, val);
-                    else if (opt == "contributions") ICOData.Contributions.Put(ppID, val);
+                    if ( opt == "totalamount" ) ICOData.TotalAmount.Put(ppID, val);
+                    else if ( opt == "contributions" ) ICOData.Contributions.Put(ppID, val);
                     else ICOData.HasResult.Put(ppID, val); // (opt == "hasresult")
                 }
             }
