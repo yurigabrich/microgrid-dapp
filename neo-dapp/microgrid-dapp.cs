@@ -116,7 +116,7 @@ namespace Neo.SmartContract
         
         // New Power Plant crowdfunding settings.
         private const uint factor = 1000;               // 1kW == 1SEB
-        private const byte minOffer = 100;              // Brazilian Reais (R$)
+        private const uint minOffer = 100;              // Brazilian Reais (R$)
         private const uint timeFrameCrowd = 518400;     // 60 days
         private const uint minTimeToMarket = 259200;    // 30 days
         
@@ -224,7 +224,7 @@ namespace Neo.SmartContract
                     if ( (GetPP((string)args[0], "Utility")) != (GetMemb(address, "Utility")) )
                         throw new InvalidOperationException("This member cannot profit from this power utility." );
         
-                    if ( (byte)args[1] <= minOffer )
+                    if ( (uint)args[1] <= minOffer )
                         throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                     
                     if ( isLock( (string)args[0] ) )
