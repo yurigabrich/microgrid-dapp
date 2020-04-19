@@ -11,7 +11,7 @@ namespace Neo.SmartContract
     {
         //---------------------------------------------------------------------------------------------
         // EVENTS
-
+        
         [DisplayName("transaction")]
         public static event Action<byte[], byte[], BigInteger, BigInteger> Transfer;
         [DisplayName("transaction")]
@@ -26,39 +26,39 @@ namespace Neo.SmartContract
         public static event Action<string, byte[], BigInteger> Offer;
         [DisplayName("change")]
         public static event Action<string, object> Update;
-
-
+        
+        
         //---------------------------------------------------------------------------------------------
         // GLOBAL VARIABLES
-
+        
         // Power limits of the distributed generation category defined by Brazilian law (from 0MW to 5MW).
         public static int[] PowGenLimits() => new int[] {0, 5000000};
-
+        
         // The total number of referendum processes.
         public static BigInteger NumOfRef() => Storage.Get("NumOfRef").AsBigInteger();
-
+        
         // The total number of power plant units.
         public static BigInteger NumOfPP() => Storage.Get("NumOfPP").AsBigInteger();
-
+        
         // The total number of members.
         public static BigInteger NumOfMemb() => Storage.Get("NumOfMemb").AsBigInteger();
-
+        
         // The total power supply at the group, i.e., sum of PP's capacity.
         public static BigInteger TotalSupply() => Storage.Get("TotalSupply").AsBigInteger();
-
+        
         // The number of days to answer a referendum process.
         private const uint timeFrameRef = 259200;   // 30 days
-
+        
         // The time a given function is invoked.
         private static uint InvokedTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
-
+        
         // Token settings.
         public static string Name() => "Sharing Electricity in Brazil";
         public static string Symbol() => "SEB";
         public static byte Decimals() => 3;                                                         // {0, 5000}
         public static byte[] Owner() => ExecutionEngine.ExecutingScriptHash;                        // aka GetReceiver() -- this smart contract == this smart contract ScriptHash
         public static string[] SupportedStandards() => new string[] { "NEP-5", "NEP-7", "NEP-10" };
-
+        
         // Member's dataset.
         private static string[] profile => new string[] {"fullname", "utility"};
         private static string[] register => new string[] {"quota", "tokens"};
@@ -70,7 +70,7 @@ namespace Neo.SmartContract
             public static StorageMap Quota => Storage.CurrentContext.CreateMap(nameof(Quota));
             public static StorageMap Tokens => Storage.CurrentContext.CreateMap(nameof(Tokens));
         }
-
+        
         // Referendum's dataset.
         private struct RefData
         {
@@ -88,7 +88,7 @@ namespace Neo.SmartContract
             public static StorageMap StartTime => Storage.CurrentContext.CreateMap(nameof(StartTime));
             public static StorageMap EndTime => Storage.CurrentContext.CreateMap(nameof(EndTime));
         }
-
+        
         // Power Plant's dataset.
         private struct PPData
         {
@@ -100,7 +100,7 @@ namespace Neo.SmartContract
             public static StorageMap NumOfFundMemb => Storage.CurrentContext.CreateMap(nameof(NumOfFundMemb));
             public static StorageMap HasStarted => Storage.CurrentContext.CreateMap(nameof(HasStarted));
         }
-
+        
         // ICO's dataset (for crowdfunding).
         private struct ICOData
         {
@@ -110,34 +110,34 @@ namespace Neo.SmartContract
             public static StorageMap Contributions => Storage.CurrentContext.CreateMap(nameof(Contributions));
             public static StorageMap Success => Storage.CurrentContext.CreateMap(nameof(Success));
             public static StorageMap HasResult => Storage.CurrentContext.CreateMap(nameof(HasResult));
-
+        
             public static StorageMap Bid => Storage.CurrentContext.CreateMap(nameof(Bid));
         }
-
+        
         // New Power Plant crowdfunding settings.
         private const uint factor = 1000;               // 1kW == 1SEB
         private const byte minOffer = 100;              // Brazilian Reais (R$)
         private const uint timeFrameCrowd = 518400;     // 60 days
         private const uint minTimeToMarket = 259200;    // 30 days
-
+        
         // The restrictive message to show up.
         private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
-
+        
         // To lock the registering process without voting.
         private static void OnlyOnce() => Storage.Put("firstCall", 1);
-
+        
         // Trick to support the conversion from 'int' to 'string'.
         private static string[] Digits() => new string[10] {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
-
+        
         // Trick to get the type of a 'string' (and of a 'integer').
         private static char[] Alpha() => new char[] {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
-
+        
         // The characters of the Base58 scheme.
         private const string Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-
+        
         //---------------------------------------------------------------------------------------------
         // THE MAIN INTERFACE
-
+        
         public static object Main ( byte[] address, string operation, params object[] args )
         {
             // General operation.
@@ -188,10 +188,12 @@ namespace Neo.SmartContract
                 return Summary( (object)args[0],     // any ID
                                 (string)args[1] );   // option
             }
-
-            // Restricted operations (group operations).
+        
+            // Restricted operations.
             if ( ((string)GetMemb(address)).Length != 0 )
             {
+                
+                // Group operations.
                 if (operation == "vote")
                 {
                     if ( args.Length != 2 )
@@ -207,7 +209,7 @@ namespace Neo.SmartContract
                                  address,           // member address
                                  (bool)args[1] );   // answer
                 }
-
+        
                 if (operation == "bid")
                 {
                     if ( args.Length != 2 )
@@ -232,7 +234,7 @@ namespace Neo.SmartContract
                                 address,                // member address
                                 (BigInteger)args[1] );  // bid value
                 }
-
+        
                 if (operation == "trade")
                 {
                     if ( args.Length != 3 )
@@ -255,21 +257,21 @@ namespace Neo.SmartContract
                                   (BigInteger)args[1],   // quota exchange
                                   (BigInteger)args[2] ); // token price
                 }
-
+        
                 if (operation == "power up")
                 {
                     if (args.Length != 4)
                         throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
-
+        
                     if ( ((int)args[3] == 0) || ((int)args[3] < minTimeToMarket) )
                         throw new InvalidOperationException("The time to market must be a factual period.");
-
+        
                     return PowerUp( (int)args[0],       // capacity [MW]
                                     (int)args[1],       // cost [R$]
                                     (string)args[2],    // power utility name
                                     (uint)args[3] );    // time to market
                 }
-
+        
                 if (operation == "change")
                 {
                     if (args.Length != 2)
@@ -308,7 +310,7 @@ namespace Neo.SmartContract
                             option[i] = address;
                             
                             return Change( (object)args[0], // PP ID
-                                            option );       // array with desired values
+                                   option );                // array with desired values
                         }
                     }
                     else // Should be a member ID (address).
@@ -324,7 +326,7 @@ namespace Neo.SmartContract
                     }
                     
                     return Change( (object)args[0], // any ID
-                                    opt );          // array with desired values
+                                   opt );           // array with desired values
                 }
                 
                 // Administrative operations.
@@ -361,37 +363,31 @@ namespace Neo.SmartContract
                     PowerUpResult( (string)args[0],     // Referendum ID
                                    (string)args[1] );   // PP ID
                 }
-
+        
                 if (operation == "list of power plants")
                 {
                     if ( args.Length != 0 )
                         throw new InvalidOperationException("This function does not need attributes.");
                     
-                    foreach (byte[] ppID in ListOfPPs())
-                    {
-                        Runtime.Notify( ppID );
-                    }
+                    ListOfPPs();
                 }
-
+        
                 if (operation == "list of members")
                 {
                     if ( args.Length != 0 )
                         throw new InvalidOperationException("This function does not need attributes.");
                     
-                    foreach (byte[] address in ListOfMembers())
-                    {
-                        Runtime.Notify( address );
-                    }
+                    ListOfMembers();
                 }
             }
-
+        
             throw new InvalidOperationException("No operation found. Have you wrote it right?");
         }
-
-
+        
+        
         //---------------------------------------------------------------------------------------------
         // GROUP FUNCTIONS - The restrictions are made on the 'Main'.
-
+        
         // To request to join the group.
         public static string Admission( byte[] address, string fullName, string utility )
         {
@@ -399,7 +395,7 @@ namespace Neo.SmartContract
             Membership( address, "Request for admission." );
             return id;
         }
-
+        
         // To get information about something.
         public static object Summary( object id, string opt = "" )
         {
@@ -486,7 +482,7 @@ namespace Neo.SmartContract
                 return new object[] { PowGenLimits()[0], PowGenLimits()[1], NumOfPP(), NumOfMemb(), Name(), Symbol(), TotalSupply() };
             }
         }
-
+        
         // To vote in a given ID process.
         public static bool Vote( string id, byte[] member, bool answer )
         {
@@ -506,7 +502,7 @@ namespace Neo.SmartContract
 
             return answer;
         }
-
+        
         // To make a bid in a new PP crowdfunding process.
         public static bool Bid( string id, byte[] member, BigInteger bid )
         {
@@ -514,7 +510,7 @@ namespace Neo.SmartContract
             BigInteger funds = (BigInteger)GetCrowd(id, "totalamount");
             
             if ( bid > (target - funds) )
-                throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str( (int)(target - funds) ), ",00). Bid again!" ));
+                throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str((int)(target - funds)) ), ",00). Bid again!" ));
 
             // WARNING!
             // All these steps are part of a crowdfunding process, not of a PP registration.
@@ -536,7 +532,7 @@ namespace Neo.SmartContract
             // so it will be possible to define the quota and the SEB a member has to gain.
             // It is made on PowerUpResult(...).
         }
-
+        
         // To update something on the ledger.
         public static object Change( object id, params object[] opts )
         {
@@ -585,7 +581,7 @@ namespace Neo.SmartContract
             // To UPDATE, the params must be ['new utility name'].
             if ( opts.Length == 1 )
             {
-                rID = Ref( "Change utility_", (string)opts[0], ((string)id).AsByteArray() );
+                rID = Ref( "Change utility_", (string)opts[0],  ((string)id).AsByteArray() );
                 Process( rID, "Request the change of utility name of a PP." );
                 return rID;
             }
@@ -596,7 +592,7 @@ namespace Neo.SmartContract
             Process(rID, "Request to delete a PP.");
             return rID;
         }
-
+        
         // The whole process to integrate a new PP on the group power generation.
         public static string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
         {
@@ -604,7 +600,7 @@ namespace Neo.SmartContract
             Process( id, "Request to add a new PP." );
             return id;
         }
-
+        
         // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
         // The 'fromAddress' will exchange an amount of shares with 'toAddress' by a defined token price,
         // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
@@ -632,7 +628,7 @@ namespace Neo.SmartContract
             Transfer(fromAddress, toAddress, exchange, price);
             return true;
         }
-
+        
         
         //---------------------------------------------------------------------------------------------
         // ADMINISTRATIVE FUNCTIONS
@@ -641,7 +637,7 @@ namespace Neo.SmartContract
 
         public static bool AdmissionResult( string id )
         {
-            // Updates the result.
+            // Calculates the result.
             CalcResult(id);
             
             // Retrives the address from private storage.
@@ -665,7 +661,7 @@ namespace Neo.SmartContract
 
         public static bool ChangeResult( string id )
         {
-            // Updates the result.
+            // Calculates the result.
             CalcResult(id);
             
             if ( Str2Bool( (string)GetRef(id, "outcome") ) )
@@ -879,7 +875,7 @@ namespace Neo.SmartContract
             }
             return addresses;
         }
-
+        
         // To return a list of members that have financed a new PP.
         private static byte[][] ListOfFunders( string ppID )
         {
@@ -898,11 +894,11 @@ namespace Neo.SmartContract
             }
             return funders;
         }
-
-
+        
+        
         //---------------------------------------------------------------------------------------------
         // SYSTEM FUNCTIONS
-
+        
         // A new PP will only distribute tokens and shares after a crowdfunding process succeed.
         // All the exceptions were handle during the crowdfunding. It only needs to distribute the assets.
         private static void Distribute( byte[] toAddress, BigInteger quota, BigInteger tokens )
@@ -921,7 +917,7 @@ namespace Neo.SmartContract
             UpMemb(toAddress, register[1], pastWallet[1] + tokens);
             Transfer(null, toAddress, quota, tokens);
         }
-
+        
         // To create a custom ID of a process based on its particular specifications.
         private static string ID( string prefix, bool unique, params string[] args )
         {
@@ -946,21 +942,21 @@ namespace Neo.SmartContract
             // STEP 3 - BASE58
             return Encode58( preID );
         }
-
+        
         // To properly store a boolean variable.
         private static string Bool2Str( bool val )
         {
             if (val) return "1";
             return "0";
         }
-
+        
         // To properly read a boolean from storage.
         private static bool Str2Bool( string val )
         {
             if (val == "1") return true;
             return false;
         }
-
+        
         // To affordably convert a integer to a string.
         private static string Int2Str(int num, string s = null)
         {
@@ -973,7 +969,7 @@ namespace Neo.SmartContract
                 
             return Int2Str(quotient, String.Concat(trick, s) );
         }
-
+        
         // The Base58 enconding scheme.
         private static string Encode58(byte[] preID)
         {
@@ -1006,7 +1002,7 @@ namespace Neo.SmartContract
             
             return b58;
         }
-
+        
         // To filter the relationship of members and PPs.
         // Displays how much a member has contributed to a PP crowdfunding.
         private static void ShowContributedValues( object lookForID, object[] listOfIDs )
@@ -1044,7 +1040,7 @@ namespace Neo.SmartContract
                 }
             }
         }
-
+        
         // To calculate the referendum result only once.
         private static void CalcResult( string id )
         {
@@ -1064,7 +1060,7 @@ namespace Neo.SmartContract
                 UpRef(id, "hasresult", 1);
             }
         }
-
+        
         // Actualy, it restricts a given operation to happen based on a timestamp.
         // Before a given time frame, no one is allowed to continue the process.
         // The monitoring of the time happens off-chain.
@@ -1084,8 +1080,8 @@ namespace Neo.SmartContract
             if (InvokedTime() <= endTime) return true;
             return false;
         }
-
-
+        
+        
         //---------------------------------------------------------------------------------------------
         // METHODS FOR MEMBERS
         // --> create
@@ -1103,7 +1099,7 @@ namespace Neo.SmartContract
             // Stores the address of each member.
             MemberData.ID.Put( Int2Str((int)temp), address );
         }
-
+        
         // --> read
         private static object GetMemb( byte[] address, string opt = "fullname" )
         {
@@ -1112,7 +1108,7 @@ namespace Neo.SmartContract
             else if (opt == "tokens") return MemberData.Tokens.Get(address);
             else return MemberData.FullName.Get(address);
         }
-
+        
         // --> update
         // Detailed restrictions to update 'profile' or 'register' data are set
         // on the function 'Change'. Here this feature is handled by polymorphism.
@@ -1149,7 +1145,7 @@ namespace Neo.SmartContract
 
             return true;
         }
-
+        
         // --> delete
         private static void DelMemb( byte[] address, string opt = "" )
         {
@@ -1161,7 +1157,7 @@ namespace Neo.SmartContract
             else
             {
                 // The member exits the group (opt == "").
-
+                
                 foreach ( string option in new string[]{"fullname", "utility", "quota", "tokens"} )
                 {
                     DelMemb(address, option);
@@ -1195,8 +1191,8 @@ namespace Neo.SmartContract
                 Storage.Put("NumOfMemb", temp);
             }
         }
-
-
+        
+        
         //---------------------------------------------------------------------------------------------
         // METHODS FOR POWER PLANTS
         // --> create
@@ -1225,7 +1221,7 @@ namespace Neo.SmartContract
             Process(id, "New PP created.");
             return id;
         }
-
+        
         // --> read
         private static object GetPP( string id, string opt = "hasstarted" )
         {
@@ -1236,7 +1232,7 @@ namespace Neo.SmartContract
             else if (opt == "numoffundmemb") return PPData.NumOfFundMemb.Get(id);
             else return PPData.HasStarted.Get(id);
         }
-
+        
         // --> update
         // The 'utility', the 'hasstarted', and the 'timetomarket' are the only options that can be changed.
         // However, the 'utility' can be changed anytime, the 'hasStarted' can be changed only once, while
@@ -1336,8 +1332,8 @@ namespace Neo.SmartContract
             temp = NumOfPP() - 1;
             Storage.Put("NumOfPP", temp);
         }
-
-
+        
+        
         //---------------------------------------------------------------------------------------------
         // METHODS FOR REFERENDUMS
         // --> create
@@ -1373,7 +1369,7 @@ namespace Neo.SmartContract
             Process(id, "The referendum process has started.");
             return id;
         }
-
+        
         // The function to vote on a referendum is declared above because it is public.
 
         // --> read
@@ -1392,7 +1388,7 @@ namespace Neo.SmartContract
             else if (opt == "endtime") return RefData.EndTime.Get(id);
             else return RefData.HasResult.Get(id);
         }
-
+        
         // --> update
         // It is only possible to internally change the 'moneyraised', the 'numofvotes',
         // the 'counttrue', the 'hasresult' and the 'outcome'.
@@ -1437,8 +1433,8 @@ namespace Neo.SmartContract
 
         // --> delete
         // A referendum process remains forever... and ever.
-
-
+        
+        
         //---------------------------------------------------------------------------------------------
         // METHODS TO FINANCE A NEW POWER PLANT
         // --> create
@@ -1457,7 +1453,7 @@ namespace Neo.SmartContract
 
         // The function to bid on a crowdfunding is declared above because it is public.
         // However, the option 'ICOData.Bid.Put(bidID, value)' is only available through the updating method.
-
+        
         // --> read
         private static BigInteger GetBid( string ppID, byte[] member )
         {
@@ -1474,13 +1470,13 @@ namespace Neo.SmartContract
             else if (opt == "success") return ICOData.Success.Get(ppID);
             else return ICOData.HasResult.Get(ppID);
         }
-
+        
         // --> update
         private static void UpBid( string ppID, byte[] member, BigInteger bid )
         {
             BigInteger orig = GetBid(ppID, member);
             
-            // Doesn't invoke Put if value is unchanged AND
+            // Don't invoke Put if value is unchanged AND
             // keeps the storage with the original value.
             if ((orig == bid) || (bid == 0)) return;
             
@@ -1526,7 +1522,7 @@ namespace Neo.SmartContract
             // else
             ICOData.Success.Put(ppID, Bool2Str(val));
         }
-
+        
         // --> delete
         private static void Refund( string ppID, byte[] member )
         {
@@ -1547,9 +1543,9 @@ namespace Neo.SmartContract
             // Notifies about the cancel of the bid.
             Return(ppID, member, 0, (-1 * grant));
         }
-
+        
         // A crowdfunding process remains forever... even if it fails.
         // In this case, only the 'totalamount' and 'contributions' will
-        // be "deleted" though the function above.
+        // be "deleted" through the function above.
     }
 }
