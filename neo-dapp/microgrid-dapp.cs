@@ -288,10 +288,8 @@ namespace Neo.SmartContract
                         if ( opt.Length != 1 )
                             throw new InvalidOperationException("Only one option is required to update a PP subject. It can be a PP utility name, or a new bid value on a PP crowdfunding campaing.");
                         
-                        if ( !(opt[0] is string) )
+                        if ( IsValidNum(opt[0]) ) // It should be a 'BigInteger'.
                         {
-                            // It should be a 'BigInteger'.
-                            
                             if ( isLock( (string)args[0] ) )
                                 throw new InvalidOperationException("The campaign has ended.");
 
@@ -310,7 +308,7 @@ namespace Neo.SmartContract
                             option[i] = address;
                             
                             return Change( (object)args[0], // PP ID
-                                   option );                // array with desired values
+                                            option );       // array with desired values
                         }
                     }
                     else // Should be a member ID (address).
@@ -541,26 +539,26 @@ namespace Neo.SmartContract
             // If 'id' is a 'byte[]' ==  member.
             if (!IsValidId(id))
             {
-                // Only the member can change its own personal data.
-                // To UPDATE, the params must be ['profile option', 'value'].
-                if ( opts[1] is string )
+                if (opts.Length != 0)
                 {
-                    UpMemb((byte[])id, (string)opts[0], (string)opts[1]);
-                    Update("Profile data.", id);
-                    return true;
-                }
-                
-                // Any member can request the change of registration data of other member.
-                // To UPDATE, the params must be ['register option', 'value'].
-                if ( opts[1] is BigInteger )
-                {
+                    // Only the member can change its own personal data.
+                    // To UPDATE, the params must be ['profile option', 'value'].
+                    if ( !IsValidNum(opts[1]) )
+                    {
+                        UpMemb((byte[])id, (string)opts[0], (string)opts[1]);
+                        Update("Profile data.", id);
+                        return true;
+                    }
+                    
+                    // Any member can request the change of registration data of other member.
+                    // To UPDATE, the params must be ['register option', 'value'].
                     rID = Ref( "Change register_", (string)opts[0], (byte[])id, (int)opts[1] );
                     Process( rID, "Request the change of registration data of a member." );
                     return rID;
                 }
-                
+
+                // else
                 // Any member can request to delete another member.
-                // The 'opts.Length' is empty.
                 rID = Ref( "Delete member_", null, (byte[])id );
                 Process(rID, "Request to dismiss a member.");
                 return rID;
@@ -1007,6 +1005,21 @@ namespace Neo.SmartContract
         private static bool IsValidId( object id )
         {
             return ( (((string)id)[0] == 'P') || (((string)id)[0] == 'R') );
+        }
+
+        // To evaluate if an object can be converted to 'BigInteger'.
+        private static bool IsValidNum( object test )
+        {
+            string temp = (string)test;
+            
+            foreach (char t in temp)
+            {
+                foreach (string d in Digits())
+                {
+                    if( t.ToString() == d ) return false;
+                }
+            }
+            return true;
         }
 
         // To filter the relationship of members and PPs.
