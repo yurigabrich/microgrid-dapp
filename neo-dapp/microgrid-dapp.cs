@@ -979,7 +979,7 @@ namespace Neo.SmartContract
             
             int basis = 58;
             int pos = 0;
-            int quotient = basis + 1;
+            int quotient = basis+1;
             while (quotient > basis)
             {
                 quotient = input / basis;
@@ -1109,7 +1109,7 @@ namespace Neo.SmartContract
             MemberData.Tokens.Put(address, tokens);
 
             // Increases the total number of members.
-            BigInteger temp = NumOfMemb() + 1;
+            BigInteger temp = NumOfMemb()+1;
             Storage.Put("NumOfMemb", temp);
             
             // Stores the address of each member.
@@ -1228,7 +1228,7 @@ namespace Neo.SmartContract
             // PPData.HasStarted.Put(id, 0);
 
             // Increases the total number of power plant units.
-            BigInteger temp = NumOfPP() + 1;
+            BigInteger temp = NumOfPP()+1;
             Storage.Put("NumOfPP", temp);
             
             // Stores the ID of each PP.
@@ -1376,7 +1376,7 @@ namespace Neo.SmartContract
             // RefData.HasResult.Put(id, 0);
             
             // Increases the total number of referendum processes.
-            BigInteger temp = NumOfRef() + 1;
+            BigInteger temp = NumOfRef()+1;
             Storage.Put("NumOfRef", temp);
             
             // Stores the ID of each Ref.
