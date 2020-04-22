@@ -410,7 +410,7 @@ namespace Neo.SmartContract
                     }
                     return brief;
                 }
-                return GetMemb(address,opt);
+                return GetMemb(address, opt);
             }
 
             // If 'id' is a 'string' with prefix 'P' == power plant.
@@ -431,7 +431,7 @@ namespace Neo.SmartContract
                         }
                         return brief;
                     }
-                    return GetPP(ppID,opt);
+                    return GetPP(ppID, opt);
                 }
                 
                 // The PP's crowdfunding may be succeed or not, and the PP is definitely not operating.
@@ -468,7 +468,7 @@ namespace Neo.SmartContract
                 {
                     return new object[] { GetRef(rID,"Proposal"), GetRef(rID,"Notes"), GetRef(rID,"Cost"), GetRef(rID,"Outcome") };
                 }
-                return GetRef(rID,opt);
+                return GetRef(rID, opt);
             }
 
             // Wrap-up the group information.
