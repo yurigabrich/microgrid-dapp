@@ -129,6 +129,7 @@ namespace Neo.SmartContract
         // The characters of the Base58 scheme.
         private const string Alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
         
+        
         //---------------------------------------------------------------------------------------------
         // THE MAIN INTERFACE
         
@@ -172,6 +173,9 @@ namespace Neo.SmartContract
                 
                 if ( ((string)GetMemb((byte[])args[0])).Length != 0 )
                 {
+                    // args[0] is a member, i.e.,
+                    // it has being requested information about a member.
+
                     if ( !Runtime.CheckWitness(address) )
                         throw new InvalidOperationException("This request can not be done on someone else's behalf.");
                     
