@@ -233,43 +233,6 @@ namespace Neo.SmartContract
                                 (BigInteger)args[1] );  // bid value
                 }
         
-                if ( operation == "trade" )
-                {
-                    if ( args.Length != 3 )
-                        throw new InvalidOperationException("Please provide the 3 arguments: the address of who you are transacting to, the quota value, and the amount of tokens.");
-        
-                    if ( !Runtime.CheckWitness(address) )
-                        throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
-                    
-                    if ( ((string)GetMemb((byte[])args[0])).Length == 0 )
-                        throw new InvalidOperationException("The address you are transacting to must be a member too.");
-        
-                    if ( (GetMemb(address, "Utility")) != (GetMemb((byte[])args[0], "Utility")) )
-                        throw new InvalidOperationException( "Both members must belong to the same power utility cover area." );
-        
-                    if ( ((int)args[1] <= 0) & ((int)args[2] <= 0) )
-                        throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 3rd argument empty. Otherwise, to donate tokens let ONLY the 2nd argument empty.");
-                    
-                    return Trade( address,               // from address
-                                  (byte[])args[0],       // to address
-                                  (BigInteger)args[1],   // quota exchange
-                                  (BigInteger)args[2] ); // token price
-                }
-        
-                if ( operation == "power up" )
-                {
-                    if ( args.Length != 4 )
-                        throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
-        
-                    if ( ((int)args[3] == 0) || ((int)args[3] < minTimeToMarket) )
-                        throw new InvalidOperationException("The time to market must be a factual period.");
-        
-                    return PowerUp( (int)args[0],       // capacity [MW]
-                                    (int)args[1],       // cost [R$]
-                                    (string)args[2],    // power utility name
-                                    (uint)args[3] );    // time to market
-                }
-        
                 if ( operation == "change" )
                 {
                     if ( args.Length != 2 )
@@ -323,6 +286,43 @@ namespace Neo.SmartContract
                     
                     return Change( (object)args[0], // any ID
                                    opt );           // array with desired values
+                }
+        
+                if ( operation == "power up" )
+                {
+                    if ( args.Length != 4 )
+                        throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
+        
+                    if ( ((int)args[3] == 0) || ((int)args[3] < minTimeToMarket) )
+                        throw new InvalidOperationException("The time to market must be a factual period.");
+        
+                    return PowerUp( (int)args[0],       // capacity [MW]
+                                    (int)args[1],       // cost [R$]
+                                    (string)args[2],    // power utility name
+                                    (uint)args[3] );    // time to market
+                }
+
+                if ( operation == "trade" )
+                {
+                    if ( args.Length != 3 )
+                        throw new InvalidOperationException("Please provide the 3 arguments: the address of who you are transacting to, the quota value, and the amount of tokens.");
+        
+                    if ( !Runtime.CheckWitness(address) )
+                        throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
+                    
+                    if ( ((string)GetMemb((byte[])args[0])).Length == 0 )
+                        throw new InvalidOperationException("The address you are transacting to must be a member too.");
+        
+                    if ( (GetMemb(address, "Utility")) != (GetMemb((byte[])args[0], "Utility")) )
+                        throw new InvalidOperationException( "Both members must belong to the same power utility cover area." );
+        
+                    if ( ((int)args[1] <= 0) & ((int)args[2] <= 0) )
+                        throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 3rd argument empty. Otherwise, to donate tokens let ONLY the 2nd argument empty.");
+                    
+                    return Trade( address,               // from address
+                                  (byte[])args[0],       // to address
+                                  (BigInteger)args[1],   // quota exchange
+                                  (BigInteger)args[2] ); // token price
                 }
                 
                 // Administrative operations.
