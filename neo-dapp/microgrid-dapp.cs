@@ -294,12 +294,12 @@ namespace Neo.SmartContract
                         throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be installed, and the period to wait the new PP gets ready to operate.");
         
                     if ( ((int)args[3] == 0) || ((int)args[3] < minTimeToMarket) )
-                        throw new InvalidOperationException("The time to market must be a factual period.");
+                        throw new InvalidOperationException("The time-to-market must be a factual period.");
         
                     return PowerUp( (int)args[0],       // capacity [MW]
                                     (int)args[1],       // cost [R$]
                                     (string)args[2],    // power utility name
-                                    (uint)args[3] );    // time to market
+                                    (uint)args[3] );    // time-to-market
                 }
 
                 if ( operation == "trade" )
@@ -802,7 +802,7 @@ namespace Neo.SmartContract
             if ( InvokedTime() <= operationDate )
                 throw new InvalidOperationException("The new PP is not ready to operate yet.");
             
-            // After waiting for the time to market.
+            // After waiting for the time-to-market.
 
             // Evaluates the construction only once.
             if ( (BigInteger)GetPP(ppID) == 0 )
