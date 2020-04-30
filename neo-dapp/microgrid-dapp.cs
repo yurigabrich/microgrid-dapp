@@ -26,8 +26,9 @@ namespace Neo.SmartContract
         public static event Action<string, byte[], BigInteger> Offer;
         [DisplayName("change")]
         public static event Action<string, object> Update;
-        
-        
+        [DisplayName("invalid operation")]
+        public static event Action<string> Exception;
+
         //---------------------------------------------------------------------------------------------
         // GLOBAL VARIABLES
         
@@ -113,9 +114,6 @@ namespace Neo.SmartContract
 
         // The power limits of the distributed generation category defined by Brazilian law (from 0MW to 5MW).
         private static int[] PowGenLimits() => new int[] {0, 5000000};
-
-        // The restrictive message to show up.
-        private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
         
         // The time a given function is invoked.
         private static uint InvokedTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
@@ -139,13 +137,13 @@ namespace Neo.SmartContract
             if ( operation == "admission" )
             {
                 if ( args.Length != 2 )
-                    throw new InvalidOperationException("Please provide the 2 arguments: your full name, and the power utility name.");
+                    return Warning("Please provide the 2 arguments: your full name, and the power utility name.");
         
                 if ( !Runtime.CheckWitness(address) )
-                    throw new InvalidOperationException("The admission can not be done on someone else's behalf.");
+                    return Warning("The admission can not be done on someone else's behalf.");
         
                 if ( ( (string)GetMemb(address) ).Length != 0 )
-                    throw new InvalidOperationException("Thanks, you're already a member. We're glad to have you as part of the group!");
+                    return Warning("Thanks, you're already a member. We're glad to have you as part of the group!");
                 
                 if ( Storage.Get("firstcall").AsBigInteger() == 0 )
                 {
@@ -169,7 +167,7 @@ namespace Neo.SmartContract
             if ( operation == "summary" )
             {
                 if ( args.Length < 1 )
-                    throw new InvalidOperationException("Provide at least a member address or a PP ID.");
+                    return Warning("Provide at least a member address or a PP ID.");
                 
                 if ( ((string)GetMemb((byte[])args[0])).Length != 0 )
                 {
@@ -177,10 +175,10 @@ namespace Neo.SmartContract
                     // it has being requested information about a member.
 
                     if ( !Runtime.CheckWitness(address) )
-                        throw new InvalidOperationException("This request can not be done on someone else's behalf.");
+                        return Warning("This request can not be done on someone else's behalf.");
                     
                     if ( ((string)GetMemb(address)).Length == 0 )
-                        throw Warning();
+                        return Warning();
                 }
                 
                 return Summary( (object)args[0],     // any ID
@@ -195,13 +193,13 @@ namespace Neo.SmartContract
                 if ( operation == "vote" )
                 {
                     if ( args.Length != 2 )
-                        throw new InvalidOperationException("Please provide the 2 arguments: the referendum ID, and your vote.");
+                        return Warning("Please provide the 2 arguments: the referendum ID, and your vote.");
         
                     if ( !Runtime.CheckWitness(address) )
-                        throw new InvalidOperationException("The vote can not be done on someone else's behalf.");
+                        return Warning("The vote can not be done on someone else's behalf.");
         
                     if ( isLock( (string)args[0]) )
-                        throw new InvalidOperationException("The ballot has ended.");
+                        return Warning("The ballot has ended.");
                     
                     return Vote( (string)args[0],   // referendum ID
                                  address,           // member address
@@ -211,22 +209,22 @@ namespace Neo.SmartContract
                 if ( operation == "bid" )
                 {
                     if ( args.Length != 2 )
-                        throw new InvalidOperationException("Please provide the 2 arguments: the PP ID, and your bid.");
+                        return Warning("Please provide the 2 arguments: the PP ID, and your bid.");
         
                     if ( !Runtime.CheckWitness(address) )
-                        throw new InvalidOperationException("The bid can not be done on someone else's behalf.");
+                        return Warning("The bid can not be done on someone else's behalf.");
         
                     if ( (((string)args[0])[0] != 'P') || (((string)args[0]).Length == 0) )
-                        throw new InvalidOperationException("Provide a valid PP ID.");
+                        return Warning("Provide a valid PP ID.");
         
                     if ( (GetPP((string)args[0], "utility")) != (GetMemb(address, "utility")) )
-                        throw new InvalidOperationException("This member cannot profit from this power utility." );
+                        return Warning("This member cannot profit from this power utility." );
         
                     if ( (int)args[1] <= minOffer )
-                        throw new InvalidOperationException(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
+                        return Warning(String.Concat("The minimum bid allowed is R$ ", Int2Str(minOffer)));
                     
                     if ( isLock( (string)args[0] ) )
-                        throw new InvalidOperationException("The crowdfunding has ended.");
+                        return Warning("The crowdfunding has ended.");
         
                     return Bid( (string)args[0],        // PP ID
                                 address,                // member address
@@ -236,7 +234,7 @@ namespace Neo.SmartContract
                 if ( operation == "change" )
                 {
                     if ( args.Length != 2 )
-                        throw new InvalidOperationException("Please provide 2 arguments only. The first one must be either the identification of the member (address) or the PP (ID). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the deletion of something.");
+                        return Warning("Please provide 2 arguments only. The first one must be either the identification of the member (address) or the PP (ID). The second one must be an array. It can be either the options about the data that will be changed, or an empty array to request the deletion of something.");
                     
                     // To simplify the indexing.
                     var opt = (object[])args[1];
@@ -245,19 +243,19 @@ namespace Neo.SmartContract
                     if ( IsValidId(args[0]) ) 
                     {
                         if ( ((string)GetPP((string)args[0], "utility")).Length == 0 )
-                            throw new InvalidOperationException("Provide a valid PP ID.");
+                            return Warning("Provide a valid PP ID.");
 
                         if ( opt.Length != 1 )
-                            throw new InvalidOperationException("Only one option is required to update a PP subject. It can be a PP utility name, or a new bid value for a PP crowdfunding campaign.");
+                            return Warning("Only one option is required to update a PP subject. It can be a PP utility name, or a new bid value for a PP crowdfunding campaign.");
                         
                         // It should be a 'BigInteger'.
                         if ( IsValidNum(opt[0]) )
                         {
                             if ( isLock( (string)args[0] ) )
-                                throw new InvalidOperationException("The crowdfunding has ended.");
+                                return Warning("The crowdfunding has ended.");
 
                             if ( !(Runtime.CheckWitness(address)) )
-                                throw new InvalidOperationException("Only the member can change its bid.");
+                                return Warning("Only the member can change its bid.");
                                 
                             // Updates the option array to pass the 'address' together with the bid value.
                             int i = opt.Length;
@@ -279,13 +277,13 @@ namespace Neo.SmartContract
                     else
                     {
                         if ( ((string)GetMemb((byte[])args[0])).Length == 0 )
-                            throw new InvalidOperationException("Provide a valid member address.");
+                            return Warning("Provide a valid member address.");
 
                         if ( (opt.Length != 2) || (opt.Length != 0) )
-                            throw new InvalidOperationException("Provide valid arguments to update/delete an address.");
+                            return Warning("Provide valid arguments to update/delete an address.");
 
                         if ( ( ((string)opt[0] == profile[0]) | ((string)opt[0] == profile[1]) ) & !(Runtime.CheckWitness(address)) )
-                            throw new InvalidOperationException("Only the member can change her/his profile data.");
+                            return Warning("Only the member can change her/his profile data.");
                     }
                     
                     return Change( (object)args[0], // member address or PP ID
@@ -295,10 +293,10 @@ namespace Neo.SmartContract
                 if ( operation == "power up" )
                 {
                     if ( args.Length != 4 )
-                        throw new InvalidOperationException("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be connected to, and the period to wait until the new PP gets ready to operate.");
+                        return Warning("Please provide the 4 arguments: the PP capacity, the cost to build it up, the power utility name in which the PP will be connected to, and the period to wait until the new PP gets ready to operate.");
         
                     if ( ((int)args[3] == 0) || ((int)args[3] < minTimeToMarket) )
-                        throw new InvalidOperationException("The time to market must be a factual period.");
+                        return Warning("The time to market must be a factual period.");
         
                     return PowerUp( (int)args[0],       // capacity [MW]
                                     (int)args[1],       // cost [R$]
@@ -309,19 +307,19 @@ namespace Neo.SmartContract
                 if ( operation == "trade" )
                 {
                     if ( args.Length != 3 )
-                        throw new InvalidOperationException("Please provide the 3 arguments: the address of who you are transacting to, the quota value, and the amount of tokens.");
+                        return Warning("Please provide the 3 arguments: the address of who you are transacting to, the quota value, and the amount of tokens.");
         
                     if ( !Runtime.CheckWitness(address) )
-                        throw new InvalidOperationException("Only the owner of an account can exchange her/his asset.");
+                        return Warning("Only the owner of an account can exchange her/his asset.");
                     
                     if ( ((string)GetMemb((byte[])args[0])).Length == 0 )
-                        throw new InvalidOperationException("The address you are transacting to must be a member too.");
+                        return Warning("The address you are transacting to must be a member too.");
         
                     if ( (GetMemb(address, "utility")) != (GetMemb((byte[])args[0], "utility")) )
-                        throw new InvalidOperationException("Both members must belong to the same power utility coverage area.");
+                        return Warning("Both members must belong to the same power utility coverage area.");
         
                     if ( ((int)args[1] <= 0) & ((int)args[2] <= 0) )
-                        throw new InvalidOperationException("You're doing it wrong. To donate energy let ONLY the 3rd argument empty. Otherwise, to donate tokens let ONLY the 2nd argument empty.");
+                        return Warning("You're doing it wrong. To donate energy let ONLY the 3rd argument empty. Otherwise, to donate tokens let ONLY the 2nd argument empty.");
                     
                     return Trade( address,               // from address
                                   (byte[])args[0],       // to address
@@ -333,10 +331,10 @@ namespace Neo.SmartContract
                 if ( operation == "admission result" )
                 {
                     if ( args.Length != 1 )
-                        throw new InvalidOperationException("Please provide only the admission process ID.");
+                        return Warning("Please provide only the admission process ID.");
                     
                     if ( isLock( (string)args[0] ) )
-                        throw new InvalidOperationException("There isn't a result yet.");
+                        return Warning("There isn't a result yet.");
                     
                     return AdmissionResult( (string)args[0] ); // Referendum ID
                 }
@@ -344,10 +342,10 @@ namespace Neo.SmartContract
                 if ( operation == "change result" )
                 {
                     if ( args.Length != 1 )
-                        throw new InvalidOperationException("Please provide only the change process ID.");
+                        return Warning("Please provide only the change process ID.");
                     
                     if ( isLock( (string)args[0] ) )
-                        throw new InvalidOperationException("There isn't a result yet.");
+                        return Warning("There isn't a result yet.");
                     
                     ChangeResult( (string)args[0] ); // Referendum ID
                 }
@@ -355,10 +353,10 @@ namespace Neo.SmartContract
                 if ( operation == "power up result" )
                 {
                     if ( args.Length == 0 )
-                        throw new InvalidOperationException("Please provide at least the new PP process ID.");
+                        return Warning("Please provide at least the new PP process ID.");
                         
                     if ( args.Length > 2 )
-                        throw new InvalidOperationException("Please provide at most the new PP process ID, and the PP ID itself if any.");
+                        return Warning("Please provide at most the new PP process ID, and the PP ID itself if any.");
                     
                     PowerUpResult( (string)args[0],     // Referendum ID
                                    (string)args[1] );   // PP ID
@@ -367,7 +365,7 @@ namespace Neo.SmartContract
                 if ( operation == "list of power plants" )
                 {
                     if ( args.Length != 0 )
-                        throw new InvalidOperationException("This function does not need attributes.");
+                        return Warning("This function does not need attributes.");
                     
                     ListOfPPs();
                 }
@@ -375,13 +373,13 @@ namespace Neo.SmartContract
                 if ( operation == "list of members" )
                 {
                     if ( args.Length != 0 )
-                        throw new InvalidOperationException("This function does not need attributes.");
+                        return Warning("This function does not need attributes.");
                     
                     ListOfMembers();
                 }
             }
         
-            throw new InvalidOperationException("No operation found. Have you wrote it right?"); //--PENDING-- alterar para notification com return 'false' (next commit).
+            return Warning("No operation found. Have you wrote it right?");
         }
         
         
@@ -509,7 +507,7 @@ namespace Neo.SmartContract
             BigInteger funds = (BigInteger)GetCrowd(ppID, "totalamount");
             
             if ( bid > (target - funds) )
-                throw new InvalidOperationException( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str((int)(target - funds)) ), ",00). Bid again!" ));
+                return Warning( String.Concat(String.Concat("You offered more than the amount available (R$ ", Int2Str((int)(target - funds)) ), ",00). Bid again!" ));
 
             // WARNING!
             // All the following steps are part of a crowdfunding process.
@@ -730,7 +728,7 @@ namespace Neo.SmartContract
             if ( ppID == null )
             {
                 if ( isLock(rID) )
-                    throw new InvalidOperationException("There isn't a result about the new PP request yet.");
+                    return Warning("There isn't a result about the new PP request yet.");
                 
                 // After the 'timeFrameRef' waiting period...
 
@@ -770,7 +768,7 @@ namespace Neo.SmartContract
             
             // STEP 2 - Analyzes the crowdfunding of the new PP approved.
             if ( isLock(ppID) )
-                throw new InvalidOperationException("There isn't a result about the new PP crowdfunding yet.");
+                return Warning("There isn't a result about the new PP crowdfunding yet.");
             
             // After the 'timeFrameCrowd' waiting period...
 
@@ -818,7 +816,7 @@ namespace Neo.SmartContract
             uint operationDate = (uint)GetCrowd(ppID, "endtime") + (uint)GetPP(ppID, "timetomarket");
             
             if ( InvokedTime() <= operationDate )
-                throw new InvalidOperationException("The new PP is not ready to operate yet.");
+                return Warning("The new PP is not ready to operate yet.");
             
             // After waiting for the time to market...
 
@@ -1127,7 +1125,14 @@ namespace Neo.SmartContract
             return false;
         }
         
-        
+        // The restrictive message to show up.
+        private static bool Warning(string msg = "Only members can access this information. Join us!")
+        {
+            Exception(msg);
+            return false;
+        }
+
+
         //---------------------------------------------------------------------------------------------
         // METHODS FOR MEMBERS
         // --> create
@@ -1337,7 +1342,10 @@ namespace Neo.SmartContract
                 uint deadline = (uint)GetCrowd(ppID, "endtime") + (uint)GetPP(ppID, "timetomarket");
                 
                 if ( InvokedTime() > deadline )
-                    throw new InvalidOperationException("The time has passed by. You can no longer postpone it.");
+                {
+                    Warning("The time has passed by. You can no longer postpone it.");
+                    return;
+                }
                 
                 // else
                 PPData.TimeToMarket.Put(ppID, (uint)val);
