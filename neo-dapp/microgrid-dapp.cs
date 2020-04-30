@@ -660,7 +660,7 @@ namespace Neo.SmartContract
 
             // Otherwise, leave the user out of the group.
             Membership( address, "Not approved yet." );
-            // DelMemb( address ); --PENDING-- next commit!
+            DelMemb( address );
             return false;
         }
 
