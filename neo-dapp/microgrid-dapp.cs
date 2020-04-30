@@ -119,7 +119,7 @@ namespace Neo.SmartContract
         
         // The time a given function is invoked.
         private static uint InvokedTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
-        
+
         // The trick to lock the admission operation process without a referendum.
         private static void OnlyOnce() => Storage.Put("firstcall", 1);
         
@@ -391,9 +391,9 @@ namespace Neo.SmartContract
         // To request to join the group.
         private static string Admission( byte[] address, string fullName, string utility )
         {
-            string id = Ref( fullName, utility, address ); // --PENDING-- fix nomenclature == rID
+            string rID = Ref( fullName, utility, address );
             Membership( address, "Request for admission." );
-            return id;
+            return rID;
         }
         
         // To get information about something.
