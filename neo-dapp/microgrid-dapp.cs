@@ -979,7 +979,7 @@ namespace Neo.SmartContract
         // To affordably convert an integer to a string.
         private static string Int2Str( int num, string s = null )
         {
-            if ( num == 0 ) return s; // --PENDING-- e se eu quiser escrever o zero?
+            if ( num == 0 ) return s;
 
             int quotient = num / 10;
             int remainder = num % 10;
