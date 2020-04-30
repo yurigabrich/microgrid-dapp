@@ -46,9 +46,6 @@ namespace Neo.SmartContract
         // The group total power supply, i.e., sum of PP's capacity.
         private static BigInteger TotalSupply() => Storage.Get("totalsupply").AsBigInteger();
         
-        // The predefined number of days to answer a referendum process.
-        private const uint timeFrameRef = 259200;   // 30 days --PENDING-- posso alterar um valor definido como constante?
-        
         // The time a given function is invoked.
         private static uint InvokedTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
         
@@ -111,11 +108,14 @@ namespace Neo.SmartContract
             public static StorageMap Bid => Storage.CurrentContext.CreateMap(nameof(Bid));
         }
         
-        // The essential settings for the process of a new PP crowdfunding.  --PENDING-- posso alterar um valor definido como constante?
-        private const uint factor = 1000;               // 1kW == 1SEB
-        private const int  minOffer = 100;              // Brazilian Reais (R$)
+        // The predefined periods to answer both a referendum and a crowdfunding, and to wait until a PP construction.
+        private const uint timeFrameRef = 259200;       // 30 days
         private const uint timeFrameCrowd = 518400;     // 60 days
         private const uint minTimeToMarket = 259200;    // 30 days
+
+        // The essential settings to support the process of a new PP crowdfunding.
+        private const int  minOffer = 100;      // Brazilian Reais (R$)
+        private const uint factor = 1000;       // 1kW == 1SEB
         
         // The restrictive message to show up.
         private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
