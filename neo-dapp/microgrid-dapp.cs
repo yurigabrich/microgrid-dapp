@@ -29,22 +29,22 @@ namespace Neo.SmartContract
         
         
         //---------------------------------------------------------------------------------------------
-        // GLOBAL VARIABLES --PENDING-- review the definitions for 'public' and 'private'
+        // GLOBAL VARIABLES
         
         // The power limits of the distributed generation category defined by Brazilian law (from 0MW to 5MW).
-        public static int[] PowGenLimits() => new int[] {0, 5000000};
+        private static int[] PowGenLimits() => new int[] {0, 5000000};
         
         // The total number of referendum processes.
-        public static BigInteger NumOfRef() => Storage.Get("numofref").AsBigInteger();
+        private static BigInteger NumOfRef() => Storage.Get("numofref").AsBigInteger();
         
         // The total number of power plant (PP) units.
-        public static BigInteger NumOfPP() => Storage.Get("numofpp").AsBigInteger();
+        private static BigInteger NumOfPP() => Storage.Get("numofpp").AsBigInteger();
         
         // The total number of members.
-        public static BigInteger NumOfMemb() => Storage.Get("numofmemb").AsBigInteger();
+        private static BigInteger NumOfMemb() => Storage.Get("numofmemb").AsBigInteger();
         
         // The group total power supply, i.e., sum of PP's capacity.
-        public static BigInteger TotalSupply() => Storage.Get("totalsupply").AsBigInteger();
+        private static BigInteger TotalSupply() => Storage.Get("totalsupply").AsBigInteger();
         
         // The predefined number of days to answer a referendum process.
         private const uint timeFrameRef = 259200;   // 30 days --PENDING-- posso alterar um valor definido como constante?
@@ -53,8 +53,8 @@ namespace Neo.SmartContract
         private static uint InvokedTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
         
         // The token basic settings.
-        public static string Name() => "Sharing Electricity in Brazil";
-        public static string Symbol() => "SEB";
+        private static string Name() => "Sharing Electricity in Brazil";
+        private static string Symbol() => "SEB";
         
         // The member's dataset settings.
         private static string[] profile => new string[] {"fullname", "utility"};
@@ -389,15 +389,15 @@ namespace Neo.SmartContract
         // GROUP FUNCTIONS - The restrictions are made on the 'Main'.
         
         // To request to join the group.
-        public static string Admission( byte[] address, string fullName, string utility )
+        private static string Admission( byte[] address, string fullName, string utility )
         {
-            string id = Ref( fullName, utility, address );
+            string id = Ref( fullName, utility, address ); // --PENDING-- fix nomenclature == rID
             Membership( address, "Request for admission." );
             return id;
         }
         
         // To get information about something.
-        public static object Summary( object id, string opt = "" )
+        private static object Summary( object id, string opt = "" )
         {
             // If 'id' is a 'byte[]' ==  member.
             if ( !IsValidId(id) )
@@ -483,7 +483,7 @@ namespace Neo.SmartContract
         }
         
         // To vote in a given process.
-        public static bool Vote( string rID, byte[] member, bool answer )
+        private static bool Vote( string rID, byte[] member, bool answer )
         {
             // Increases the number of votes.
             BigInteger temp = (BigInteger)GetRef(rID,"numofvotes");
@@ -503,7 +503,7 @@ namespace Neo.SmartContract
         }
         
         // To make a bid in a new PP crowdfunding process.
-        public static bool Bid( string ppID, byte[] member, BigInteger bid )
+        private static bool Bid( string ppID, byte[] member, BigInteger bid )
         {
             BigInteger target = (BigInteger)GetPP(ppID, "cost");
             BigInteger funds = (BigInteger)GetCrowd(ppID, "totalamount");
@@ -535,7 +535,7 @@ namespace Neo.SmartContract
         }
         
         // To update a member or a PP dataset on the ledger.
-        public static object Change( object id, params object[] opts )
+        private static object Change( object id, params object[] opts )
         {
             // A referendum must start in case the change needs group's consensus.
             string rID;
@@ -596,7 +596,7 @@ namespace Neo.SmartContract
         }
         
         // To integrate a new PP on the group power generation.
-        public static string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
+        private static string PowerUp( int capacity, int cost, string utility, uint timeToMarket )
         {
             string rID = Ref( Int2Str(capacity), utility, "".AsByteArray(), cost, timeToMarket );
             Process( rID, "Request to add a new PP." );
@@ -606,7 +606,7 @@ namespace Neo.SmartContract
         // To allow the transfer of shares/tokens from someone to someone else (transactive energy indeed).
         // The 'fromAddress' will exchange an amount of shares with 'toAddress' by a defined token price,
         // i.e., while 'fromAddress' sends shares to 'toAddress', the 'toAddress' sends tokens to 'fromAddress'.
-        public static bool Trade( byte[] fromAddress, byte[] toAddress, BigInteger exchange, BigInteger price )
+        private static bool Trade( byte[] fromAddress, byte[] toAddress, BigInteger exchange, BigInteger price )
         {
             int n = 2;
             BigInteger[] toWallet = new BigInteger[n];
@@ -638,7 +638,7 @@ namespace Neo.SmartContract
         // After a period of 'timeFrameRef' days, a member should invoke the below functions to state
         // the referendum process. An off-chain operation should handle this waiting time.
 
-        public static bool AdmissionResult( string rID )
+        private static bool AdmissionResult( string rID )
         {
             // Calculates the result.
             CalcResult(rID);
@@ -664,7 +664,7 @@ namespace Neo.SmartContract
             return false;
         }
 
-        public static bool ChangeResult( string rID )
+        private static bool ChangeResult( string rID )
         {
             // Calculates the result.
             CalcResult(rID);
@@ -724,7 +724,7 @@ namespace Neo.SmartContract
             return false;
         }
 
-        public static object PowerUpResult( string rID, string ppID = null )
+        private static object PowerUpResult( string rID, string ppID = null )
         {
             // STEP 1 - Analyzes the referendum about the request for a new PP.
             if ( ppID == null )
@@ -1424,7 +1424,7 @@ namespace Neo.SmartContract
             return id;
         }
         
-        // The function to vote on a referendum is declared above because it is public.
+        // The function to vote on a referendum is declared above.
 
         // --> read
         private static object GetRef( string rID, string opt = "hasresult" )
@@ -1505,7 +1505,7 @@ namespace Neo.SmartContract
             // ICOData.HasResult.Put(ppID, 0);
         }
 
-        // The function to bid on a crowdfunding is declared above because it is public.
+        // The function to bid on a crowdfunding is declared above.
         // However, the option 'ICOData.Bid.Put(bidID, value)' is only available through
         // the updating method, and not as part of the creation method.
         
