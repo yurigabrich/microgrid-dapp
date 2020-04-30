@@ -31,9 +31,6 @@ namespace Neo.SmartContract
         //---------------------------------------------------------------------------------------------
         // GLOBAL VARIABLES
         
-        // The power limits of the distributed generation category defined by Brazilian law (from 0MW to 5MW).
-        private static int[] PowGenLimits() => new int[] {0, 5000000};
-        
         // The total number of referendum processes.
         private static BigInteger NumOfRef() => Storage.Get("numofref").AsBigInteger();
         
@@ -45,13 +42,6 @@ namespace Neo.SmartContract
         
         // The group total power supply, i.e., sum of PP's capacity.
         private static BigInteger TotalSupply() => Storage.Get("totalsupply").AsBigInteger();
-        
-        // The time a given function is invoked.
-        private static uint InvokedTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
-        
-        // The token basic settings.
-        private static string Name() => "Sharing Electricity in Brazil";
-        private static string Symbol() => "SEB";
         
         // The member's dataset settings.
         private static string[] profile => new string[] {"fullname", "utility"};
@@ -117,8 +107,18 @@ namespace Neo.SmartContract
         private const int  minOffer = 100;      // Brazilian Reais (R$)
         private const uint factor = 1000;       // 1kW == 1SEB
         
+        // The token basic settings.
+        private static string Name() => "Sharing Electricity in Brazil";
+        private static string Symbol() => "SEB";
+
+        // The power limits of the distributed generation category defined by Brazilian law (from 0MW to 5MW).
+        private static int[] PowGenLimits() => new int[] {0, 5000000};
+
         // The restrictive message to show up.
         private static Exception Warning() => new InvalidOperationException("Only members can access this information. Join us!");
+        
+        // The time a given function is invoked.
+        private static uint InvokedTime() => Blockchain.GetHeader(Blockchain.GetHeight()).Timestamp;
         
         // The trick to lock the admission operation process without a referendum.
         private static void OnlyOnce() => Storage.Put("firstcall", 1);
