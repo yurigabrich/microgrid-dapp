@@ -496,8 +496,7 @@ namespace Neo.SmartContract
 
             // Publishes the vote.
             Ballot(rID, member, answer);
-
-            return answer;
+            return true;
         }
         
         // To make a bid in a new PP crowdfunding process.
