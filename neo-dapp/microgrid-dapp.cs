@@ -333,7 +333,7 @@ namespace Neo.SmartContract
                     if ( args.Length != 1 )
                         return Warning("Please provide only the admission process ID.");
                     
-                    if ( isLock( (string)args[0] ) )
+                    if ( isLock( (string)args[0], "inv" ) )
                         return Warning("There isn't a result yet.");
                     
                     return AdmissionResult( (string)args[0] ); // Referendum ID
@@ -344,7 +344,7 @@ namespace Neo.SmartContract
                     if ( args.Length != 1 )
                         return Warning("Please provide only the change process ID.");
                     
-                    if ( isLock( (string)args[0] ) )
+                    if ( isLock( (string)args[0], "inv" ) )
                         return Warning("There isn't a result yet.");
                     
                     ChangeResult( (string)args[0] ); // Referendum ID
@@ -726,7 +726,7 @@ namespace Neo.SmartContract
             // STEP 1 - Analyzes the referendum about the request for a new PP.
             if ( ppID == null )
             {
-                if ( isLock(rID) )
+                if ( isLock(rID, "inv") )
                     return Warning("There isn't a result about the new PP request yet.");
                 
                 // After the 'timeFrameRef' waiting period...
@@ -766,7 +766,7 @@ namespace Neo.SmartContract
             }
             
             // STEP 2 - Analyzes the crowdfunding of the new PP approved.
-            if ( isLock(ppID) )
+            if ( isLock(ppID, "inv") )
                 return Warning("There isn't a result about the new PP crowdfunding yet.");
             
             // After the 'timeFrameCrowd' waiting period...
@@ -1103,10 +1103,13 @@ namespace Neo.SmartContract
         }
         
         // Actually, it restricts a given operation to happen based on a timestamp.
-        // Before a given time frame, no one is allowed to continue the process.
-        // The monitoring of the time happens off-chain.
-        // Once the time stated is reached, any member can then resume the process.
-        private static bool isLock( string id )
+        // However, the monitoring of the time happens off-chain.
+        // For operations 'vote', 'bid', and 'change', no one is allowed to continue
+        // the process after the 'endtime'.
+        // On the other hand, the operations 'admission result', 'change result', and
+        // 'power up result' stop the process before a given time frame. Once the time
+        // stated is reached, any member can then resume the process.
+        private static bool isLock( string id, string logic = null )
         {
             uint endTime;
             
@@ -1120,8 +1123,16 @@ namespace Neo.SmartContract
                 endTime = (uint)GetCrowd(id, "endtime");
             }
             
-            if ( InvokedTime() <= endTime ) return true;
-            return false;
+            if ( logic == "inv" )
+            {
+                if ( InvokedTime() <= endTime ) return true;
+                return false;
+            }
+            else
+            {
+                if ( InvokedTime() <= endTime ) return false;
+                return true;
+            }
         }
         
         // The restrictive message to show up.
