@@ -100,9 +100,9 @@ namespace Neo.SmartContract
         }
         
         // The predefined periods to answer both a referendum and a crowdfunding, and to wait until a PP construction.
-        private const uint timeFrameRef = 259200;       // 30 days
-        private const uint timeFrameCrowd = 518400;     // 60 days
-        private const uint minTimeToMarket = 259200;    // 30 days
+        private const uint timeFrameRef = 2592000;       // 30 days
+        private const uint timeFrameCrowd = 5184000;     // 60 days
+        private const uint minTimeToMarket = 2592000;    // 30 days
 
         // The essential settings to support the process of a new PP crowdfunding.
         private const int  minOffer = 100;      // Brazilian Reais (R$)
