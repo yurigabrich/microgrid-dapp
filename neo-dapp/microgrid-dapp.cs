@@ -1085,7 +1085,7 @@ namespace Neo.SmartContract
         // To calculate the referendum result only once.
         private static void CalcResult( string rID )
         {
-            if ( Str2Bool( (string)GetRef(rID) ) )
+            if ( !Str2Bool( (string)GetRef(rID) ) )
             {
                 BigInteger totalOfVotes = (BigInteger)GetRef(rID, "numofvotes");
                 BigInteger totalOfTrues = (BigInteger)GetRef(rID, "counttrue");
