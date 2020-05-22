@@ -379,7 +379,7 @@ namespace Neo.SmartContract
                 }
             }
         
-            return Warning("No operation found. Have you wrote it right?");
+            return Warning("No operation found. Have you written it right?");
         }
         
         
