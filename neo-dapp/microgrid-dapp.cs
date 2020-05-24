@@ -347,7 +347,7 @@ namespace Neo.SmartContract
                     if ( isLock( (string)args[0], "inv" ) )
                         return Warning("There isn't a result yet.");
                     
-                    ChangeResult( (string)args[0] ); // Referendum ID
+                    return ChangeResult( (string)args[0] ); // Referendum ID
                 }
                 
                 if ( operation == "power up result" )
@@ -358,8 +358,8 @@ namespace Neo.SmartContract
                     if ( args.Length > 2 )
                         return Warning("Please provide at most the new PP process ID, and the PP ID itself if any.");
                     
-                    PowerUpResult( (string)args[0],     // Referendum ID
-                                   (string)args[1] );   // PP ID
+                    return PowerUpResult( (string)args[0],     // Referendum ID
+                                          (string)args[1] );   // PP ID
                 }
         
                 if ( operation == "list of power plants" )
@@ -367,7 +367,7 @@ namespace Neo.SmartContract
                     if ( args.Length != 0 )
                         return Warning("This function does not need attributes.");
                     
-                    ListOfPPs();
+                    return ListOfPPs();
                 }
         
                 if ( operation == "list of members" )
@@ -375,7 +375,7 @@ namespace Neo.SmartContract
                     if ( args.Length != 0 )
                         return Warning("This function does not need attributes.");
                     
-                    ListOfMembers();
+                    return ListOfMembers();
                 }
             }
         
