@@ -279,7 +279,7 @@ namespace Neo.SmartContract
                         if ( ((string)GetMemb((byte[])args[0])).Length == 0 )
                             return Warning("Provide a valid member address.");
 
-                        if ( (opt.Length != 2) || (opt.Length != 0) )
+                        if ( (opt.Length != 2) & (opt.Length != 0) )
                             return Warning("Provide valid arguments to update/delete an address.");
 
                         if ( ( ((string)opt[0] == profile[0]) | ((string)opt[0] == profile[1]) ) & !(Runtime.CheckWitness(address)) )
