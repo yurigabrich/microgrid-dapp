@@ -397,8 +397,8 @@ namespace Neo.SmartContract
         // To get information about something.
         private static object Summary( object id, string opt = "" )
         {
-            // If 'id' is a 'byte[]' ==  member.
-            if ( !IsValidId(id) )
+            // If 'id' is a 'byte[]' == member.
+            if ( ((byte[])id).Length == 20 )
             {
                 var address = (byte[])id;
                 
@@ -537,8 +537,8 @@ namespace Neo.SmartContract
             // A referendum must start in case the change needs group's consensus.
             string rID;
 
-            // If 'id' is a 'byte[]' ==  member.
-            if ( !IsValidId(id) )
+            // If 'id' is a 'byte[]' == member.
+            if ( ((byte[])id).Length == 20 )
             {
                 if ( opts.Length != 0 )
                 {
