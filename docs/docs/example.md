@@ -1,8 +1,12 @@
 ---
 layout: default
 title: Example
-nav_order: 2
+nav_order: 9
 ---
 
-# Coming soon
+# Example
 {: .no_toc }
+
+---
+
+## Coming soon
