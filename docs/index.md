@@ -46,6 +46,8 @@ The `C#` algorithm implementation is in the [folder neo-dapp](/neo-dapp) under t
 
 As additional language implementations are expected, in the folder [pseudo-code](/pseudo-code) can be found generic flowcharts and information of the proposed system, (initially) echoed from the thesis.
 
+---
+
 ## About the project
 
 Microgrid Transactive Energy Smart Contract is &copy; 2020 by [Yuri Gabrich](https://github.com/yurigabrich/).
