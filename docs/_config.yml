@@ -15,6 +15,7 @@
 # in the templates via {{ site.myvariable }}.
 title: Microgrid Transactive Energy smart contract
 description: The beginning of a blockchain application for the Transactive Energy.
+short: MTEsm
 baseurl: "/microgrid-dapp" # the subpath of your site, e.g. /blog
 url: "https://yurigabrich.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 
