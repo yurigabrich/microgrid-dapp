@@ -19,31 +19,31 @@ nav_order: 3
 ## General operation
 
 ### admission
-![admission](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/admission.png)
+![admission](https://raw.githubusercontent.com/yurigabrich/microgrid-dapp/doc/pseudo-code/imgs/admission.png)
 
 ---
 
 ## Partially restricted operation
 
 ### summary
-![summary](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/summary.png)
+![summary](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/summary.png?raw=true)
 
 ---
 
 ## Restricted operations
 
 ### vote
-![vote](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/vote.png)
+![vote](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/vote.png?raw=true)
 
 ### bid
-![bid](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/bid.png)
+![bid](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/bid.png?raw=true)
 
 ### trade
-![trade](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/trade.png)
+![trade](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/trade.png?raw=true)
 
 ### power-up
-![power-up](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/power-up.png)
+![power-up](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/power-up.png?raw=true)
 
 ### change
-![change](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/change.png)
+![change](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/change.png?raw=true)
 
