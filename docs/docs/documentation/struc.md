@@ -1,7 +1,7 @@
 ---
 layout: default
 title: SM structure
-parent: Documents
+parent: Documentation
 nav_order: 1
 ---
 

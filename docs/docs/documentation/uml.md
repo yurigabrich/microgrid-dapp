@@ -1,7 +1,7 @@
 ---
 layout: default
 title: UML
-parent: Documents
+parent: Documentation
 nav_order: 2
 ---
 

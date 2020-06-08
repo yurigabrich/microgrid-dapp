@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Flowcharts
-parent: Documents
+parent: Documentation
 nav_order: 3
 ---
 
