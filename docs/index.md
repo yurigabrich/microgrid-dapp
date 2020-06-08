@@ -2,84 +2,65 @@
 layout: default
 title: Home
 nav_order: 1
-description: "Just the Docs is a responsive Jekyll theme with built-in search that is easily customizable and hosted on GitHub Pages."
+description: "MTEsm"
 permalink: /
 ---
 
-# Focus on writing good documentation
+# Microgrid Transactive Energy Smart Contract
 {: .fs-9 }
 
-Just the Docs gives your documentation a jumpstart with a responsive Jekyll theme that is easily customizable and hosted on GitHub Pages.
+The beginning of a blockchain application to pave the way for Transactive Energy at Brazilian micro/mini-grids.
 {: .fs-6 .fw-300 }
 
-[Get started now](#getting-started){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 } [View it on GitHub](https://github.com/pmarsceill/just-the-docs){: .btn .fs-5 .mb-4 .mb-md-0 }
+[Get started now](https://yurigabrich.github.io/microgrid-dapp/docs/example){: .btn .btn-primary .fs-5 .mb-4 .mb-md-0 .mr-2 } [View it on GitHub](https://github.com/yurigabrich/microgrid-dapp){: .btn .fs-5 .mb-4 .mb-md-0 }
 
 ---
 
-## Getting started
+## Intro
 
-### Dependencies
+The microgrid concept stands for the integration of distributed generation (DG) of electricity in an existing mid/low voltage power grid infrastructure.
+The size fo the microgrid is measured by its power generation capacity, and it can also have other nomenclatures due to this specification, such as mini-grid or nanogrid.
+Independently of its size, it may operate disconnected from the main grid as well.
+Either to feed the local point of generation or nearby points of power consumption.
 
-Just the Docs is built for [Jekyll](https://jekyllrb.com), a static site generator. View the [quick start guide](https://jekyllrb.com/docs/) for more information. Just the Docs requires no special plugins and can run on GitHub Pages' standard Jekyll compiler. The [Jekyll SEO Tag plugin](https://github.com/jekyll/jekyll-seo-tag) is included by default (no need to run any special installation) to inject SEO and open graph metadata on docs pages. For information on how to configure SEO and open graph metadata visit the [Jekyll SEO Tag usage guide](https://jekyll.github.io/jekyll-seo-tag/usage/).
+However, the upcoming growth of DGs and the efficiency improvements on distributed energy resources (DER) have giving room to a new approach of the energy market for mid/low voltage power consumers.
+An opportunity to choose the energy source provider beyond the distribution utility, in other words, flexibility to choose upon energy type and different electricity prices.
+Unfortunately, proper coordination between this market and the current electric grid operation is a huge challenge.
 
-### Quick start: Use as a GitHub Pages remote theme
+The transactive energy (TE) is the concept looking to solve this issue.
+The objective is to have a system to better integrate DERs, to provide transparent energy prices, and to allow consumers of all sizes to trade energy without compromise the quality and reliability of the main electricity grid.
 
-1. Add Just the Docs to your Jekyll site's `_config.yml` as a [remote theme](https://blog.github.com/2017-11-29-use-any-theme-with-github-pages/)
-```yaml
-remote_theme: pmarsceill/just-the-docs
-```
-<small>You must have GitHub Pages enabled on your repo, one or more Markdown files, and a `_config.yml` file. [See an example repository](https://github.com/pmarsceill/jtd-remote)</small>
+A *one-size-fits-all* solution is impracticable but blockchain comes in on good rescue.
+Although electric specifications of the distribution grid are almost the same worldwide, the electric sector directives might follow local energy capacity and potential, economic ambitions and mid-/long-term planning of the govern.
+This way several blockchain solutions are being developed under the aforementioned requirements.
 
-### Local installation: Use the gem-based theme
+The current **Microgrid Transactive Energy Smart Contract** is the result of a master degree on the look for a solution to implement the TE in the Brazilian micro/mini-grid context through a blockchain application.
+The thesis is also available online at the [Brazilian Thesis and Dissertation Catalog](http://catalogodeteses.capes.gov.br/catalogo-teses/#!/) [`Coming soon!`].
+The smart contract developed is only a small step towards a full micro/mini-grid distributed application (Dapp) but enough to assist the power exchange between consumers and prosumers (*pro*ducers + con*sumers*) through a transparent and secure management platform.
 
-1. Install the Ruby Gem
-```bash
-$ gem install just-the-docs
-```
-```yaml
-# .. or add it to your your Jekyll site’s Gemfile
-gem "just-the-docs"
-```
-2. Add Just the Docs to your Jekyll site’s `_config.yml`
-```yaml
-theme: "just-the-docs"
-```
-3. _Optional:_ Initialize search data (creates `search-data.json`)
-```bash
-$ bundle exec just-the-docs rake search:init
-```
-3. Run you local Jekyll server
-```bash
-$ jekyll serve
-```
-```bash
-# .. or if you're using a Gemfile (bundler)
-$ bundle exec jekyll serve
-```
-4. Point your web browser to [http://localhost:4000](http://localhost:4000)
 
-If you're hosting your site on GitHub Pages, [set up GitHub Pages and Jekyll locally](https://help.github.com/en/articles/setting-up-your-github-pages-site-locally-with-jekyll) so that you can more easily work in your development environment.
+### Smart Contract Dependency
 
-### Configure Just the Docs
+The current project was designed for interacting with the [NEO Blockchain](https://github.com/neo-project/neo) and can be tested online with [NeoCompiler Eco](https://github.com/NeoResearch/neocompiler-eco) at the [EcoLab](https://neocompiler.io/#!/ecolab/compilers).
+The `C#` algorithm implementation is in the [folder neo-dapp](/neo-dapp) under the file [`microgrid-dapp.cs`](/neo-dapp/microgrid-dapp.cs).
 
-- [See configuration options]({{ site.baseurl }}{% link docs/configuration.md %})
-
----
+As additional language implementations are expected, in the folder [pseudo-code](/pseudo-code) can be found generic flowcharts and information of the proposed system, (initially) echoed from the thesis.
 
 ## About the project
 
-Just the Docs is &copy; 2017-2019 by [Patrick Marsceill](http://patrickmarsceill.com).
+Microgrid Transactive Energy Smart Contract is &copy; 2020 by [Yuri Gabrich](https://github.com/yurigabrich/).
 
 ### License
 
-Just the Docs is distributed by an [MIT license](https://github.com/pmarsceill/just-the-docs/tree/master/LICENSE.txt).
+This project is shared under the [MIT License attribution](LICENSE).
 
 ### Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change. Read more about becoming a contributor in [our GitHub repo](https://github.com/pmarsceill/just-the-docs#contributing).
+You're welcome to contribute to the project development!
+I'm still a newbie on code collaboration but the following [Code of Conduct](/CONTRIBUTING.md) adapted from the [Contributor Covenant](https://www.contributor-covenant.org/) looks fair for this project.
+Take a look at it and let's work together. :sunglasses:
 
-#### Thank you to the contributors of Just the Docs!
+#### Thank you to the contributors of the MTEsm!
 
 <ul class="list-style-none">
 {% for contributor in site.github.contributors %}
@@ -88,9 +69,3 @@ email, or any other method with the owners of this repository before making a ch
   </li>
 {% endfor %}
 </ul>
-
-### Code of Conduct
-
-Just the Docs is committed to fostering a welcoming community.
-
-[View our Code of Conduct](https://github.com/pmarsceill/just-the-docs/tree/master/CODE_OF_CONDUCT.md) on our GitHub repository.
