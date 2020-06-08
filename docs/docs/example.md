@@ -1,8 +1,8 @@
 ---
 layout: default
-title: Configuration
+title: Example
 nav_order: 2
 ---
 
-# Comming soon...
+# Coming soon
 {: .no_toc }
