@@ -1024,7 +1024,13 @@ namespace Neo.SmartContract
         // To evaluate if an object is a 'string' that may represent both a PP ID or a Ref ID.
         private static bool IsValidId( object id )
         {
-            return ( (((string)id)[0] == 'P') || (((string)id)[0] == 'R') );
+            // Checks if the Referendum exists.
+            if ( ((string)GetRef( (string)id, "proposal" )).Length != 0 ) return true;
+        
+            // Checks if the PP exists.
+            if ( ((string)GetPP( (string)id, "capacity" )).Length != 0 ) return true;
+        
+            return false;
         }
 
         // To evaluate if an object can be converted to 'BigInteger'.
