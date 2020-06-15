@@ -395,7 +395,7 @@ namespace Neo.SmartContract
         }
         
         // To get information about something.
-        private static object Summary( object id, string opt = "" )
+        private static object Summary( object id, string opt = null )
         {
             // If 'id' is a 'byte[]' == member.
             if ( ((byte[])id).Length == 20 )
