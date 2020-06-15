@@ -163,6 +163,14 @@ namespace Neo.SmartContract
                                   (string)args[1] ); // utility
             }
             
+            if ( operation == "admission war" )
+            {
+                return RefWar( (string)args[2],   // rID
+                               (string)args[0],   // fullName
+                               (string)args[1],   // utility
+                                address );        // invoker/caller address
+            }
+            
             // Partially restricted operation.
             if ( operation == "summary" )
             {
@@ -290,6 +298,15 @@ namespace Neo.SmartContract
                                    opt );           // array with desired values
                 }
         
+                if ( operation == "change war" )
+                {
+                    return RefWar( (string)args[2],      // rID
+                                   "Change register_",   // proposal
+                                   (string)args[0],      // register variable = "quota"
+                                   address,              // member ID
+                                   (int)args[1] );       // new quota value
+                }
+                
                 if ( operation == "power up" )
                 {
                     if ( args.Length != 4 )
@@ -337,6 +354,11 @@ namespace Neo.SmartContract
                         return Warning("There isn't a result yet.");
                     
                     return AdmissionResult( (string)args[0] ); // Referendum ID
+                }
+                
+                if ( operation == "admission result war" )
+                {
+                    return AdmissionResultWar( (string)args[0] ); // Referendum ID
                 }
                 
                 if ( operation == "change result" )
@@ -642,16 +664,18 @@ namespace Neo.SmartContract
             
             // Retrives the address from private storage.
             byte[] address = (byte[])GetRef(rID, "address");
-
+            
             if ( Str2Bool( (string)GetRef(rID, "outcome") ) )
             {
                 // Retrives the member data from private storage.
-                string fullName = (string)GetRef(rID, "proposal");
-                string utility = (string)GetRef(rID, "notes");
-
+                // string fullName = (string)GetRef(rID, "proposal");
+                // string utility = (string)GetRef(rID, "notes");
+                
                 // Adds a new member after the group approval.
-                Member( address, fullName, utility, 0, 0 );
-                Membership( address, "Welcome on board!" );
+                // Member( address, fullName, utility, 0, 0 );
+                // Membership( address, "Welcome on board!" );
+                
+                // Wait for the second step.
                 return true;
             }
 
@@ -659,6 +683,21 @@ namespace Neo.SmartContract
             Membership( address, "Not approved yet." );
             DelMemb( address );
             return false;
+        }
+        
+        private static bool AdmissionResultWar( string rID )
+        {
+            // Retrives the address from private storage.
+            byte[] address = (byte[])GetRef(rID, "address");
+            
+            // Retrives the member data from private storage.
+            string fullName = (string)GetRef(rID, "proposal");
+            string utility = (string)GetRef(rID, "notes");
+            
+            // Adds a new member after the group approval.
+            Member( address, fullName, utility, 0, 0 );
+            Membership( address, "Welcome on board!" );
+            return true;
         }
 
         private static bool ChangeResult( string rID )
@@ -1417,35 +1456,42 @@ namespace Neo.SmartContract
         private static string Ref( string proposal, string notes, byte[] address, int cost = 0, uint time = 0 )
         {
             string id = ID( "\x5A", true, new string[] {proposal, notes, Int2Str(cost)} );
-
-            // Stores the practical values.
-            RefData.Proposal.Put(id, proposal);
-            RefData.Notes.Put(id, notes);
-            RefData.Outcome.Put(id, Bool2Str(false));
-            RefData.StartTime.Put(id, InvokedTime());
-            RefData.EndTime.Put(id, InvokedTime() + timeFrameRef);
-
-            // Evaluates the values before stores them since it is expensive to store null values.
-            if ( address.Length != 0 ) RefData.Address.Put(id, address);
-            if ( cost != 0 ) RefData.Cost.Put(id, cost);
-            if ( time != 0 ) RefData.Time.Put(id, time);
             
-            // Just states the other values since it is expensive to store null values.
-            // RefData.MoneyRaised.Put(id, 0);
-            // RefData.NumOfVotes.Put(id, 0);
-            // RefData.CountTrue.Put(id, 0);
-            // RefData.HasResult.Put(id, 0);
+            // Workaround!
             
-            // Increases the total number of referendum processes.
-            BigInteger temp = NumOfRef()+1;
-            Storage.Put("numofref", temp);
-            
-            // Stores the ID of each referendum.
-            RefData.ID.Put( Int2Str((int)temp), id );
-
             // Notifies about the creation of the referendum ID.
             Process(id, "The referendum process has started.");
             return id;
+        }
+
+        private static bool RefWar( string rID, string proposal, string notes, byte[] address, int cost = 0, uint time = 0 )
+        {
+            // Stores the practical values.
+            RefData.Proposal.Put(rID, proposal);
+            RefData.Notes.Put(rID, notes);
+            RefData.Outcome.Put(rID, Bool2Str(false));
+            RefData.StartTime.Put(rID, InvokedTime());
+            RefData.EndTime.Put(rID, InvokedTime() + timeFrameRef);
+            
+            // Evaluates the values before stores them since it is expensive to store null values.
+            if ( address.Length != 0 ) RefData.Address.Put(rID, address);
+            if ( cost != 0 ) RefData.Cost.Put(rID, cost);
+            if ( time != 0 ) RefData.Time.Put(rID, time);
+            
+            // Just states the other values since it is expensive to store null values.
+            // RefData.MoneyRaised.Put(rID, 0);
+            // RefData.NumOfVotes.Put(rID, 0);
+            // RefData.CountTrue.Put(rID, 0);
+            // RefData.HasResult.Put(rID, 0);
+            
+            // Increases the total number of referendum processes. (limited by the number of operations, max. 6)
+            // BigInteger temp = NumOfRef()+1;
+            // Storage.Put("numofref", temp);
+            
+            // Stores the ID of each referendum. (limited by the number of operations, max. 6)
+            // RefData.ID.Put( Int2Str((int)temp), rID );
+            
+            return true;
         }
         
         // The function to vote on a referendum is declared above.
