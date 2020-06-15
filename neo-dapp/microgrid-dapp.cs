@@ -100,7 +100,7 @@ namespace Neo.SmartContract
         }
         
         // The predefined periods to answer both a referendum and a crowdfunding, and to wait until a PP construction.
-        private const uint timeFrameRef = 2592000;       // 30 days
+        private const uint timeFrameRef = 120;           // 30 days = 2592000
         private const uint timeFrameCrowd = 5184000;     // 60 days
         private const uint minTimeToMarket = 2592000;    // 30 days
 
