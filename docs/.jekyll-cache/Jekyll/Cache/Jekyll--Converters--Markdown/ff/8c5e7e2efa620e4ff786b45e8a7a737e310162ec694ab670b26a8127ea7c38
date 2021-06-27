@@ -1,0 +1,59 @@
+I"?<h1 class="fs-9" id="microgrid-transactive-energy-smart-contract">Microgrid Transactive Energy Smart Contract</h1>
+
+<p class="fs-6 fw-300">The beginning of a blockchain application to pave the way for Transactive Energy at Brazilian micro/mini-grids.</p>
+
+<p><a href="https://yurigabrich.github.io/microgrid-dapp/docs/example" class="btn btn-primary fs-5 mb-4 mb-md-0 mr-2">Get started now</a> <a href="https://github.com/yurigabrich/microgrid-dapp" class="btn fs-5 mb-4 mb-md-0">View it on GitHub</a></p>
+
+<hr />
+
+<h2 id="intro">Intro</h2>
+
+<p>The microgrid concept stands for the integration of distributed generation (DG) of electricity in an existing mid/low voltage power grid infrastructure.
+The size fo the microgrid is measured by its power generation capacity, and it can also have other nomenclatures due to this specification, such as mini-grid or nanogrid.
+Independently of its size, it may operate disconnected from the main grid as well.
+Either to feed the local point of generation or nearby points of power consumption.</p>
+
+<p>However, the upcoming growth of DGs and the efficiency improvements on distributed energy resources (DER) have giving room to a new approach of the energy market for mid/low voltage power consumers.
+An opportunity to choose the energy source provider beyond the distribution utility, in other words, flexibility to choose upon energy type and different electricity prices.
+Unfortunately, proper coordination between this market and the current electric grid operation is a huge challenge.</p>
+
+<p>The transactive energy (TE) is the concept looking to solve this issue.
+The objective is to have a system to better integrate DERs, to provide transparent energy prices, and to allow consumers of all sizes to trade energy without compromise the quality and reliability of the main electricity grid.</p>
+
+<p>A <em>one-size-fits-all</em> solution is impracticable but blockchain comes in on good rescue.
+Although electric specifications of the distribution grid are almost the same worldwide, the electric sector directives might follow local energy capacity and potential, economic ambitions and mid-/long-term planning of the govern.
+This way several blockchain solutions are being developed under the aforementioned requirements.</p>
+
+<p>The current <strong>Microgrid Transactive Energy Smart Contract</strong> is the result of a master degree on the look for a solution to implement the TE in the Brazilian micro/mini-grid context through a blockchain application.
+The thesis is also available online at the <a href="http://catalogodeteses.capes.gov.br/catalogo-teses/#!/">Brazilian Thesis and Dissertation Catalog</a> [<code class="highlighter-rouge">Coming soon!</code>].
+The smart contract developed is only a small step towards a full micro/mini-grid distributed application (Dapp) but enough to assist the power exchange between consumers and prosumers (<em>pro</em>ducers + con<em>sumers</em>) through a transparent and secure management platform.</p>
+
+<h3 id="smart-contract-dependency">Smart Contract Dependency</h3>
+
+<p>The current project was designed for interacting with the <a href="https://github.com/neo-project/neo">NEO Blockchain</a> and can be tested online with <a href="https://github.com/NeoResearch/neocompiler-eco">NeoCompiler Eco</a> at the <a href="https://neocompiler.io/#!/ecolab/compilers">EcoLab</a>.
+The <code class="highlighter-rouge">C#</code> algorithm implementation is in the <a href="/neo-dapp">folder neo-dapp</a> under the file <a href="/neo-dapp/microgrid-dapp.cs"><code class="highlighter-rouge">microgrid-dapp.cs</code></a>.</p>
+
+<p>As additional language implementations are expected, in the folder <a href="/pseudo-code">pseudo-code</a> can be found generic flowcharts and information of the proposed system, (initially) echoed from the thesis.</p>
+
+<hr />
+
+<h2 id="about-the-project">About the project</h2>
+
+<p>Microgrid Transactive Energy Smart Contract is © 2020 by <a href="https://github.com/yurigabrich/">Yuri Gabrich</a>.</p>
+
+<h3 id="license">License</h3>
+
+<p>This project is shared under the <a href="LICENSE">MIT License attribution</a>.</p>
+
+<h3 id="contributing">Contributing</h3>
+
+<p>You’re welcome to contribute to the project development!
+I’m still a newbie on code collaboration but the following <a href="/CONTRIBUTING.md">Code of Conduct</a> adapted from the <a href="https://www.contributor-covenant.org/">Contributor Covenant</a> looks fair for this project.
+Take a look at it and let’s work together. :sunglasses:</p>
+
+<h4 id="thank-you-to-the-contributors-of-the-mtesm">Thank you to the contributors of the MTEsm!</h4>
+
+<ul class="list-style-none">
+
+</ul>
+:ET

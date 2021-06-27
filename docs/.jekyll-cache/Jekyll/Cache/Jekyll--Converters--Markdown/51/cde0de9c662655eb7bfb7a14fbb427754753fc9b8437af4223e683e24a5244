@@ -1,0 +1,57 @@
+I"M	<h1 class="no_toc" id="flowchart-of-each-operation">Flowchart of each operation</h1>
+
+<h2 class="no_toc text-delta" id="table-of-contents">Table of contents</h2>
+
+<ol id="markdown-toc">
+  <li><a href="#general-operation" id="markdown-toc-general-operation">General operation</a>    <ol>
+      <li><a href="#admission" id="markdown-toc-admission">admission</a></li>
+    </ol>
+  </li>
+  <li><a href="#partially-restricted-operation" id="markdown-toc-partially-restricted-operation">Partially restricted operation</a>    <ol>
+      <li><a href="#summary" id="markdown-toc-summary">summary</a></li>
+    </ol>
+  </li>
+  <li><a href="#restricted-operations" id="markdown-toc-restricted-operations">Restricted operations</a>    <ol>
+      <li><a href="#vote" id="markdown-toc-vote">vote</a></li>
+      <li><a href="#bid" id="markdown-toc-bid">bid</a></li>
+      <li><a href="#trade" id="markdown-toc-trade">trade</a></li>
+      <li><a href="#power-up" id="markdown-toc-power-up">power-up</a></li>
+      <li><a href="#change" id="markdown-toc-change">change</a></li>
+    </ol>
+  </li>
+</ol>
+
+<hr />
+
+<h2 id="general-operation">General operation</h2>
+
+<h3 id="admission">admission</h3>
+<p><img src="https://raw.githubusercontent.com/yurigabrich/microgrid-dapp/doc/pseudo-code/imgs/admission.png" alt="admission" /></p>
+
+<hr />
+
+<h2 id="partially-restricted-operation">Partially restricted operation</h2>
+
+<h3 id="summary">summary</h3>
+<p><img src="https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/summary.png?raw=true" alt="summary" /></p>
+
+<hr />
+
+<h2 id="restricted-operations">Restricted operations</h2>
+
+<h3 id="vote">vote</h3>
+<p><img src="https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/vote.png?raw=true" alt="vote" /></p>
+
+<h3 id="bid">bid</h3>
+<p><img src="https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/bid.png?raw=true" alt="bid" /></p>
+
+<h3 id="trade">trade</h3>
+<p><img src="https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/trade.png?raw=true" alt="trade" /></p>
+
+<h3 id="power-up">power-up</h3>
+<p><img src="https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/power-up.png?raw=true" alt="power-up" /></p>
+
+<h3 id="change">change</h3>
+<p><img src="https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/change.png?raw=true" alt="change" /></p>
+
+:ET
