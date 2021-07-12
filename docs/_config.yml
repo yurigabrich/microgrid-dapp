@@ -40,7 +40,7 @@ heading_anchors: true
 #    - "//github.com/yurigabrich/microgrid-dapp"
 
 # Footer content appears at the bottom of every page's main content
-footer_content: "Copyright &copy; 2020 Yuri Gabrich. Distributed by an <a href=\"https://github.com/yurigabrich/just-the-docs/tree/master/LICENSE.txt\">MIT license.</a>"
+#footer_content: "Copyright &copy; 2020 Yuri Gabrich. Distributed by an <a href=\"https://github.com/yurigabrich/just-the-docs/tree/master/LICENSE.txt\">MIT license.</a>"
 
 # Color scheme currently only supports "dark" or nil (default)
 color_scheme: nil
