@@ -10,4 +10,4 @@ nav_order: 1
 
 ---
 
-![uml](https://raw.githubusercontent.com/yurigabrich/microgrid-dapp/doc/pseudo-code/imgs/uml.png)
+![uml](https://raw.githubusercontent.com/yurigabrich/microgrid-dapp/master/pseudo-code/imgs/uml.png)
