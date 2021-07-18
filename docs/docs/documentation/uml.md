@@ -1,11 +1,11 @@
 ---
 layout: default
-title: UML
+title: UML Diagram
 parent: Documentation
-nav_order: 2
+nav_order: 1
 ---
 
-# System UML
+# UML Diagram
 {: .no_toc }
 
 ---
