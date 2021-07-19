@@ -1,7 +1,7 @@
 ---
 layout: default
 title: About it
-nav_order: 10
+nav_order: 4
 ---
 
 Microgrid Transactive Energy Smart Contract (MTEsm) is &copy; 2020 by [Yuri Gabrich](https://github.com/yurigabrich/).
