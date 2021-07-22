@@ -58,7 +58,7 @@ Take a look at it and let's work together. 😎
 {% for contributor in site.github.contributors %}
   {% if contributor.login != "dependabot[bot]" %}
     <li class="d-inline-block mr-1">
-       <a href="{{ contributor.html_url }}"><img src="{{ contributor.avatar_url }}" width="32" height="32" alt="{{ contributor.login }}"/>{{ contributor.login }}</a>
+       <a href="{{ contributor.html_url }}"><img src="{{ contributor.avatar_url }}" width="32" height="32" alt="{{ contributor.login }}"/></a>
     </li>
   {% endif %}
 {% endfor %}
