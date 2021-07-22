@@ -1,10 +1,11 @@
 ---
 layout: default
-title: Issues
-nav_order: 8
+title: Known Issues
+nav_order: 5
+parent: Documentation
 ---
 
-# Issues
+# Known Issues
 {: .no_toc }
 
 ---

@@ -1,8 +1,7 @@
 ---
 layout: default
 title: Flowcharts
-parent: Documentation
-nav_order: 3
+nav_exclude: true
 ---
 
 # Flowchart of each operation
