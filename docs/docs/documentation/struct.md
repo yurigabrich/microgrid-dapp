@@ -6,8 +6,11 @@ nav_order: 2
 ---
 
 # Code Structure
-{: .no_toc }
 
----
+"Users may interact with the smart contract through the operations available under the main interface (solid box),
+while the remaining functions (dashed boxes) support all the operations needs."
 
-![mtemsm](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/MTEMsm.png?raw=true)
+<br>
+
+![code structure](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/struct.png?raw=true)
+*The structure of the MTEsm code. [(GABRICH, 2019, appendix C)](/microgrid-dapp/docs/references)*
