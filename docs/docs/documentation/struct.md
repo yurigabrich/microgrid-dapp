@@ -12,5 +12,5 @@ while the remaining functions (dashed boxes) support all the operations needs."
 
 <br>
 
-![code structure](https://github.com/yurigabrich/microgrid-dapp/blob/doc/pseudo-code/imgs/struct.png?raw=true)
+![code structure](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/struct.png?raw=true)
 *The structure of the MTEsm code. [(GABRICH, 2019, appendix C)](/microgrid-dapp/docs/references)*
