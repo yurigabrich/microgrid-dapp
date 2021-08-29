@@ -57,11 +57,7 @@ she/he gains access to other functions only belonging to the group private envir
 <br>
 
 ![figure 7](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig7.png)
-*.... [(GABRICH, 2019, figure 7)](microgrid-dapp/docs/references)*
-
-figure 7
-The pathway to be accepted in a group's private environment.
-Functions (b) and (c) complements the whole process presented on (a).
+*The pathway to be accepted in a group's private environment. Functions (b) and (c) complements the whole process presented on (a). [(GABRICH, 2019, figure 7)](microgrid-dapp/docs/references)*
 
 <br>
 
