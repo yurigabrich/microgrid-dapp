@@ -93,18 +93,15 @@ Thefore, only positive votes are counted and absence votes are weighted as negat
  
 ## Bid
 
-When members are notified about a crowdfunding, they can bid to get a portion of its new power plant capacity.
-Important restrictions apply to get a successful transaction, such as the member must belong to the same coverage area of where the new \gls{gd} will reside.
-The whole process also updates the number of contributions made and keeps record of each one, so in case the crowdfunding fail and a cancellation have to be made, some information persists.
+Likewise the vote function, the bid function aims to state a member position front of a group decision but now the subject is to determine
+how much the member will contribute to finance a new power plant.
+Restrictions for the transaction also follow the Brazilian legislation since a member cannot have a portion of energy from a generation outside the member power network.
+In the end, all information for this kind of crowdfunding keep recorded forever even if it fails or a cancellation happens.
 
 <br>
 
 ![figure 11](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig11.png)
-*.... [(GABRICH, 2019, figure 11)](microgrid-dapp/docs/references)*
-
-figure 11
-The process of a new power plant crowdfunding.
-Function (b) complements the whole process presented on (a).
+*The process of a new power plant crowdfunding. Function (b) complements the whole process presented on (a). [(GABRICH, 2019, figure 11)](microgrid-dapp/docs/references)*
 
 <br>
 
