@@ -63,28 +63,17 @@ she/he gains access to other functions only belonging to the group private envir
 
 ## Summary
 
-It is the partially restricted operation.
-Depending on who has invoked this option (user or member) different outputs are displayed.
-In short, a user is forbidden to access any member's information, such as to check an individual balance of tokens and quota.
-However, no restriction applies to visualize power plants and referendums statuses.
-Likewise to get a brief overview of the group with the most updated values of the total number of members and power capacity all at once.
+This function has a special behaviour since its output denpends on who has requested it, i.e.,
+a user has limited access to several kinds of the group information, such as a member balance of tokens or quota.
+However, everyone can get information of the power plants and referendums statuses, for instance.
 
 <br>
 
 ![figure 8](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig8.png)
-*.... [(GABRICH, 2019, figure 8)](microgrid-dapp/docs/references)*
+*The process to get information from the group. Function (b) complements the whole process presented on (a), while (c) is one of the respective steps of (b), that continues in the next figure. [(GABRICH, 2019, figure 8)](microgrid-dapp/docs/references)*
 
 ![figure 9](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig9.png)
-*.... [(GABRICH, 2019, figure 9)](microgrid-dapp/docs/references)*
-
-figure 8
-The process to get information from the group (1).
-Function (b) complements the whole process presented on (a),
-while (c) is one of the respective steps of (b), that continues in Figure 9.
-
-figue 9
-The process to get information from the group (2).
-Flowcharts (a) and (b) complement the respective steps presented in Figure 8b.
+*Flowcharts (a) and (b) complement the respective steps presented in the figure above. [(GABRICH, 2019, figure 9)](microgrid-dapp/docs/references)*
 
 <br>
  
