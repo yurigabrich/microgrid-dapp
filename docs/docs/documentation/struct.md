@@ -79,21 +79,15 @@ However, everyone can get information of the power plants and referendums status
  
 ## Vote
 
-Every time a referendum-like process starts, there is a voting period.
-It supports a fair and transparent group decision, for instance, to approve a user request to join the group or a new power plant funding.
-Although the countdown happens off-chain, members should state on-chain her/his placement during the time frame of 30 days from the respective start of the timestamp process.
-Moreover, each member has the same power vote, i.e., 1 member is equal to 1 vote.
-To comply with the financial policy algorithm stated before, only positive answers are counted but both answers are displayed. However, when evaluating the result, absence votes are weighted as negative answers.
+The function to vote on every referendum-like process.
+Any group decision always depends on each member vote, so each member has the same power vote, i.e., 1 member is equal to 1 vote.
+However, a blockchain code requires a financial thinking to handle with the execution expenses.
+Thefore, only positive votes are counted and absence votes are weighted as negative answers when evaluating the result.
 
 <br>
 
 ![figure 10](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig10.png)
-*.... [(GABRICH, 2019, figure 10)](microgrid-dapp/docs/references)*
-
-figure 10
-A general voting procedure called by a member.
-Function (b) complements the whole process presented on (a).
-Note that the return argument of (b) means the success of the ballot, and not the vote answer.
+*A general voting procedure called by a member. Function (b) complements the whole process presented on (a). Note that the return argument of (b) means the success of the ballot, and not the vote answer. [(GABRICH, 2019, figure 10)](microgrid-dapp/docs/references)*
 
 <br>
  
