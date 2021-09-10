@@ -107,43 +107,30 @@ In the end, all information for this kind of crowdfunding keep recorded forever 
 
 ## Change
 
-Any modification on the information already established on the group's private space is considered an update.
-Moreover, there are only two options that can be changed without a group agreement (i.e. without wait for a entire referendum process), that are the update of the member profile data, and the member bid on a crowdfunding, which depends on the decision of the member her-/himself only.
-In the case of a member deletion, the \gls{mtesm} will redistribute the quotas for the remaining members.
-And for a power plant elimination, no big changes have to be made on members' register since their quotas is a percentage rate of the group power capacity, not of the single value of a power plant capacity.
+The function to update the information already registered in the group private space.
+However, there are two sets of information available.
+One is concerned to the member own data, for instance, the profile data or a bid on a crowdfunding.
+This kind of information can be changed without a group agreement, therefore, it is not required to wait for an entire referendum process to change the data.
+The other set is always a referendum-like process that requires members vote and period for discussions.
+
+A particular change of the data is the option to delete an information.
+Then, the deletion of a member data will redistribute the quotas for the remaining members proportionally to each one.
+But the deletion of a power plant will not impact on the members registers since their quotas is a percentage rate of the group power capacity,
+not of the single value of a power plant capacity.
 
 <br>
 
 ![figure 12](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig12.png)
-*.... [(GABRICH, 2019, figure 12)](microgrid-dapp/docs/references)*
+*The full updating process of several information. Further details in the next figures. [(GABRICH, 2019, figure 12)](microgrid-dapp/docs/references)*
 
 ![figure 13](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig13.png)
-*.... [(GABRICH, 2019, figure 13)](microgrid-dapp/docs/references)*
+*Function (a) complements the process presented in the figure before, while (b) and (c) complement the final steps of (a). Although both have different outcomes, they share a common pattern such as one option to update data without group consensus. [(GABRICH, 2019, figure 13)](microgrid-dapp/docs/references)*
 
 ![figure 14](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig14.png)
-*.... [(GABRICH, 2019, figure 14)](microgrid-dapp/docs/references)*
+*The step (b) intermediates the referendum succeess in the function (a) and the final steps reproduced in the next figure. [(GABRICH, 2019, figure 14)](microgrid-dapp/docs/references)*
 
 ![figure 15](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig15.png)
-*.... [(GABRICH, 2019, figure 15)](microgrid-dapp/docs/references)*
-
-figure 12
-The process to update some information (1).
-The full updating process of several information. Further details in Fig 13 until 15.
-
-figure 13
-The process to update some information (2).
-Function (a) complements the process presented in Fig 12,
-while (b) and (c) complement the final steps of (a).
-Although both have different outcomes, they share a common pattern such as
-one option to update data without group consensus.
-
-figure 14
-The process to update some information (3).
-The step (b) intermediates the referendum succeess in the function (a) and the final steps reproduced in fig 15.
-
-figure 15
-The process to update some information (4).
-The end of the update process accordingly with each proposal identified in fig 14b.
+*The end of the update process accordingly with each proposal identified in the figure above, item (b). [(GABRICH, 2019, figure 15)](microgrid-dapp/docs/references)*
 
 <br>
 
