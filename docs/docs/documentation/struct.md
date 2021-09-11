@@ -136,40 +136,35 @@ not of the single value of a power plant capacity.
 
 ## Power-up
 
-This function aims to provide the tools to manage any power plant registering data.
-Any member can request to add a new power plant, however, until a power generation start, a referendum process must succeed firstly.
-This process is different because, beyond the traditional waiting period of 30 days of a ballot, there are two additional waiting times, one for the crowdfunding (pre-defined to 60 days), and other for the power plant construction until its gets ready to operate (pre-defined to 30 days too).
-For the crowdfunding case, the \gls{mtesm} registers how much each member is up to pay to fund a given amount of power, but the bids coordination and payment have to be made in off-chain platforms.
-If funding succeed, the power plant construction period starts.
-The interaction with real-time planning is subtle and this variable can be updated before its deadline.
-This waiting time is required to avoid unbalanced distribution of energy among members.
-In other words, to update the share fraction of the whole group based on the new power plant auction, the \gls{mtesm} must wait the date the new power plant is ready to operate.
-Moreover, this function also supports the group crypto-currency market (\gls{SEB}) since every time a new power plant is approved, some tokens are proportionally created.
-However, their distribution happens once the whole new power plant implementation process ends.
-Therefore, independently of the number of beneficiaries, the last step of the \emph{power-up} operation is a transaction that distributes tokens all at once, making the returning values always account for 100\% of the new power implemented.
+A restricted function to manage the registering data of power plants.
+Therefore, any member can request a new power plant to increase the power capacity of the group.
+However, until the power generation starts, a referendum process must succeed in advance.
+
+Differently than other referendum processes, the power-up function requires longer steps to reach the final outcome.
+Now, there are a waiting period of 30 days of a ballot, the waiting time for the crowdfunding (pre-defined to 60 days),
+and the waiting time for the power plant construction until its gets ready to operate (pre-defined to 30 days too).
+
+For the crowdfunding step, the MTEsm records how much each member is willing to pay to fund a given amount of power
+but the bids coordination and payment is made in off-chain platforms.
+Then, if the funding succeed, the power plant construction starts, and the waiting period of this step can be updated anytime before its deadline.
+This time frame is required to avoid unbalanced distribution of energy among members.
+In other words, to update the share fraction of the whole group based on the new power plant auction, the MTEsm must wait the date the new power plant is ready to operate.
+
+Finally, this function also supports the group market of crypto-currency (SEB = Sharing Electricity in Brazil).
+So, every time a new power plant is approved, tokens are proportionally created.
+But the SEB distribution only happens at the end of the whole process.
+Therefore, the last step of the power-up function is a transaction that distributes SEBs all at once to every member that had financed the new power plant.
 
 <br>
 
 ![figure 16](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig16.png)
-*.... [(GABRICH, 2019, figure 16)](microgrid-dapp/docs/references)*
+*The process to increase the group power capacity starts here. Functions (b) and (c) complement the whole process presented on (a). [(GABRICH, 2019, figure 16)](microgrid-dapp/docs/references)*
 
 ![figure 17](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig17.png)
-*.... [(GABRICH, 2019, figure 17)](microgrid-dapp/docs/references)*
+*The steps (a) and (b) complement the initial operations in item (c) of the figure before. [(GABRICH, 2019, figure 17)](microgrid-dapp/docs/references)*
 
 ![figure 18](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig18.png)
-*.... [(GABRICH, 2019, figure 18)](microgrid-dapp/docs/references)*
-
-figure 16
-The process to increase the group power capacity (1).
-Functions (b) and (c) complement the whole process presented on (a).
-
-figure 17
-The process to increase the group power capacity (2).
-The steps (a) and (b) complement the initia operations in Fig 16c.
-
-figure 18
-The process... (3)
-The analysis of the PP operation status complements the last step in Fig 16c.
+*The analysis of the power plant (PP) operation status complements the last step in item (c) of the first figure of this workflow. [(GABRICH, 2019, figure 18)](microgrid-dapp/docs/references)*
 
 <br>
  
