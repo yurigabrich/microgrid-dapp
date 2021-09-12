@@ -16,7 +16,7 @@ while the remaining functions (dashed boxes) support all the operations needs.
 
 <br>
 
-![code structure](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/struct.png)
+![code structure](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/struct.png)
 *The structure of the MTEsm code. [(GABRICH, 2019, figure 5)](microgrid-dapp/docs/references)*
 
 <br>
@@ -36,7 +36,7 @@ Then, the remaining operation continues in the following figures, according to o
 
 <br>
 
-![main interface](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/main-interface.png)
+![main interface](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/main-interface.png)
 *The flowchart of the MTEsm main interface. [(GABRICH, 2019, figure 6)](microgrid-dapp/docs/references)*
 
 <br>
@@ -56,7 +56,7 @@ she/he gains access to other functions only belonging to the group private envir
 
 <br>
 
-![figure 7](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig7.png)
+![figure 7](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig7.png)
 *The pathway to be accepted in a group's private environment. Functions (b) and (c) complements the whole process presented on (a). [(GABRICH, 2019, figure 7)](microgrid-dapp/docs/references)*
 
 <br>
@@ -69,10 +69,10 @@ However, everyone can get information of the power plants and referendums status
 
 <br>
 
-![figure 8](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig8.png)
+![figure 8](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig8.png)
 *The process to get information from the group. Function (b) complements the whole process presented on (a), while (c) is one of the respective steps of (b), that continues in the next figure. [(GABRICH, 2019, figure 8)](microgrid-dapp/docs/references)*
 
-![figure 9](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig9.png)
+![figure 9](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig9.png)
 *Flowcharts (a) and (b) complement the respective steps presented in the figure above. [(GABRICH, 2019, figure 9)](microgrid-dapp/docs/references)*
 
 <br>
@@ -86,7 +86,7 @@ Thefore, only positive votes are counted and absence votes are weighted as negat
 
 <br>
 
-![figure 10](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig10.png)
+![figure 10](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig10.png)
 *A general voting procedure called by a member. Function (b) complements the whole process presented on (a). Note that the return argument of (b) means the success of the ballot, and not the vote answer. [(GABRICH, 2019, figure 10)](microgrid-dapp/docs/references)*
 
 <br>
@@ -100,7 +100,7 @@ In the end, all information for this kind of crowdfunding keep recorded forever 
 
 <br>
 
-![figure 11](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig11.png)
+![figure 11](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig11.png)
 *The process of a new power plant crowdfunding. Function (b) complements the whole process presented on (a). [(GABRICH, 2019, figure 11)](microgrid-dapp/docs/references)*
 
 <br>
@@ -120,16 +120,16 @@ not of the single value of a power plant capacity.
 
 <br>
 
-![figure 12](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig12.png)
+![figure 12](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig12.png)
 *The full updating process of several information. Further details in the next figures. [(GABRICH, 2019, figure 12)](microgrid-dapp/docs/references)*
 
-![figure 13](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig13.png)
+![figure 13](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig13.png)
 *Function (a) complements the process presented in the figure before, while (b) and (c) complement the final steps of (a). Although both have different outcomes, they share a common pattern such as one option to update data without group consensus. [(GABRICH, 2019, figure 13)](microgrid-dapp/docs/references)*
 
-![figure 14](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig14.png)
+![figure 14](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig14.png)
 *The step (b) intermediates the referendum succeess in the function (a) and the final steps reproduced in the next figure. [(GABRICH, 2019, figure 14)](microgrid-dapp/docs/references)*
 
-![figure 15](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig15.png)
+![figure 15](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig15.png)
 *The end of the update process accordingly with each proposal identified in the figure above, item (b). [(GABRICH, 2019, figure 15)](microgrid-dapp/docs/references)*
 
 <br>
@@ -157,13 +157,13 @@ Therefore, the last step of the power-up function is a transaction that distribu
 
 <br>
 
-![figure 16](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig16.png)
+![figure 16](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig16.png)
 *The process to increase the group power capacity starts here. Functions (b) and (c) complement the whole process presented on (a). [(GABRICH, 2019, figure 16)](microgrid-dapp/docs/references)*
 
-![figure 17](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig17.png)
+![figure 17](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig17.png)
 *The steps (a) and (b) complement the initial operations in item (c) of the figure before. [(GABRICH, 2019, figure 17)](microgrid-dapp/docs/references)*
 
-![figure 18](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig18.png)
+![figure 18](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig18.png)
 *The analysis of the power plant (PP) operation status complements the last step in item (c) of the first figure of this workflow. [(GABRICH, 2019, figure 18)](microgrid-dapp/docs/references)*
 
 <br>
@@ -183,7 +183,7 @@ In the end, to keep the group transparency about the quota shares, the MTEsm out
 
 <br>
 
-![figure 19](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig19.png)
+![figure 19](https://github.com/yurigabrich/microgrid-dapp/raw/master/pseudo-code/imgs/fig19.png)
 *The trade agreement process between members. Function (b) complements the process (a). [(GABRICH, 2019, figure 19)](microgrid-dapp/docs/references)*
 
 <br>
