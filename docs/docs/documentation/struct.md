@@ -170,20 +170,20 @@ Therefore, the last step of the power-up function is a transaction that distribu
  
 ## Trade
 
-A member can exchange quotas with anyone else by a price agreed upon themselves (an off-chain communication process).
-Important to remember that this value is represented by means of the group's token created for this purpose, the \gls{SEB}.
-However, the principle of donation is preserved depending on how null values are transacted.
-If the objective is to donate energy, an exchange of quotas is made with a zero token price.
-On the other hand, a donation of \glspl{SEB} has null values of quotas.
-To keep the group transparency about the quota shares, the \gls{mtesm} displays a notification every time the function is triggered.
+Another kind of restricted function that allow members to exchange energy quotas by a price agreed upon themselves.
+Although the deal is registered in the blockchain, the negotiation is an off-chain communication process.
+Moreover, all the exchange is governed by the group's cryptocurrency SEB.
+
+The principle of donation is also possible.
+When agreeing the deal, a member has a option to leave the price or the quotas parameters empty to define such transaction as a donation.
+If the price is null, it is a donation of quotas.
+Otherwise, if the quotas is null, it is a donation of SEBs.
+
+In the end, to keep the group transparency about the quota shares, the MTEsm outputs a notification every time the function is triggered.
 
 <br>
 
 ![figure 19](https://github.com/yurigabrich/microgrid-dapp/blob/master/pseudo-code/imgs/fig19.png)
-*.... [(GABRICH, 2019, figure 19)](microgrid-dapp/docs/references)*
-
-figure 19
-The trade agreement process between members.
-Function (b) complements the process (a).
+*The trade agreement process between members. Function (b) complements the process (a). [(GABRICH, 2019, figure 19)](microgrid-dapp/docs/references)*
 
 <br>
