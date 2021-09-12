@@ -1,10 +1,10 @@
 // _________________________________________________________________
 // MIT License
 // 
-// Copyright (C) 2018 - 2019
+// Copyright (C) 2018 - 2020
 //
 // Author:
-//          Yuri Bastos Gabrich - yuribgabrich[at]gmail.com
+//          Yuri Bastos Gabrich - yuribgabrich[at]gmail[dot]com
 // 
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
