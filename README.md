@@ -17,7 +17,7 @@ Although electric specifications of the distribution grid are almost the same wo
 This way several blockchain solutions are being developed under the aforementioned requirements.
 
 The current **Microgrid Transactive Energy Smart Contract** is the result of a master degree on the look for a solution to implement the TE in the Brazilian micro/mini-grid context through a blockchain application.
-The thesis is also available online at the [Brazilian Thesis and Dissertation Catalog](http://catalogodeteses.capes.gov.br/catalogo-teses/#!/) [`Coming soon!`].
+The thesis is also available online at the [Brazilian Thesis and Dissertation Catalog](http://catalogodeteses.capes.gov.br/catalogo-teses/#!/) [`Coming soon!`] ▶️ meanwhile, you can check it out at the [UFRJ GESEL repository](http://www.gesel.ie.ufrj.br/app/webroot/files/publications/12_gabrich_2020_11_17.pdf) ◀️.
 The smart contract developed is only a small step towards a full micro/mini-grid distributed application (Dapp) but enough to assist the power exchange between consumers and prosumers (*pro*ducers + con*sumers*) through a transparent and secure management platform.
 
 ## Smart Contract
