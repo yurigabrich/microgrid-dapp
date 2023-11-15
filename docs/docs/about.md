@@ -8,8 +8,8 @@ nav_order: 4
 
 The **Microgrid Transactive Energy Smart Contract (MTEsm)** is the outcome of a master degree on the look for a solution to implement the Transactive Energy (TE) in the Brazilian micro/mini-grid context through a blockchain application.
 
-The thesis is available online at the [Brazilian Thesis and Dissertation Catalog](http://catalogodeteses.capes.gov.br/catalogo-teses/#!/) [`Coming soon!`], which presents
-the worldwide efforts to implement the blockchain technology into the energy sector, a comparison between several blockchain platforms and the requirements considered for the Brazilian scenario.
+The thesis is available online at the [digital library of UERJ](http://www.bdtd.uerj.br/handle/1/19528), at the [UFRJ GESEL repository](http://www.gesel.ie.ufrj.br/app/webroot/files/publications/12_gabrich_2020_11_17.pdf), and at the [Bibliotecas da Energia's collection](https://biblioteca.sophia.com.br/terminal/5523/acervo/detalhe/101560).
+This document presents the worldwide efforts to implement the blockchain technology into the energy sector, a comparison between several blockchain platforms and the requirements considered for the Brazilian scenario.
 
 The smart contract developed is only a small step towards a full micro/mini-grid distributed application (Dapp) but
 enough to assist in the power exchange between consumers and prosumers (*pro*ducers + con*sumers*) through a transparent and secure management platform.
